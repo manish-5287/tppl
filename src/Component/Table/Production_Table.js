@@ -9,7 +9,7 @@ export default class Production_Table extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            tableHead: ['PO Id', 'Date', 'Contract Name', '	Product', 'Plan Qty','Prep Qty'],
+            tableHead: ['Id', 'Date', 'Contract Name', '	Product', 'Plan Qty','Prep Qty'],
             rowData: [],
             isPopoverVisible: false,
             popoverContent: ""
@@ -22,7 +22,7 @@ export default class Production_Table extends Component {
         handleProductionOrder=async()=>{
             try {
                 const response=await makeRequest(BASE_URL+'/mobile/dashboard')
-                console.log(response);
+                // console.log("production_table",response);
                 const {success,message,productionDetails}=response;
                 if (success) {
                     this.setState({rowData:productionDetails});

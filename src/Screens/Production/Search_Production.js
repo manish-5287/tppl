@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity, Modal, Alert ,Image} from 'react-native'
+import { StyleSheet, Text, View, TouchableOpacity, Modal, Alert, Image } from 'react-native'
 import React, { Component } from 'react'
 import { Table, Row } from 'react-native-table-component';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
@@ -9,7 +9,7 @@ export default class Search_Production extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            tableHead: ['PO Id', 'Date', 'Contract Name', '	Product', 'Plan Qty', 'Prep Qty'],
+            tableHead: ['Id', 'Date', 'Contract Name', 'Product', 'Plan Qty', 'Prep Qty'],
             rowData: [],
             isPopoverVisible: false,
             popoverContent: ""
@@ -94,27 +94,29 @@ export default class Search_Production extends Component {
         try {
             const { contract_id } = this.props.route.params;
             const params = { contract_id };
-            console.log("idididididdiddid", contract_id);
+            // console.log("handleContractSearch", contract_id);
             const response = await makeRequest(BASE_URL + '/mobile/searchproduction', params)
-            console.log("vvvfff", response);
             const { success, message, searchProduction } = response;
+            // console.log("handleContractSearch_response", response);
             if (success) {
                 this.setState({ rowData: searchProduction });
-                Alert.alert(message);
+
             } else {
-                Alert.alert(message);
+                console.log(message);
             }
         } catch (error) {
             console.log(error);
         }
     }
-
+    handleGoBackHome = () => {
+        this.props.navigation.navigate('Production');
+    }
 
     render() {
         const { tableHead, rowData } = this.state;
         return (
             <>
-               <View
+                <View
                     style={{
                         backgroundColor: '#f3faf7',
                         height: wp(14),
@@ -125,21 +127,33 @@ export default class Search_Production extends Component {
                         flexDirection: 'row'
 
                     }}>
-                    <Image source={require('../../Assets/applogo.png')}
-                        style={{
-                            width: wp(16),
-                            height: wp(13),
-                            marginLeft: wp(2)
+                    <TouchableOpacity onPress={this.handleGoBackHome}>
+                        <Image source={require('../../Assets/goback/prod.png')}
+                            style={{
+                                width: wp(8),
+                                height: wp(8),
+                                marginLeft: wp(2)
+                            }} />
+                    </TouchableOpacity>
 
-                        }} />
+
                     <Text
                         style={{
                             color: '#333',
                             fontSize: wp(5),
                             fontWeight: '500',
-                            marginRight: wp(35),
                             letterSpacing: wp(0.4),
-                        }}>Production</Text>
+                            textTransform: 'uppercase'
+                        }}>Production order</Text>
+
+
+                    <Image source={require('../../Assets/applogo.png')}
+                        style={{
+                            width: wp(16),
+                            height: wp(13),
+                            resizeMode: 'contain',
+                            marginRight: wp(2)
+                        }} />
 
                 </View>
                 <View style={styles.container}>

@@ -1,4 +1,4 @@
-import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, Modal, Alert, FlatList } from 'react-native'
+import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, Modal, Alert, FlatList, Keyboard, TouchableWithoutFeedback, RefreshControl } from 'react-native'
 import React, { Component } from 'react'
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { Table, Row } from 'react-native-table-component';
@@ -13,7 +13,7 @@ export class Production extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            tableHead: ['PO Id', 'Date', 'Contract Name', '	Product', 'Plan Qty', 'Prep Qty'],
+            tableHead: ['Id', 'Date', 'Contract Name', 'Product', 'Plan Qty', 'Prep Qty'],
             rowData: [],
             currentPage: 0,
             rowsPerPage: 15,
@@ -21,26 +21,27 @@ export class Production extends Component {
             popoverContent: "",
             searchName: '',
             contractName: [],
-            showProcessingLoader: false
+            showProcessingLoader: false,
+            isRefreshing: false
         };
     };
 
     componentDidMount() {
         this.handleProduction();
-        
+
     };
 
     handleProduction = async () => {
         try {
             this.setState({ showProcessingLoader: true })
             const response = await makeRequest(BASE_URL + '/mobile/production')
-            console.log(response);
             const { success, message, productionDetails } = response;
+            // console.log("production",response);
             if (success) {
                 this.setState({ rowData: productionDetails, showProcessingLoader: false });
-                Alert.alert(message);
+
             } else {
-                Alert.alert(message);
+                console.log(message);
 
             }
         } catch (error) {
@@ -161,17 +162,18 @@ export class Production extends Component {
     handleSearch = async (searchName) => {
         try {
             const params = { workorderno: searchName };
-            console.log('eeeeeee', params);
+            // console.log(' Search', params);
             const response = await makeRequest(BASE_URL + '/mobile/searchcontractname', params);
             const { success, message, contractName } = response;
             // console.log(response);
             if (success) {
                 this.setState({ contractName: contractName });
             } else {
-            Alert.alert(message);
+                this.setState({ contractName: [], errorMessage: message })
             }
         } catch (error) {
             console.log(error);
+            this.setState({ contractName: [], errorMessage: 'please try again' })
         }
     };
 
@@ -193,7 +195,7 @@ export class Production extends Component {
         if (!item) {
             return (
                 <View style={{ alignItems: 'center', paddingVertical: wp(2) }}>
-                    <Text>No Data</Text>
+                    <Text>{this.state.errorMessage}</Text>
                 </View>
             );
         }
@@ -207,6 +209,26 @@ export class Production extends Component {
         );
     };
 
+    _handleListRefresh = async () => {
+        try {
+            // pull-to-refresh
+            this.setState({ isRefreshing: true }, () => {
+                // setTimeout with a delay of 1000 milliseconds (1 second)
+                setTimeout(() => {
+                    // updating list after the delay
+                    this.handleProduction();
+                    // resetting isRefreshing after the update
+                    this.setState({ isRefreshing: false , searchName: ''});
+                }, 100);
+            });
+        } catch (error) {
+            console.log(error.message);
+        }
+    };
+
+    handleGoBackHome = () => {
+        this.props.navigation.navigate('home');
+    }
 
     render() {
         const { tableHead, rowData, currentPage, rowsPerPage } = this.state;
@@ -220,6 +242,7 @@ export class Production extends Component {
 
         return (
             <>
+
                 <View
                     style={{
                         backgroundColor: '#f3faf7',
@@ -231,28 +254,52 @@ export class Production extends Component {
                         flexDirection: 'row'
 
                     }}>
-                    <Image source={require('../../Assets/applogo.png')}
-                        style={{
-                            width: wp(16),
-                            height: wp(13),
-                            marginLeft: wp(2)
+                    <TouchableOpacity onPress={this.handleGoBackHome}>
+                        <Image source={require('../../Assets/goback/prod.png')}
+                            style={{
+                                width: wp(8),
+                                height: wp(8),
+                                marginLeft: wp(2)
+                            }} />
+                    </TouchableOpacity>
 
-                        }} />
+
                     <Text
                         style={{
                             color: '#333',
                             fontSize: wp(5),
                             fontWeight: '500',
-                            marginRight: wp(35),
                             letterSpacing: wp(0.4),
-                        }}>Production</Text>
+                            textTransform: 'uppercase'
+                        }}>Production order</Text>
+
+
+                    <Image source={require('../../Assets/applogo.png')}
+                        style={{
+                            width: wp(16),
+                            height: wp(13),
+                            resizeMode: 'contain',
+                            marginRight: wp(2)
+                        }} />
 
                 </View>
+
                 <View style={styles.container}>
-                    <ScrollView style={{ marginBottom: wp(16) }} showsVerticalScrollIndicator={false}>
+                    <ScrollView
+                        style={{ marginBottom: wp(16) }}
+                        showsVerticalScrollIndicator={false}
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={this.state.isRefreshing}
+                                onRefresh={this._handleListRefresh}
+                                colors={['#40856f']}
+                            />
+                        }
+
+                    >
                         <View style={styles.search}>
                             <TextInput
-                                placeholder='Enter Contract ID'
+                                placeholder='Search Work Order No.'
                                 placeholderTextColor='#40856f'
                                 maxLength={25}
                                 keyboardType='number-pad'
@@ -275,7 +322,7 @@ export class Production extends Component {
                                     />
                                 ) : (
                                     <View style={styles.noResultsContainer}>
-                                        <Text style={styles.noResultsText}>No Result Found</Text>
+                                        <Text style={styles.noResultsText}>{this.state.errorMessage}</Text>
                                     </View>
                                 )}
                             </View>
@@ -325,6 +372,7 @@ export class Production extends Component {
                         </Modal>
                     </ScrollView>
                 </View>
+
                 {showProcessingLoader && <ProcessingLoader />}
             </>
         );

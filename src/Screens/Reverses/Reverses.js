@@ -1,6 +1,6 @@
-import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, Modal, Alert, FlatList } from 'react-native'
+import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, Modal, Alert, FlatList, RefreshControl } from 'react-native'
 import React, { Component } from 'react'
-import { widthPercentageToDP as wp,heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { Table, Row } from 'react-native-table-component';
 import { BASE_URL, makeRequest } from '../../api/Api_info';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
@@ -10,7 +10,7 @@ export class Reverses extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            tableHead: ['S No.', 'Reverse Id', 'Contract name', 'Product', 'Received By', 'Date'],
+            tableHead: ['Id', 'Contract name', 'Product', 'Received By', 'Date'],
             rowData: [],
             currentPage: 0,
             rowsPerPage: 10,
@@ -19,7 +19,8 @@ export class Reverses extends Component {
             showProcessingLoader: false,
             searchReverse: '',
             searchName: '',
-            contractName: []
+            contractName: [],
+            isRefreshing: false
         };
 
     }
@@ -32,13 +33,13 @@ export class Reverses extends Component {
         try {
             this.setState({ showProcessingLoader: true })
             const response = await makeRequest(BASE_URL + '/mobile/reverse')
-            console.log(response);
             const { success, message, reverseDetails } = response;
+            // console.log("reverse",response);
             if (success) {
                 this.setState({ rowData: reverseDetails, showProcessingLoader: false });
-                Alert.alert(message);
+
             } else {
-                Alert.alert(message);
+                console.log(message);
             }
         } catch (error) {
             console.log(error);
@@ -54,7 +55,7 @@ export class Reverses extends Component {
                     data={Object.values(rowData)}
                     textStyle={styles.rowText}
                     style={[rowIndex % 2 === 0 ? styles.rowEven : styles.rowOdd]}
-                    flexArr={[0, 2, 3, 3, 2, 2]}
+                    flexArr={[0, 3, 3, 2, 2]}
                 />
             );
         } else if (Array.isArray(rowData)) {
@@ -91,7 +92,7 @@ export class Reverses extends Component {
                 })}
                 textStyle={styles.rowText}
                 style={[rowIndex % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
-                flexArr={[0, 2, 3, 3, 2, 2]}
+                flexArr={[0, 3, 3, 2, 2]}
             />
         );
     };
@@ -160,17 +161,19 @@ export class Reverses extends Component {
     handleSearch = async (searchName) => {
         try {
             const params = { workorderno: searchName };
-            console.log('eeeeeee', params);
+            // console.log('searc', params);
             const response = await makeRequest(BASE_URL + '/mobile/searchcontractname', params);
             const { success, message, contractName } = response;
             // console.log(response);
             if (success) {
                 this.setState({ contractName: contractName });
             } else {
-                Alert.alert(message);
+                this.setState({ contractName: [], errorMesage: message })
             }
         } catch (error) {
             console.log(error);
+            this.setState({ contractName: [], errorMesage: 'Please try agian' })
+
         }
     };
 
@@ -192,7 +195,7 @@ export class Reverses extends Component {
         if (!item) {
             return (
                 <View style={{ alignItems: 'center', paddingVertical: wp(2) }}>
-                    <Text>No Data</Text>
+                    <Text>{this.state.errorMesage}</Text>
                 </View>
             );
         }
@@ -206,7 +209,26 @@ export class Reverses extends Component {
         );
     };
 
+    _handleListRefresh = async () => {
+        try {
+            // pull-to-refresh
+            this.setState({ isRefreshing: true }, () => {
+                // setTimeout with a delay of 1000 milliseconds (1 second)
+                setTimeout(() => {
+                    // updating list after the delay
+                    this.handleReverse();
+                    // resetting isRefreshing after the update
+                    this.setState({ isRefreshing: false, searchName: '' });
+                }, 100);
+            });
+        } catch (error) {
+            console.log(error.message);
+        }
+    };
 
+    handleGoBackHome = () => {
+        this.props.navigation.navigate('home');
+    }
     render() {
         const { tableHead, rowData, currentPage, rowsPerPage } = this.state;
         const startIndex = currentPage * rowsPerPage;
@@ -229,29 +251,51 @@ export class Reverses extends Component {
                         flexDirection: 'row'
 
                     }}>
-                    <Image source={require('../../Assets/applogo.png')}
-                        style={{
-                            width: wp(16),
-                            height: wp(13),
-                            marginLeft: wp(2)
+                   <TouchableOpacity onPress={this.handleGoBackHome}>
+                        <Image source={require('../../Assets/goback/reverse.png')}
+                            style={{
+                                width: wp(8),
+                                height: wp(8),
+                                marginLeft: wp(2)
+                            }} />
+                    </TouchableOpacity>
 
-                        }} />
+
                     <Text
                         style={{
                             color: '#333',
                             fontSize: wp(5),
                             fontWeight: '500',
-                            marginRight: wp(40),
                             letterSpacing: wp(0.4),
+                            textTransform: 'uppercase'
                         }}>Reverse</Text>
+
+
+                    <Image source={require('../../Assets/applogo.png')}
+                        style={{
+                            width: wp(16),
+                            height: wp(13),
+                            resizeMode: 'contain',
+                            marginRight: wp(2)
+                        }} />
 
                 </View>
 
                 <View style={styles.container}>
-                    <ScrollView style={{ marginBottom: wp(16) }} showsVerticalScrollIndicator={false}>
+                    <ScrollView
+                        style={{ marginBottom: wp(16) }}
+                        showsVerticalScrollIndicator={false}
+                        refreshControl={
+                            <RefreshControl
+                                colors={['#197486']}
+                                refreshing={this.state.isRefreshing}
+                                onRefresh={this._handleListRefresh}
+                            />
+                        }
+                    >
                         <View style={styles.search}>
                             <TextInput
-                                placeholder='Enter Contract ID'
+                                placeholder='Search Work Order No.'
                                 placeholderTextColor='#197486'
                                 maxLength={25}
                                 keyboardType='number-pad'
@@ -274,7 +318,7 @@ export class Reverses extends Component {
                                     />
                                 ) : (
                                     <View style={styles.noResultsContainer}>
-                                        <Text style={styles.noResultsText}>No Result Found</Text>
+                                        <Text style={styles.noResultsText}>{this.state.errorMesage}</Text>
                                     </View>
                                 )}
                             </View>
@@ -282,7 +326,7 @@ export class Reverses extends Component {
 
 
                         <Table style={{ marginTop: wp(3) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
-                            <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[0, 2, 3, 3, 2, 2]} />
+                            <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[0, 3, 3, 2, 2]} />
                             {slicedData.map((rowData, index) => this.renderRowData(rowData, index))}
                         </Table>
 

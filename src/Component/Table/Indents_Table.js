@@ -8,7 +8,7 @@ export class Indents_Table extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            tableHead: ['S No.', 'Indent Id', 'Contract name', 'Product', 'Issue By', 'Date'],
+            tableHead: ['Id', 'Contract name', 'Product', 'Issue By', 'Date'],
             rowData: [],
             isPopoverVisible: false,
             popoverContent: ""
@@ -23,7 +23,7 @@ export class Indents_Table extends Component {
     handleGrnOrder = async () => {
         try {
             const response = await makeRequest(BASE_URL + '/mobile/dashboard')
-            console.log(response);
+            // console.log('Indent_Table',response);
             const { success, message, indentDetails } = response;
             if (success) {
                 this.setState({ rowData: indentDetails });
@@ -46,7 +46,7 @@ export class Indents_Table extends Component {
                     data={Object.values(rowData)}
                     textStyle={styles.rowText}
                     style={[rowIndex % 2 === 0 ? styles.rowEven : styles.rowOdd]}
-                    flexArr={[0, 2, 3, 3, 2, 2]}
+                    flexArr={[0,3,3,2,2]}
                 />
             );
         } else if (Array.isArray(rowData)) {
@@ -83,7 +83,7 @@ export class Indents_Table extends Component {
                 })}
                 textStyle={styles.rowText}
                 style={[rowIndex % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
-                flexArr={[0, 2, 3, 3, 2, 2]}
+                flexArr={[0,3,3,2,2]}
             />
         );
     };
@@ -140,7 +140,7 @@ export class Indents_Table extends Component {
         return (
             <View style={styles.container}>
                 <Table borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
-                    <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[0, 2, 3, 3, 2, 2]} />
+                    <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[0,3,3,2,2]} />
                     {rowData.map((rowData, index) => this.renderRowData(rowData, index))}
                 </Table>
 

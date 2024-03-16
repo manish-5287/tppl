@@ -1,4 +1,4 @@
-import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, Modal, Alert } from 'react-native'
+import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, Modal, Alert, TouchableWithoutFeedback, Keyboard, RefreshControl } from 'react-native'
 import React, { Component } from 'react'
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import { Table, Row } from 'react-native-table-component';
@@ -11,14 +11,15 @@ export class PO extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            tableHead: ['PO Id', 'Date', 'Vendor', 'Qty', 'Amount', 'Delivery'],
+            tableHead: ['Id', 'Date', 'Vendor', 'Qty', 'Amount', 'Delivery'],
             rowData: [],
             currentPage: 0,
             rowsPerPage: 15,
             isPopoverVisible: false,
             popoverContent: "",
             searchPO: '',
-            showProcessingLoader: false
+            showProcessingLoader: false,
+            isRefreshing: false
         };
     };
 
@@ -30,14 +31,12 @@ export class PO extends Component {
         try {
             this.setState({ showProcessingLoader: true })
             const response = await makeRequest(BASE_URL + '/mobile/purchaseorder')
-            console.log(response);
             const { success, message, poDetails } = response;
+            // console.log("po",response); 
             if (success) {
-                this.setState({ rowData: poDetails,showProcessingLoader:false });
-                Alert.alert(message);
+                this.setState({ rowData: poDetails, showProcessingLoader: false });
             } else {
-                Alert.alert(message);
-
+                console.log(message);
             }
         } catch (error) {
             console.log(error);
@@ -50,9 +49,8 @@ export class PO extends Component {
                 this.setState({ searchPO, rowData: [] });
                 return;
             }
-            
             const params = { po_id: searchPO };
-            console.log('11111', params);
+            // console.log('Search', params);
             const response = await makeRequest(BASE_URL + '/mobile/searchpurchaseorder', params)
             const { success, message, purchaseDetails } = response;
             // console.log('2222222', response);
@@ -64,6 +62,7 @@ export class PO extends Component {
 
         } catch (error) {
             console.log(error);
+
         }
     }
 
@@ -150,6 +149,27 @@ export class PO extends Component {
             </View>
         );
     };
+
+    _handleListRefreshing = async () => {
+        try {
+            // pull-to-refresh
+            this.setState({ isRefreshing: true }, () => {
+                // setTimeout with a delay of 1000 milliseconds (1 second)
+                setTimeout(() => {
+                    // updating list after the delay
+                    this.handlePO();
+                    // resetting isRefreshing after the update
+                    this.setState({ isRefreshing: false , searchPO: ''});
+                }, 100);
+            });
+        } catch (error) {
+
+        }
+    }
+
+    handleGoBackHome = () => {
+        this.props.navigation.navigate('home');
+    }
     render() {
         const { tableHead, rowData, currentPage, rowsPerPage, } = this.state;
         const startIndex = currentPage * rowsPerPage;
@@ -162,6 +182,7 @@ export class PO extends Component {
 
         return (
             <>
+
                 <View
                     style={{
                         backgroundColor: '#E1F5FE',
@@ -173,29 +194,53 @@ export class PO extends Component {
                         flexDirection: 'row'
 
                     }}>
-                    <Image source={require('../../Assets/applogo.png')}
-                        style={{
-                            width: wp(16),
-                            height: wp(13),
-                            marginLeft: wp(2)
+                    <TouchableOpacity onPress={this.handleGoBackHome}>
+                        <Image source={require('../../Assets/goback/po.png')}
+                            style={{
+                                width: wp(8),
+                                height: wp(8),
+                                marginLeft: wp(2)
+                            }} />
+                    </TouchableOpacity>
 
-                        }} />
+
                     <Text
                         style={{
                             color: '#333',
                             fontSize: wp(5),
                             fontWeight: '500',
-                            marginRight: wp(30),
                             letterSpacing: wp(0.4),
+                            textTransform: 'uppercase'
                         }}>Purchase Order</Text>
 
+
+                    <Image source={require('../../Assets/applogo.png')}
+                        style={{
+                            width: wp(16),
+                            height: wp(13),
+                            resizeMode: 'contain',
+                            marginRight: wp(2)
+                        }} />
+
+
                 </View>
+
                 <View style={styles.container}>
-                    <ScrollView style={{ marginBottom: wp(16) }} showsVerticalScrollIndicator={false}>
+                    <ScrollView
+                        style={{ marginBottom: wp(16) }}
+                        showsVerticalScrollIndicator={false}
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={this.state.isRefreshing}
+                                onRefresh={this._handleListRefreshing}
+                                colors={['#039BE5']}
+                            />
+                        }
+                    >
 
                         <View style={styles.search}>
                             <TextInput
-                                placeholder='Enter PO ID'
+                                placeholder='Search Purchase order ID'
                                 placeholderTextColor='#039BE5'
                                 maxLength={25}
                                 keyboardType='number-pad'
@@ -240,6 +285,7 @@ export class PO extends Component {
                         </Modal>
                     </ScrollView>
                 </View>
+
                 {showProcessingLoader && <ProcessingLoader />}
             </>
         );

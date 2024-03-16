@@ -1,6 +1,6 @@
-import { Text, View, StyleSheet, TextInput, Image, ScrollView, TouchableOpacity, Alert, FlatList } from 'react-native'
+import { Text, View, StyleSheet, TextInput, Image, ScrollView, TouchableOpacity, Alert, FlatList, RefreshControl } from 'react-native'
 import React, { Component } from 'react'
-import { widthPercentageToDP as wp,heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { Table, Row } from 'react-native-table-component';
 import { BASE_URL, makeRequest } from '../../api/Api_info';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
@@ -10,14 +10,15 @@ export class Indent extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            tableHead: ['S No.', 'Indent Id', 'Contract name', 'Product', 'Issue By', 'Date'],
+            tableHead: ['Id', 'Contract name', 'Product', 'Issue By', 'Date'],
             rowData: [],
             currentPage: 0,
             rowsPerPage: 11,
             showProcessingLoader: false,
             searchIndent: '',
             searchName: '',
-            contractName: []
+            contractName: [],
+            isRefreshing: false
 
         };
     }
@@ -30,14 +31,14 @@ export class Indent extends Component {
         try {
             this.setState({ showProcessingLoader: true })
             const response = await makeRequest(BASE_URL + '/mobile/indent')
-            console.log(response);
             const { success, message, indentDetails } = response;
-            console.log(indentDetails);
+            // console.log("Indent",response);
+
             if (success) {
                 this.setState({ rowData: indentDetails, showProcessingLoader: false });
-                Alert.alert(message);
+
             } else {
-                Alert.alert(message);
+                console.log(message);
             }
         } catch (error) {
             console.log(error);
@@ -64,7 +65,7 @@ export class Indent extends Component {
                     data={Object.values(rowData)}
                     textStyle={styles.rowText}
                     style={[rowIndex % 2 === 0 ? styles.rowEven : styles.rowOdd]}
-                    flexArr={[0, 2, 3, 3, 2, 2]}
+                    flexArr={[0, 3, 3, 2, 2]}
                 />
             );
         } else {
@@ -82,7 +83,7 @@ export class Indent extends Component {
                     ))}
                     style={rowIndex % 2 === 0 ? styles.rowEven : styles.rowOdd}
                     textStyle={styles.rowText}
-                    flexArr={[0, 2, 3, 3, 2, 2]} //Adjust the flexArr according to your column widths.
+                    flexArr={[0, 3, 3, 2, 2]} //Adjust the flexArr according to your column widths.
                 />
             );
         }
@@ -91,17 +92,18 @@ export class Indent extends Component {
     handleSearch = async (searchName) => {
         try {
             const params = { workorderno: searchName };
-            console.log('eeeeeee', params);
+            // console.log('Search', params);
             const response = await makeRequest(BASE_URL + '/mobile/searchcontractname', params);
             const { success, message, contractName } = response;
-            // console.log(response);
+
             if (success) {
                 this.setState({ contractName: contractName });
             } else {
-                Alert.alert(message);
+                this.setState({ contractName: [], errorMessage: message })
             }
         } catch (error) {
             console.log(error);
+            this.setState({ contractName: [], errorMessage: 'Please try again' })
         }
     };
 
@@ -123,7 +125,7 @@ export class Indent extends Component {
         if (!item) {
             return (
                 <View style={{ alignItems: 'center', paddingVertical: wp(2) }}>
-                    <Text>No Data</Text>
+                    <Text>{this.state.errorMessage}</Text>
                 </View>
             );
         }
@@ -137,6 +139,26 @@ export class Indent extends Component {
         );
     };
 
+    _handleListRefreshing = async () => {
+        try {
+            // pull-to-refresh
+            this.setState({ isRefreshing: true }, () => {
+                // setTimeout with a delay of 1000 milliseconds (1 second)
+                setTimeout(() => {
+                    // updating list after the delay
+                    this.handleIndent();
+                    // resetting isRefreshing after the update
+                    this.setState({ isRefreshing: false, searchName: '' });
+                }, 100);
+            });
+        } catch (error) {
+
+        }
+    }
+
+    handleGoBackHome = () => {
+        this.props.navigation.navigate('home');
+    }
 
     render() {
         const { tableHead, rowData, currentPage, rowsPerPage } = this.state;
@@ -160,30 +182,52 @@ export class Indent extends Component {
                         flexDirection: 'row'
 
                     }}>
-                    <Image source={require('../../Assets/applogo.png')}
-                        style={{
-                            width: wp(16),
-                            height: wp(13),
-                            marginLeft: wp(2)
+                    <TouchableOpacity onPress={this.handleGoBackHome}>
+                        <Image source={require('../../Assets/goback/contract.png')}
+                            style={{
+                                width: wp(8),
+                                height: wp(8),
+                                marginLeft: wp(2)
+                            }} />
+                    </TouchableOpacity>
 
-                        }} />
+
                     <Text
                         style={{
                             color: '#333',
                             fontSize: wp(5),
                             fontWeight: '500',
-                            marginRight: wp(40),
                             letterSpacing: wp(0.4),
+                            textTransform: 'uppercase'
                         }}>Indent</Text>
+
+
+                    <Image source={require('../../Assets/applogo.png')}
+                        style={{
+                            width: wp(16),
+                            height: wp(13),
+                            resizeMode: 'contain',
+                            marginRight: wp(2)
+                        }} />
 
                 </View>
 
                 <View style={styles.container}>
-                    <ScrollView style={{ marginBottom: wp(16) }} showsVerticalScrollIndicator={false}>
+                    <ScrollView
+                        style={{ marginBottom: wp(16) }}
+                        showsVerticalScrollIndicator={false}
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={this.state.isRefreshing}
+                                onRefresh={this._handleListRefreshing}
+                                colors={['#757575']}
+                            />
+                        }
+                    >
 
                         <View style={styles.search}>
                             <TextInput
-                                placeholder='Enter Contract ID'
+                                placeholder='Search Work Order No.'
                                 placeholderTextColor='#757575'
                                 maxLength={25}
                                 keyboardType='number-pad'
@@ -206,14 +250,14 @@ export class Indent extends Component {
                                     />
                                 ) : (
                                     <View style={styles.noResultsContainer}>
-                                        <Text style={styles.noResultsText}>No Result Found</Text>
+                                        <Text style={styles.noResultsText}>{this.state.errorMessage}</Text>
                                     </View>
                                 )}
                             </View>
                         ) : null}
 
                         <Table style={{ marginTop: wp(3) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
-                            <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[0, 2, 3, 3, 2, 2]} />
+                            <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[0, 3, 3, 2, 2]} />
                             {slicedData.map((rowData, index) => this.renderRowData(rowData, index))}
                         </Table>
 
@@ -310,7 +354,7 @@ const styles = StyleSheet.create({
         fontWeight: "500"
     },
 
-    
+
     searchResultsContainer: {
         position: 'absolute',
         top: hp(8), // Adjust the top position as needed

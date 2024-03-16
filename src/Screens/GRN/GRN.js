@@ -1,4 +1,4 @@
-import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, Modal, Alert } from 'react-native'
+import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, Modal, Alert, Keyboard, TouchableWithoutFeedback, ScrollViewBase, RefreshControl } from 'react-native'
 import React, { Component } from 'react'
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import { Table, Row } from 'react-native-table-component';
@@ -10,14 +10,16 @@ export class GRN extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            tableHead: ['GRN No.', 'PO Id', 'Date', 'Bill Date', 'Supplier', 'Amount '],
+            tableHead: ['No.', 'Id', 'Date', 'Bill Date', 'Supplier', 'Amount '],
             rowData: [],
             currentPage: 0,
             rowsPerPage: 20,
             isPopoverVisible: false,
             popoverContent: "",
             searchGRN: '',
-            showProcessingLoader: false
+            showProcessingLoader: false,
+            isRefreshing: false
+
         };
     }
 
@@ -27,15 +29,16 @@ export class GRN extends Component {
 
     handleGRN = async () => {
         try {
+
             this.setState({ showProcessingLoader: true })
             const response = await makeRequest(BASE_URL + '/mobile/grn')
-            console.log(response);
             const { success, message, grnDetails } = response;
+            // console.log("grn",response);
             if (success) {
-                this.setState({ rowData: grnDetails,showProcessingLoader: false});
-                Alert.alert(message);
+                this.setState({ rowData: grnDetails, showProcessingLoader: false });
+
             } else {
-                Alert.alert(message);
+                console.log(message);
 
             }
         } catch (error) {
@@ -45,14 +48,14 @@ export class GRN extends Component {
 
     handlesearchGrn = async (searchGRN) => {
         try {
+
             const params = { po_id: searchGRN };
-            console.log('eeeeeee',params);
+            // console.log('search', params);
             const response = await makeRequest(BASE_URL + '/mobile/searchgrn', params);
             const { success, message, grnreceiveDetails } = response;
-            // console.log(response);
+             
             if (success) {
-              
-                this.setState({ rowData:grnreceiveDetails  });
+                this.setState({ rowData: grnreceiveDetails });
             } else {
                 console.log(message);
             }
@@ -60,7 +63,7 @@ export class GRN extends Component {
             console.log(error);
         }
     };
-    
+
     renderRowData = (rowData, rowIndex) => {
         if (typeof rowData === 'object' && rowData !== null) {
             return (
@@ -174,6 +177,26 @@ export class GRN extends Component {
     };
 
 
+    _handleListRefreshing = async () => {
+        try {
+            // pull-to-refresh
+            this.setState({ isRefreshing: true }, () => {
+                // setTimeout with a delay of 1000 milliseconds (1 second)
+                setTimeout(() => {
+                    // updating list after the delay
+                    this.handleGRN();
+                    // resetting isRefreshing after the update
+                    this.setState({ isRefreshing: false , searchGRN: ''});
+                }, 100);
+            });
+        } catch (error) {
+
+        }
+    }
+
+    handleGoBackHome = () => {
+        this.props.navigation.navigate('home');
+    }
 
     render() {
         const { tableHead, rowData, currentPage, rowsPerPage } = this.state;
@@ -187,6 +210,7 @@ export class GRN extends Component {
 
         return (
             <>
+
                 <View
                     style={{
                         backgroundColor: '#EFEBE9',
@@ -198,28 +222,51 @@ export class GRN extends Component {
                         flexDirection: 'row'
 
                     }}>
-                    <Image source={require('../../Assets/applogo.png')}
-                        style={{
-                            width: wp(16),
-                            height: wp(13),
-                            marginLeft: wp(2)
+                 <TouchableOpacity onPress={this.handleGoBackHome}>
+                        <Image source={require('../../Assets/goback/grn.png')}
+                            style={{
+                                width: wp(8),
+                                height: wp(8),
+                                marginLeft: wp(2)
+                            }} />
+                    </TouchableOpacity>
 
-                        }} />
+
                     <Text
                         style={{
                             color: '#333',
                             fontSize: wp(5),
                             fontWeight: '500',
-                            marginRight: wp(45),
                             letterSpacing: wp(0.4),
+                            textTransform: 'uppercase'
                         }}>GRN</Text>
 
+
+                    <Image source={require('../../Assets/applogo.png')}
+                        style={{
+                            width: wp(16),
+                            height: wp(13),
+                            resizeMode: 'contain',
+                            marginRight: wp(2)
+                        }} />
+
                 </View>
+
                 <View style={styles.container}>
-                    <ScrollView style={{ marginBottom: wp(16) }} showsVerticalScrollIndicator={false}>
+                    <ScrollView
+                        style={{ marginBottom: wp(16) }}
+                        showsVerticalScrollIndicator={false}
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={this.state.isRefreshing}
+                                onRefresh={this._handleListRefreshing}
+                                colors={['#8D6E63']}
+                            />
+                        }
+                    >
                         <View style={styles.search}>
                             <TextInput
-                                placeholder='Enter PO ID'
+                                placeholder='Search Purchase Order Id'
                                 placeholderTextColor='#8D6E63'
                                 maxLength={25}
                                 keyboardType='number-pad'
@@ -276,8 +323,10 @@ export class GRN extends Component {
                         </Modal>
                     </ScrollView>
                 </View>
-                {showProcessingLoader && <ProcessingLoader/>}
+
+                {showProcessingLoader && <ProcessingLoader />}
             </>
+
         );
     }
 
@@ -303,12 +352,12 @@ const styles = StyleSheet.create({
     rowEven: {
         backgroundColor: '#D7CCC8',
         width: wp(97),
-        height:wp(10)
+        height: wp(10)
     },
     rowOdd: {
         backgroundColor: '#EFEBE9',
         width: wp(97),
-         height:wp(10)
+        height: wp(10)
     },
     rowText: {
         color: '#212529',

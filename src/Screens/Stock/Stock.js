@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, Modal } from 'react-native';
+import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, Modal, RefreshControl } from 'react-native';
 import { Table, Row } from 'react-native-table-component';
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import CustomLoader from '../../Component/loader/Loader';
@@ -9,19 +9,20 @@ export class Stock extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            tableHead: ['S No.', 'Date', 'Opening Stock', 'Received Stock', 'Dispatched Stock', 'Closing Stock'],
+            tableHead: ['Date', 'Opening Stock', 'Received Stock', 'Dispatched Stock', 'Closing Stock'],
             rowData: [
-                ['S No.', 'Date', 'Opening Stock', 'Received Stock', 'Dispatched Stock', 'Closing Stock'],
-                ['S No.', 'Date', 'Opening Stock', 'Received Stock', 'Dispatched Stock', 'Closing Stock'],
-                ['S No.', 'Date', 'Opening Stock', 'Received Stock', 'Dispatched Stock', 'Closing Stock'],
-                ['S No.', 'Date', 'Opening Stock', 'Received Stock', 'Dispatched Stock', 'Closing Stock'],
+                ['Date', 'Opening Stock', 'Received Stock', 'Dispatched Stock', 'Closing Stock'],
+                ['Date', 'Opening Stock', 'Received Stock', 'Dispatched Stock', 'Closing Stock'],
+                ['Date', 'Opening Stock', 'Received Stock', 'Dispatched Stock', 'Closing Stock'],
+                ['Date', 'Opening Stock', 'Received Stock', 'Dispatched Stock', 'Closing Stock'],
 
             ],
             currentPage: 0,
             rowsPerPage: 10,
             isPopoverVisible: false,
             popoverContent: "",
-            showProcessingLoader: false
+            showProcessingLoader: false,
+            isRefreshing: false
         };
     }
 
@@ -53,7 +54,7 @@ export class Stock extends Component {
                 })}
                 textStyle={styles.rowText}
                 style={[rowIndex % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
-                flexArr={[0, 1, 2, 2, 2, 2]}
+                flexArr={[0, 2, 2, 2, 2, 2]}
             />
         );
     };
@@ -98,6 +99,26 @@ export class Stock extends Component {
         );
     };
 
+    _handleListRefresh = async () => {
+        try {
+            // pull-to-refresh
+            this.setState({ isRefreshing: true }, () => {
+                // setTimeout with a delay of 1000 milliseconds (1 second)
+                setTimeout(() => {
+                    // updating list after the delay
+                    this.renderRowData();
+                    // resetting isRefreshing after the update
+                    this.setState({ isRefreshing: false });
+                }, 100);
+            });
+        } catch (error) {
+            console.log(error.message);
+        }
+    };
+
+    handleGoBackHome = () => {
+        this.props.navigation.navigate('home');
+    }
     render() {
         const { tableHead, rowData, currentPage, rowsPerPage } = this.state;
         const startIndex = currentPage * rowsPerPage;
@@ -119,29 +140,53 @@ export class Stock extends Component {
                     alignItems: 'center',
                     flexDirection: 'row'
                 }}>
+                    <TouchableOpacity onPress={this.handleGoBackHome}>
+                        <Image source={require('../../Assets/goback/stock.png')}
+                            style={{
+                                width: wp(8),
+                                height: wp(8),
+                                marginLeft: wp(2)
+                            }} />
+                    </TouchableOpacity>
+
+
+                    <Text
+                        style={{
+                            color: '#333',
+                            fontSize: wp(5),
+                            fontWeight: '500',
+                            letterSpacing: wp(0.4),
+                            textTransform: 'uppercase'
+                        }}>Stock</Text>
+
+
                     <Image source={require('../../Assets/applogo.png')}
                         style={{
                             width: wp(16),
                             height: wp(13),
-                            marginLeft: wp(2)
+                            resizeMode: 'contain',
+                            marginRight: wp(2)
                         }} />
-                    <Text style={{
-                        color: '#333',
-                        fontSize: wp(5),
-                        fontWeight: '500',
-                        marginRight: wp(40),
-                        letterSpacing: wp(0.4)
-                    }}>Stocks</Text>
                 </View>
-                
+
                 <View style={styles.container}>
-                    <ScrollView style={{ marginBottom: wp(16) }} showsVerticalScrollIndicator={false}>
+                    <ScrollView
+                        style={{ marginBottom: wp(16) }}
+                        showsVerticalScrollIndicator={false}
+                        refreshControl={
+                            <RefreshControl
+                                colors={['#9575CD']}
+                                refreshing={this.state.isRefreshing}
+                                onRefresh={this._handleListRefresh}
+                            />
+                        }
+                    >
                         <View style={styles.search}>
-                            <TextInput placeholder='Search vendor name' placeholderTextColor='#9575CD' maxLength={25} style={styles.search_text} />
+                            <TextInput placeholder='Search Stock' placeholderTextColor='#9575CD' maxLength={25} style={styles.search_text} />
                         </View>
 
                         <Table style={{ marginTop: wp(3) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
-                            <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[0, 1, 2, 2, 2, 2]} />
+                            <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[0, 2, 2, 2, 2, 2]} />
                             {slicedData.map((rowData, index) => this.renderRowData(rowData, index))}
                         </Table>
 

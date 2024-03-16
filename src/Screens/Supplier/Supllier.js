@@ -1,10 +1,14 @@
-import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, Modal, Alert, FlatList } from 'react-native'
+import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, Modal, Alert, FlatList, RefreshControl } from 'react-native'
 import React, { Component } from 'react'
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { Table, Row } from 'react-native-table-component';
 import { BASE_URL, makeRequest } from '../../api/Api_info';
 import CustomLoader from '../../Component/loader/Loader';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
+import DateTimePicker from 'react-native-modal-datetime-picker';
+import { clearData } from '../../api/User_Preference';
+
+
 
 export class Supllier extends Component {
     constructor(props) {
@@ -18,31 +22,67 @@ export class Supllier extends Component {
             popoverContent: "",
             showProcessingLoader: false,
             searchName: '',
-            contractName: []
+            contractName: [],
+            isRefreshing: false,
+            isDateTimePickerVisible: false,
+            showFlatList: false, // Add this state variable
+            selectedDateFrom: '',
+            selectedDateTo: '',
+            pickerType: '',
+            vendorid: '',
+            nameInput:'',
+            isLoading: false,
+
         };
     }
 
     componentDidMount() {
+        // Call your data fetching function when the component mounts
         this.handleSUpplier();
-    };
+       
+      }
+
 
     handleSUpplier = async () => {
         try {
             this.setState({ showProcessingLoader: true })
             const response = await makeRequest(BASE_URL + '/mobile/vendor')
-            console.log(response);
-            const { success, message, vendorDetails } = response;
+            // console.log("SUpplier",response);
+            const { success, message, vendorDetails, name } = response;
             if (success) {
-                this.setState({ rowData: vendorDetails, showProcessingLoader: false });
-                Alert.alert(message);
-            } else {
-                Alert.alert(message);
+                this.setState({ rowData: vendorDetails, showProcessingLoader: false,nameInput:name });
 
+            } else {
+                console.log(message);
             }
         } catch (error) {
             console.log(error);
         }
     }
+
+    _handleListRefresh = async () => {
+        try {
+            // pull-to-refresh
+            this.setState({ isRefreshing: true }, () => {
+                // setTimeout with a delay of 1000 milliseconds (1 second)
+                setTimeout(() => {
+                    // updating list after the delay
+                  this.handleSUpplier();
+                  this.handleSearch();
+                  this.handleShowSearch();
+                    // resetting isRefreshing after the update
+                    this.setState({ 
+                        isRefreshing: false,
+                        selectedDateFrom: '',
+                        selectedDateTo: '',
+                        searchName: ''
+                     });
+                }, 100);
+            });
+        } catch (error) {
+            console.log(error.message);
+        }
+    };
 
     renderRowData = (rowData, rowIndex) => {
         if (typeof rowData === 'object' && rowData !== null) {
@@ -159,31 +199,60 @@ export class Supllier extends Component {
         );
     };
 
-    handleSearch = async (searchName) => {
+    // show search venfor //
+
+    handleShowSearch = async () => {
         try {
-            const params = { vendorname: searchName };
-            console.log('eeeeeee', params);
-            const response = await makeRequest(BASE_URL + '/mobile/searchvendorname', params);
-            const { success, message, vendorName } = response;
-            // console.log(response);
+     
+            const { selectedDateFrom, selectedDateTo, vendorid } = this.state;
+            const params = {
+                vendor_id: vendorid,
+                date_from: selectedDateFrom,
+                date_to: selectedDateTo
+            }
+            console.log("showVendor", params);
+            const response = await makeRequest(BASE_URL + '/mobile/searchvendor', params)
+            const { success, message, vendorDetails } = response
             if (success) {
-                this.setState({ contractName: vendorName });
+                this.setState({ rowData: vendorDetails })
             } else {
-                Alert.alert(message);
+                console.log(message);
             }
         } catch (error) {
             console.log(error);
         }
+    }
+
+    // search vendor //
+
+    handleSearch = async ( ) => {
+        try {
+            const {searchName}=this.state;
+            const params = {
+                vendorname: searchName
+            };
+            // console.log('search', params);
+            this.setState({ showProcessingLoader: true })
+            const response = await makeRequest(BASE_URL + '/mobile/searchvendorname', params);
+            const { success, message, vendorName } = response;
+            if (success) {
+                this.setState({ contractName: vendorName, showFlatList: true , showProcessingLoader:false });
+            } else {
+                this.setState({ contractName: [], errorMessage: message, showFlatList: true })
+            }
+        } catch (error) {
+            console.log(error);
+            this.setState({ contractName: [], errorMessage: 'Please try again ', showFlatList: false})
+        }
     };
 
-
     handleProductPress = (item) => {
-        const { contract_id } = item;
-        // Navigate to the ProductDetailScreen with the selected item
-        this.props.navigation.navigate('Search_Reverse', { contract_id });
-
+        const { name, vendor_id } = item;
+        console.log(vendor_id);
+        // Update searchName state with the selected item's name
+        this.setState({ searchName: name, vendorid: vendor_id });
         // Stop refreshing and clear search term and results
-        this.setState({ searchName: '', contractName: [] });
+        this.setState({ contractName: [], showFlatList: false });
     };
 
     componentDidFocus = () => {
@@ -194,7 +263,7 @@ export class Supllier extends Component {
         if (!item) {
             return (
                 <View style={{ alignItems: 'center', paddingVertical: wp(2) }}>
-                    <Text>No Data</Text>
+                    <Text>{this.state.errorMessage}</Text>
                 </View>
             );
         }
@@ -208,16 +277,45 @@ export class Supllier extends Component {
         );
     };
 
+    // date time picker 
+
+    _showDateTimePicker = (type) => this.setState({ isDateTimePickerVisible: true, pickerType: type });
+
+    _hideDateTimePicker = () => this.setState({ isDateTimePickerVisible: false });
+
+    _handleDatePicked = date => {
+        const day = date.getDate();
+        const month = date.getMonth() + 1; // Adding 1 to month because it's zero-based
+        const year = date.getFullYear();
+
+        const formattedDate = `${day}-${month}-${year}`;
+
+        if (this.state.pickerType === 'from') {
+            this.setState({ selectedDateFrom: formattedDate });
+        } else if (this.state.pickerType === 'to') {
+            this.setState({ selectedDateTo: formattedDate });
+        }
+        this._hideDateTimePicker();
+    };
+
+    handleGoBackHome = () => {
+        this.props.navigation.navigate('home');
+    };
+
+    handleVendorReport = () => {
+        
+        this.props.navigation.navigate('report');
+    };
+
     render() {
-        const { tableHead, rowData, currentPage, rowsPerPage } = this.state;
+        const { tableHead, rowData, currentPage, rowsPerPage, isLoading,showProcessingLoader} = this.state;
         const startIndex = currentPage * rowsPerPage;
         const endIndex = Math.min(startIndex + rowsPerPage, rowData.length); // Calculate end index while considering the last page
         const slicedData = rowData.slice(startIndex, endIndex);
-        if (this.state.isLoading) {
+        if (isLoading) {
             return <CustomLoader />;
         }
-        const { showProcessingLoader } = this.state
-
+       
         return (
             <>
                 <View
@@ -231,33 +329,55 @@ export class Supllier extends Component {
                         flexDirection: 'row'
 
                     }}>
-                    <Image source={require('../../Assets/applogo.png')}
-                        style={{
-                            width: wp(16),
-                            height: wp(13),
-                            marginLeft: wp(2)
+                    <TouchableOpacity onPress={this.handleGoBackHome}>
+                        <Image source={require('../../Assets/goback/supplier.png')}
+                            style={{
+                                width: wp(8),
+                                height: wp(8),
+                                marginLeft: wp(2)
+                            }} />
+                    </TouchableOpacity>
 
-                        }} />
+
                     <Text
                         style={{
                             color: '#333',
                             fontSize: wp(5),
                             fontWeight: '500',
-                            marginRight: wp(40),
                             letterSpacing: wp(0.4),
-                        }}>Supplier</Text>
+                            textTransform: 'uppercase'
+                        }}>Supplier </Text>
+
+
+                    <Image source={require('../../Assets/applogo.png')}
+                        style={{
+                            width: wp(16),
+                            height: wp(13),
+                            resizeMode: 'contain',
+                            marginRight: wp(2)
+                        }} />
 
                 </View>
 
 
                 <View style={styles.container}>
-                    <ScrollView style={{ marginBottom: wp(16) }} showsVerticalScrollIndicator={false}>
+                    <ScrollView
+                        style={{ marginBottom: wp(16) }}
+                        showsVerticalScrollIndicator={false}
+                        refreshControl={
+                            <RefreshControl
+                                colors={['#00838F']}
+                                refreshing={this.state.isRefreshing}
+                                onRefresh={this._handleListRefresh}
+                            />
+                        }>
+
                         <View style={styles.search}>
                             <TextInput
-                                placeholder='Search vendor name'
+                                placeholder={this.state.nameInput}
                                 placeholderTextColor='#00838F'
                                 maxLength={25}
-                                keyboardType='number-pad'
+                                keyboardType='name-phone-pad'
                                 value={this.state.searchName}
                                 onChangeText={(searchName) => {
                                     this.setState({ searchName });
@@ -265,7 +385,7 @@ export class Supllier extends Component {
                                 }}
                                 style={styles.search_text} />
                         </View>
-                        {this.state.searchName.length > 0 ? (
+                        {this.state.showFlatList && this.state.searchName.length > 0 ? (
                             <View style={styles.searchResultsContainer}>
                                 {this.state.contractName.length > 0 ? (
                                     <FlatList
@@ -276,24 +396,70 @@ export class Supllier extends Component {
                                     />
                                 ) : (
                                     <View style={styles.noResultsContainer}>
-                                        <Text style={styles.noResultsText}>No Result Found</Text>
+                                        <Text style={styles.noResultsText}>{this.state.errorMessage}</Text>
                                     </View>
                                 )}
                             </View>
                         ) : null}
 
+                        {/* Date Time picker View */}
+                        <View style={styles.DateTimepicker_Box}>
+
+                            <DateTimePicker
+                                mode='date'
+                                isVisible={this.state.isDateTimePickerVisible}
+                                onConfirm={this._handleDatePicked}
+                                onCancel={this._hideDateTimePicker}
+                            />
+
+                            <View style={styles.Date_From}>
+                                <TouchableOpacity onPress={() => this._showDateTimePicker('from')}>
+                                    <Text style={styles.Date_text}>
+                                        {this.state.selectedDateFrom ? this.state.selectedDateFrom : 'Select Date from'}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            <View style={styles.Date_to}>
+                                <TouchableOpacity onPress={() => this._showDateTimePicker('to')}>
+                                    <Text style={styles.Date_text}>
+                                        {this.state.selectedDateTo ? this.state.selectedDateTo : 'Select Date to'}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+
+
+                            <TouchableOpacity
+                                onPress={this.handleShowSearch}
+                                style={{
+                                    width: wp(20),
+                                    height: wp(9),
+                                    borderRadius: wp(2),
+                                    backgroundColor: '#00838F',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                }}>
+                                <Text style={{
+                                    fontSize: wp(3.7),
+                                    fontWeight: '500',
+                                    color: 'white',
+                                }}>Search</Text>
+                            </TouchableOpacity>
+
+
+                        </View>
+
                         {/* Vendor button */}
 
-                        <TouchableOpacity onPress={this.handleVendorReport}>
-                            <View style={{ width: wp(35), height: wp(10), borderRadius: wp(3.5), backgroundColor: '#00838F', justifyContent: 'center', alignItems: 'center', marginTop: wp(2), alignSelf: 'flex-end' }}>
-                                <Text style={{ fontSize: wp(3.7), fontWeight: '500', color: 'white' }}>Vendor Report</Text>
-                            </View>
+                        <TouchableOpacity style={styles.Vendor_report} onPress={this.handleVendorReport}>
+                            <Text style={styles.vendorReport_text}> View Vendor Report</Text>
+                            <Image source={require('../../Assets/Image/vendore-report.png')} style={styles.vendoreReport_arrow} />
                         </TouchableOpacity>
 
 
                         {/* Table  */}
 
-                        <Table style={{ marginTop: wp(3) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
+                        <Table style={{ marginTop: wp(2) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
                             <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[2, 3, 2, 2, 2]} />
                             {slicedData.map((rowData, index) => this.renderRowData(rowData, index))}
                         </Table>
@@ -338,9 +504,9 @@ export class Supllier extends Component {
                         </Modal>
 
                     </ScrollView>
+                {showProcessingLoader && <ProcessingLoader />}
                 </View>
 
-                {showProcessingLoader && <ProcessingLoader />}
             </>
         );
     }
@@ -350,7 +516,7 @@ export class Supllier extends Component {
 const styles = StyleSheet.create({
     container: {
         alignSelf: 'center',
-        marginTop: wp(2),
+
 
     },
     head: {
@@ -467,6 +633,67 @@ const styles = StyleSheet.create({
         fontSize: wp(3),
         fontWeight: 'bold',
     },
+
+
+    // Date time picker style //
+    DateTimepicker_Box: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginTop: wp(3),
+        alignContent: "center"
+    },
+    Date_From: {
+        width: wp(35),
+        height: wp(9),
+        borderColor: '#00838F',
+        borderWidth: wp(0.3),
+        borderRadius: wp(2),
+        backgroundColor: '#E0F7FA',
+        justifyContent: 'center'
+    },
+    Date_text: {
+        color: '#00838F',
+        fontSize: wp(3),
+        fontWeight: "500",
+        marginLeft: wp(2)
+
+    },
+
+    Date_to: {
+        width: wp(35),
+        height: wp(9),
+        borderColor: '#00838F',
+        borderWidth: wp(0.3),
+        borderRadius: wp(2),
+        backgroundColor: '#E0F7FA',
+        justifyContent: 'center'
+
+    },
+
+
+
+    // vendor report style
+    Vendor_report: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        alignSelf: 'flex-end',
+        marginTop: wp(5)
+
+    },
+    vendorReport_text: {
+        fontSize: wp(3.7),
+        fontWeight: '500',
+        color: '#00838F',
+        alignSelf: 'flex-end',
+        textDecorationLine: 'underline',
+        marginRight: wp(1.5)
+    },
+    vendoreReport_arrow: {
+        width: wp(4),
+        height: wp(3.5)
+    }
+
 
 });
 

@@ -1,14 +1,16 @@
-import { ScrollView, StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native'
+import { ScrollView, StyleSheet, Text, View, TouchableOpacity, Image, RefreshControl } from 'react-native'
 import React, { Component } from 'react'
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import Header_comp from '../../Component/Header/Header_comp';
 import Po_Table from '../../Component/Table/Po_Table';
-import Production_order from '../../Component/Table/Production_Table';
 import GRN_Table from '../../Component/Table/GRN_Table';
-import Indents, { Indents_Table } from '../../Component/Table/Indents_Table';
-import Reverses, { Reverses_Table } from '../../Component/Table/Reverses_Table';
+import  { Indents_Table } from '../../Component/Table/Indents_Table';
+import  { Reverses_Table } from '../../Component/Table/Reverses_Table';
 import { BASE_URL, makeRequest } from '../../api/Api_info';
 import Production_Table from '../../Component/Table/Production_Table';
+import { KEYS, getData } from '../../api/User_Preference';
+import CustomLoader from '../../Component/loader/Loader';
+import ProcessingLoader from '../../Component/loader/ProcessingLoader';
 
 
 export default class Dashboard extends Component {
@@ -46,7 +48,10 @@ export default class Dashboard extends Component {
         todaymaintenancecount: 0,
         weekmaintenancecount: 0,
         monthmaintenancecount: 0
-      }
+      },
+      isRefreshing: false,
+      showProcessingLoader:false
+      
 
 
     }
@@ -59,9 +64,13 @@ export default class Dashboard extends Component {
 
   handleSliderBox = async () => {
     try {
+      const Info = await getData(KEYS.USER_INFO)
+      console.log('StoreData_info', Info);
+
+
       const response = await makeRequest(BASE_URL + '/mobile/dashboard');
       const { success, message, contractHeader, poHeader, grnHeader, supplierHeader, maintenanceHeader } = response;
-      console.log('sdsad', response);
+      // console.log('Slider_box', response);
       if (success) {
 
         if (contractHeader.length > 0 || poHeader.length > 0 || grnHeader.length > 0 || supplierHeader.length > 0 || maintenanceHeader.length > 0) {
@@ -69,8 +78,8 @@ export default class Dashboard extends Component {
             contractData: contractHeader[0],
             purchaseData: poHeader[0],
             grnData: grnHeader[0],
-            supplierData:supplierHeader[0],
-            maintenanceData:maintenanceHeader[0]
+            supplierData: supplierHeader[0],
+            maintenanceData: maintenanceHeader[0]
 
           });
         }
@@ -81,7 +90,6 @@ export default class Dashboard extends Component {
       console.log(error);
     }
   };
-
 
   handlePO = () => {
     try {
@@ -134,32 +142,77 @@ export default class Dashboard extends Component {
     }
   }
 
+  handleSupplier = () => {
+    try {
+
+      this.props.navigation.navigate('supplier')
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  _handleListRefresh = async () => {
+    try {
+      // pull-to-refresh
+      this.setState({ isRefreshing: true }, () => {
+        // setTimeout with a delay of 1000 milliseconds (1 second)
+        setTimeout(() => {
+          // updating list after the delay
+          this.handleSliderBox();
+          // resetting isRefreshing after the update
+          this.setState({ isRefreshing: false });
+        }, 100);
+      });
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
+
   render() {
-    const { contractData, purchaseData, grnData,supplierData,maintenanceData } = this.state;
+    const { contractData, purchaseData, grnData, supplierData, maintenanceData } = this.state;
     console.log('mansih', contractData);
+    if (this.state.isLoading) {
+      return <CustomLoader />;
+    }
+    const { showProcessingLoader } = this.state
     return (
       <>
-        <Header_comp />
-        <View style={{ padding: wp(2), flex: 1, backgroundColor: '#fefefc' }}>
+        <Header_comp navigation={this.props.navigation} />
+        <ScrollView
+          style={{ padding: wp(2), flex: 1, backgroundColor: '#fefefc' }}
+          refreshControl={
+            <RefreshControl
+              colors={['#0068b1']}
+              refreshing={this.state.isRefreshing}
+              onRefresh={this._handleListRefresh}
+            />
+          }
+
+        >
 
           {/* Header slider */}
-          <View>
-            <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
 
+          <ScrollView
+            horizontal={true}
+            showsHorizontalScrollIndicator={false}
+            showsVerticalScrollIndicator={false}
+
+          >
+
+            <TouchableOpacity onPress={this.handleContract}>
               <View style={Styles.slider_box1}>
                 <View style={Styles.box1}>
-                  <TouchableOpacity onPress={this.handleContract}>
-                    <Text
-                      style={{
-                        color: 'white',
-                        fontSize: wp(3),
-                        fontWeight: '500',
-                        marginLeft: wp(2),
-                        letterSpacing: wp(0.1),
-                      }}>
-                      Contract ({contractData.contractcount})
-                    </Text>
-                  </TouchableOpacity>
+                  <Text
+                    style={{
+                      color: 'white',
+                      fontSize: wp(3),
+                      fontWeight: '500',
+                      marginLeft: wp(2),
+                      letterSpacing: wp(0.1),
+                    }}>
+                    Contract ({contractData.contractcount})
+                  </Text>
+
                 </View>
                 <View style={Styles.second_box}>
                   <Text
@@ -194,9 +247,9 @@ export default class Dashboard extends Component {
                   </Text>
                 </View>
               </View>
-
-              {/* box 2 */}
-
+            </TouchableOpacity>
+            {/* box 2 */}
+            <TouchableOpacity onPress={this.handlePO}>
               <View style={Styles.slider_box2}>
                 <View style={Styles.box2}>
                   <Text
@@ -247,9 +300,10 @@ export default class Dashboard extends Component {
                 </View>
 
               </View>
+            </TouchableOpacity>
 
-              {/* box 3 */}
-
+            {/* box 3 */}
+            <TouchableOpacity onPress={this.handleGRN}>
               <View style={Styles.slider_box3}>
                 <View style={Styles.box3}>
                   <Text
@@ -301,8 +355,10 @@ export default class Dashboard extends Component {
 
 
               </View>
+            </TouchableOpacity>
 
-              {/* box 4 */}
+            {/* box 4 */}
+            <TouchableOpacity onPress={this.handleSupplier}>
               <View style={Styles.slider_box4}>
                 <View style={Styles.box4}>
                   <Text
@@ -352,59 +408,60 @@ export default class Dashboard extends Component {
 
                 </View>
               </View>
+            </TouchableOpacity>
 
-              {/* box 5 */}
-              <View style={Styles.slider_box5}>
-                <View style={Styles.box5}>
-                  <Text
-                    style={{
-                      color: 'white',
-                      fontSize: wp(3),
-                      fontWeight: '500',
-                      marginLeft: wp(2)
-                    }}>
-                    Maintenance ({maintenanceData.maintenancecount})
-                  </Text>
+            {/* box 5 */}
+            <View style={Styles.slider_box5}>
+              <View style={Styles.box5}>
+                <Text
+                  style={{
+                    color: 'white',
+                    fontSize: wp(3),
+                    fontWeight: '500',
+                    marginLeft: wp(2)
+                  }}>
+                  Maintenance ({maintenanceData.maintenancecount})
+                </Text>
 
-                </View>
-                <View style={Styles.second_box}>
-                  <Text
-                    style={{
-                      color: 'white',
-                      fontSize: wp(2.8),
-                      fontWeight: '500',
-                      marginLeft: wp(2),
-                      letterSpacing: wp(0.1)
-                    }}>
-                    Today - {maintenanceData.todaymaintenancecount}
-                  </Text>
-
-                  <Text
-                    style={{
-                      color: 'white',
-                      fontSize: wp(2.8),
-                      fontWeight: '500',
-                      marginLeft: wp(2),
-                      letterSpacing: wp(0.1)
-                    }}>
-                    This Week - {maintenanceData.weekmaintenancecount}
-                  </Text>
-
-                  <Text
-                    style={{
-                      color: 'white',
-                      fontSize: wp(2.8),
-                      fontWeight: '500',
-                      marginLeft: wp(2),
-                      letterSpacing: wp(0.1)
-                    }}>
-                    This Month - {maintenanceData.monthmaintenancecount}
-                  </Text>
-
-                </View>
               </View>
-            </ScrollView>
-          </View>
+              <View style={Styles.second_box}>
+                <Text
+                  style={{
+                    color: 'white',
+                    fontSize: wp(2.8),
+                    fontWeight: '500',
+                    marginLeft: wp(2),
+                    letterSpacing: wp(0.1)
+                  }}>
+                  Today - {maintenanceData.todaymaintenancecount}
+                </Text>
+
+                <Text
+                  style={{
+                    color: 'white',
+                    fontSize: wp(2.8),
+                    fontWeight: '500',
+                    marginLeft: wp(2),
+                    letterSpacing: wp(0.1)
+                  }}>
+                  This Week - {maintenanceData.weekmaintenancecount}
+                </Text>
+
+                <Text
+                  style={{
+                    color: 'white',
+                    fontSize: wp(2.8),
+                    fontWeight: '500',
+                    marginLeft: wp(2),
+                    letterSpacing: wp(0.1)
+                  }}>
+                  This Month - {maintenanceData.monthmaintenancecount}
+                </Text>
+
+              </View>
+            </View>
+          </ScrollView>
+
 
           {/* Table */}
 
@@ -417,7 +474,7 @@ export default class Dashboard extends Component {
                   fontSize: wp(5),
                   fontWeight: '500',
                   color: '#039BE5',
-                  letterSpacing: wp(0.1),
+                  letterSpacing: wp(0.3),
 
                 }}>Purchase Order</Text>
                 <TouchableOpacity onPress={this.handlePO}>
@@ -426,7 +483,8 @@ export default class Dashboard extends Component {
                       fontSize: wp(3),
                       fontWeight: '500',
                       color: '#039BE5',
-                      marginRight: wp(1)
+                      marginRight: wp(1),
+                      letterSpacing: wp(0.3)
                     }}
                     >View More</Text>
                     <Image source={require('../../Assets/Image/production-arrow.png')} style={{ width: wp(2.5), height: wp(2.5) }} />
@@ -445,7 +503,7 @@ export default class Dashboard extends Component {
                   fontSize: wp(5),
                   fontWeight: '500',
                   color: "#40856f",
-                  letterSpacing: wp(0.1)
+                  letterSpacing: wp(0.3),
                 }}>Production Order</Text>
                 <TouchableOpacity onPress={this.handleProduction}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: wp(1), right: wp(2) }}>
@@ -453,7 +511,8 @@ export default class Dashboard extends Component {
                       fontSize: wp(3),
                       fontWeight: '500',
                       color: "#40856f",
-                      marginRight: wp(1)
+                      marginRight: wp(1),
+                      letterSpacing: wp(0.3)
                     }}
                     >View More</Text>
                     <Image source={require('../../Assets/Image/right-arrow.png')} style={{ width: wp(2.5), height: wp(2.5) }} />
@@ -472,7 +531,7 @@ export default class Dashboard extends Component {
                   fontSize: wp(5),
                   fontWeight: '500',
                   color: '#8D6E63',
-                  letterSpacing: wp(0.1)
+                  letterSpacing: wp(0.3),
                 }}>GRN</Text>
                 <TouchableOpacity onPress={this.handleGRN}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: wp(1), right: wp(2) }}>
@@ -480,7 +539,8 @@ export default class Dashboard extends Component {
                       fontSize: wp(3),
                       fontWeight: '500',
                       color: '#8D6E63',
-                      marginRight: wp(1)
+                      marginRight: wp(1),
+                      letterSpacing: wp(0.3)
                     }}
                     >View More</Text>
                     <Image source={require('../../Assets/Image/grn-arrow.png')} style={{ width: wp(2.5), height: wp(2.5) }} />
@@ -500,7 +560,7 @@ export default class Dashboard extends Component {
                   fontSize: wp(5),
                   fontWeight: '500',
                   color: '#757575',
-                  letterSpacing: wp(0.1)
+                  letterSpacing: wp(0.3),
                 }}>Indent </Text>
                 <TouchableOpacity onPress={this.handleIndent}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: wp(1), right: wp(2) }}>
@@ -508,7 +568,8 @@ export default class Dashboard extends Component {
                       fontSize: wp(3),
                       fontWeight: '500',
                       color: '#757575',
-                      marginRight: wp(1)
+                      marginRight: wp(1),
+                      letterSpacing: wp(0.3)
                     }}
                     >View More</Text>
                     <Image source={require('../../Assets/Image/indent-arrow.png')} style={{ width: wp(2.5), height: wp(2.5) }} />
@@ -527,7 +588,7 @@ export default class Dashboard extends Component {
                   fontSize: wp(5),
                   fontWeight: '500',
                   color: '#197486',
-                  letterSpacing: wp(0.1)
+                  letterSpacing: wp(0.3),
                 }}>Reverse</Text>
                 <TouchableOpacity onPress={this.handleReverse}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: wp(1), right: wp(2) }}>
@@ -535,7 +596,8 @@ export default class Dashboard extends Component {
                       fontSize: wp(3),
                       fontWeight: '500',
                       color: '#197486',
-                      marginRight: wp(1)
+                      marginRight: wp(1),
+                      letterSpacing: wp(0.3)
                     }}
                     >View More</Text>
                     <Image source={require('../../Assets/Image/reverse-arrow.png')} style={{ width: wp(2.5), height: wp(2.5) }} />
@@ -543,13 +605,14 @@ export default class Dashboard extends Component {
                 </TouchableOpacity>
               </View>
 
-              <Reverses_Table/>
+              <Reverses_Table />
             </View>
 
           </ScrollView>
 
 
-        </View>
+        </ScrollView>
+        {showProcessingLoader && <ProcessingLoader />}
       </>
     )
   }
@@ -580,7 +643,7 @@ const Styles = StyleSheet.create({
   },
 
   second_box: {
-    
+
     backgroundColor: '355c6e',
     width: wp(70),
     flex: 1,

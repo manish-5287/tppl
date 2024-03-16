@@ -1,10 +1,11 @@
-import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, Modal, FlatList, Alert } from 'react-native'
+import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, Modal, FlatList, Alert, RefreshControl, ScrollViewBase } from 'react-native'
 import React, { Component } from 'react'
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { Table, Row } from 'react-native-table-component';
 import { BASE_URL, makeRequest } from '../../api/Api_info';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
 import CustomLoader from '../../Component/loader/Loader';
+
 
 
 export default class Contract extends Component {
@@ -19,29 +20,28 @@ export default class Contract extends Component {
             popoverContent: "",
             showProcessingLoader: false,
             searchName: '',
-            contractName: []
+            contractName: [],
+            isRefreshing: false
 
         };
 
     };
 
-
     componentDidMount() {
         this.handleContract();
-         
+
     };
 
     handleContract = async () => {
         try {
             this.setState({ showProcessingLoader: true })
             const response = await makeRequest(BASE_URL + '/mobile/contract')
-            console.log("dsfhttt", response);
             const { success, message, contractDetails } = response;
+            // console.log("Contract", response);
             if (success) {
                 this.setState({ rowData: contractDetails, showProcessingLoader: false });
-                Alert.alert(message);
             } else {
-                Alert.alert(message);
+                console.log(message);
             }
         } catch (error) {
             console.log(error);
@@ -139,17 +139,17 @@ export default class Contract extends Component {
     handleSearch = async (searchName) => {
         try {
             const params = { workorderno: searchName };
-            console.log('eeeeeee', params);
+            // console.log('Search', params);
             const response = await makeRequest(BASE_URL + '/mobile/searchcontractname', params);
             const { success, message, contractName } = response;
-            // console.log(response);
             if (success) {
                 this.setState({ contractName: contractName });
             } else {
-            Alert.alert(message);
+                this.setState({ contractName: [], errorMessage: message });
             }
         } catch (error) {
             console.log(error);
+            this.setState({ contractName: [], errorMessage: 'An error occurred. Please try again.' });
         }
     };
 
@@ -171,7 +171,7 @@ export default class Contract extends Component {
         if (!item) {
             return (
                 <View style={{ alignItems: 'center', paddingVertical: wp(2) }}>
-                    <Text>No Data</Text>
+                    <Text>{this.state.errorMessage}</Text>
                 </View>
             );
         }
@@ -184,6 +184,28 @@ export default class Contract extends Component {
             </TouchableOpacity>
         );
     };
+
+    _handleListRefresh = () => {
+        try {
+            // pull-to-refresh
+            this.setState({ isRefreshing: true }, () => {
+                // setTimeout with a delay of 1000 milliseconds (1 second)
+                setTimeout(() => {
+                    // updating list after the delay
+                    this.handleContract();
+                    // resetting isRefreshing after the update
+                    this.setState({ isRefreshing: false,searchName: '' });
+                }, 100);
+            });
+        } catch (error) {
+            console.log(error);
+
+        }
+    };
+
+    handleGoBackHome = () => {
+        this.props.navigation.navigate('home');
+    }
 
     render() {
         const { tableHead, rowData, currentPage, rowsPerPage } = this.state;
@@ -209,30 +231,49 @@ export default class Contract extends Component {
                         flexDirection: 'row'
 
                     }}>
-                    <Image source={require('../../Assets/applogo.png')}
-                        style={{
-                            width: wp(16),
-                            height: wp(13),
-                            marginLeft: wp(2)
+                    <TouchableOpacity onPress={this.handleGoBackHome}>
+                        <Image source={require('../../Assets/goback/contract.png')}
+                            style={{
+                                width: wp(8),
+                                height: wp(8),
+                                marginLeft: wp(2)
+                            }} />
+                    </TouchableOpacity>
 
-                        }} />
+
                     <Text
                         style={{
                             color: '#333',
                             fontSize: wp(5),
                             fontWeight: '500',
-                            marginRight: wp(40),
                             letterSpacing: wp(0.4),
+                            textTransform: 'uppercase'
                         }}>Contract</Text>
+
+
+                    <Image source={require('../../Assets/applogo.png')}
+                        style={{
+                            width: wp(16),
+                            height: wp(13),
+                            resizeMode: 'contain',
+                            marginRight: wp(2)
+                        }} />
 
                 </View>
 
-                <View style={styles.container}>
-
-
+                <ScrollView
+                    style={styles.container}
+                    refreshControl={
+                        <RefreshControl
+                            colors={['grey']}
+                            refreshing={this.state.isRefreshing}
+                            onRefresh={this._handleListRefresh}
+                        />
+                    }
+                >
                     <View style={styles.search}>
                         <TextInput
-                            placeholder='Enter Work Order Number'
+                            placeholder='Search Work Order No.'
                             placeholderTextColor='#212529'
                             maxLength={25}
                             keyboardType='number-pad'
@@ -255,7 +296,7 @@ export default class Contract extends Component {
                                 />
                             ) : (
                                 <View style={styles.noResultsContainer}>
-                                    <Text style={styles.noResultsText}>No Result Found</Text>
+                                    <Text style={styles.noResultsText}>{this.state.errorMessage}</Text>
                                 </View>
                             )}
                         </View>
@@ -292,7 +333,7 @@ export default class Contract extends Component {
                         </View>
                     </Modal>
 
-                </View>
+                </ScrollView>
                 {showProcessingLoader && <ProcessingLoader />}
             </>
         );

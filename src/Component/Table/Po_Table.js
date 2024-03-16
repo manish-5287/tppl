@@ -8,7 +8,7 @@ export default class Po_Table extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            tableHead: ['PO Id', 'Date', 'Vendor', 'Quantity', 'Amount', 'Delivery'],
+            tableHead: ['Id', 'Date', 'Vendor', 'Quantity', 'Amount', 'Delivery'],
             rowData: [],
             isPopoverVisible: false,
             popoverContent: ""
@@ -21,7 +21,7 @@ export default class Po_Table extends Component {
     handlePurchaseOrder = async () => {
         try {
             const response = await makeRequest(BASE_URL + '/mobile/dashboard')
-            console.log(response);
+            // console.log('po_table',response);
             const { success, message, poDetails } = response;
             if (success) {
                 this.setState({ rowData: poDetails });

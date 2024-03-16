@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity, Modal, Alert,Image } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Modal, Alert, Image } from 'react-native';
 import React, { Component } from 'react';
 import { Table, Row, Rows } from 'react-native-table-component';
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
@@ -8,7 +8,7 @@ export class Search_Reverse extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            tableHead: ['S No.', 'Reverse Id', 'Contract name', 'Product', 'Received By', 'Date'],
+            tableHead: ['Id', 'Contract name', 'Product', 'Received By', 'Date'],
             rowData: [],
             isPopoverVisible: false,
             popoverContent: ""
@@ -123,19 +123,22 @@ export class Search_Reverse extends Component {
         try {
             const { contract_id } = this.props.route.params;
             const params = { contract_id };
-            console.log("idididididdiddid", contract_id);
+            // console.log("handleContractSearch", contract_id);
             const response = await makeRequest(BASE_URL + '/mobile/searchreverse', params)
-            console.log("vvvfff", response);
+            // console.log("handleContractSearch", response);
             const { success, message, searchReverse } = response;
             if (success) {
                 this.setState({ rowData: searchReverse });
-                Alert.alert(message);
             } else {
-                Alert.alert(message);
+                console.log(message);
             }
         } catch (error) {
             console.log(error);
         }
+    };
+
+    handleGoBackHome = () => {
+        this.props.navigation.navigate('Reverse');
     }
     render() {
         const { tableHead, rowData } = this.state;
@@ -152,21 +155,33 @@ export class Search_Reverse extends Component {
                         flexDirection: 'row'
 
                     }}>
-                    <Image source={require('../../Assets/applogo.png')}
-                        style={{
-                            width: wp(16),
-                            height: wp(13),
-                            marginLeft: wp(2)
+                    <TouchableOpacity onPress={this.handleGoBackHome}>
+                        <Image source={require('../../Assets/goback/reverse.png')}
+                            style={{
+                                width: wp(8),
+                                height: wp(8),
+                                marginLeft: wp(2)
+                            }} />
+                    </TouchableOpacity>
 
-                        }} />
+
                     <Text
                         style={{
                             color: '#333',
                             fontSize: wp(5),
                             fontWeight: '500',
-                            marginRight: wp(40),
                             letterSpacing: wp(0.4),
+                            textTransform: 'uppercase'
                         }}>Reverse</Text>
+
+
+                    <Image source={require('../../Assets/applogo.png')}
+                        style={{
+                            width: wp(16),
+                            height: wp(13),
+                            resizeMode: 'contain',
+                            marginRight: wp(2)
+                        }} />
 
                 </View>
                 <View style={styles.container}>

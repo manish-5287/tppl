@@ -1,8 +1,8 @@
-import React from "react";
+import React, { Component, useEffect, useState } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { widthPercentageToDP as wp} from 'react-native-responsive-screen';
-import { Image } from "react-native";
+import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
+import { Image, Text } from "react-native";
 import SplashScreen from "./src/Screens/Splash/Splash_Screen";
 import Login from "./src/Screens/Login_Screen/Login";
 import PO from "./src/Screens/PO/PO";
@@ -20,37 +20,56 @@ import Search_Contract from "./src/Screens/Contract/Search_Contract";
 import Search_Production from "./src/Screens/Production/Search_Production";
 import { Search_Reverse } from "./src/Screens/Reverses/Search_Reverse";
 import { Search_Indent } from "./src/Screens/Indent/Search_Indent";
-
-
-
+import { KEYS, getData } from "./src/api/User_Preference";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import Search_Supplier from "./src/Screens/Supplier/Search_supplier";
+import Search_VendorReports from "./src/Screens/Supplier/Search_VendorReports";
 
 
 const Stack = createNativeStackNavigator()
-export default function APP() {
 
+export default function APP() {
+  const [userInfo, setUserInfo] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const info = await getData(KEYS.USER_INFO);
+        console.log('User Info:', info);
+        setUserInfo(info);
+      } catch (error) {
+        console.error('Error fetching user info:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="splash" component={SplashScreen} />
+      <Stack.Navigator
+        initialRouteName={userInfo ? 'mytab' : 'login'}
+        screenOptions={{ headerShown: false }}
+      >
         <Stack.Screen name="login" component={Login} />
+        <Stack.Screen name="splash" component={SplashScreen} />
         <Stack.Screen name="PO" component={PO} />
         <Stack.Screen name="Production" component={Production} />
-        <Stack.Screen name="Search_Product" component={Search_Production}/>
+        <Stack.Screen name="Search_Product" component={Search_Production} />
         <Stack.Screen name="GRN" component={GRN} />
         <Stack.Screen name="Contract" component={Contract} />
-        <Stack.Screen name="Search_Contract" component={Search_Contract}/>
+        <Stack.Screen name="Search_Contract" component={Search_Contract} />
         <Stack.Screen name="Indent" component={Indent} />
         <Stack.Screen name="Search_Indent" component={Search_Indent} />
         <Stack.Screen name="Reverse" component={Reverses} />
         <Stack.Screen name="Search_Reverse" component={Search_Reverse} />
         <Stack.Screen name="report" component={VendorReport} />
         <Stack.Screen name="mytab" component={MyTab} />
-
       </Stack.Navigator>
     </NavigationContainer>
-  )
+  );
 }
+
 
 const Tab = createBottomTabNavigator()
 function MyTab() {
@@ -59,21 +78,22 @@ function MyTab() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: { alignItems: 'center' },
-        tabBarActiveTintColor: "#EF9A9A",
-        tabBarInactiveTintColor: "#0477a4",
+        tabBarActiveTintColor: "#0277BD",
+        tabBarInactiveTintColor: "#29B6F6",
         tabBarLabelStyle: {
           marginTop: wp(-2),
           fontSize: wp(3.2),
           fontWeight: '500',
         },
+
       }}>
       <Tab.Screen name='home' component={Dashboard} options={{
         tabBarLabel: 'Home',
         tabBarIcon: ({ size, focused }) => (
           <Image
-          source={focused ? require('../tppl/src/Assets/bottom_icon/home-icon-silhouette.png') : require('../tppl/src/Assets/bottom_icon/home-icon-silhouette.png')}
-          style={[{ width: wp(6), height: wp(6), tintColor: '#0477a4' }, focused && { tintColor: '#EF9A9A' }]}
-        />
+            source={focused ? require('../tppl/src/Assets/bottom_icon/home-icon-silhouette.png') : require('../tppl/src/Assets/bottom_icon/home-icon-silhouette.png')}
+            style={[{ width: wp(6), height: wp(6), tintColor: '#29B6F6' }, focused && { tintColor: '#0277BD' }]}
+          />
         ),
 
       }} />
@@ -84,7 +104,7 @@ function MyTab() {
         tabBarIcon: ({ size, focused }) => (
           <Image
             source={focused ? require('../tppl/src/Assets/bottom_icon/production.png') : require('../tppl/src/Assets/bottom_icon/production.png')}
-            style={[{ width: wp(6), height: wp(6), tintColor: '#0477a4' }, focused && { tintColor: '#EF9A9A' }]}
+            style={[{ width: wp(6), height: wp(6), tintColor: '#29B6F6' }, focused && { tintColor: '#0277BD' }]}
           />)
       }} />
 
@@ -94,19 +114,19 @@ function MyTab() {
         tabBarIcon: ({ size, focused }) => (
           <Image
             source={focused ? require('../tppl/src/Assets/bottom_icon/boxes.png') : require('../tppl/src/Assets/bottom_icon/boxes.png')}
-            style={[{ width: wp(6), height: wp(6), tintColor: '#0477a4' }, focused && { tintColor: '#EF9A9A' }]}
+            style={[{ width: wp(6), height: wp(6), tintColor: '#29B6F6' }, focused && { tintColor: '#0277BD' }]}
           />
         ),
       }} />
 
       <Tab.Screen name='stock' component={Stock} options={{
-        tabBarLabel: 'stock',
+        tabBarLabel: 'Stock',
 
         tabBarIcon: ({ size, focused }) => (
           <Image
-          source={focused ? require('../tppl/src/Assets/bottom_icon/store.png') : require('../tppl/src/Assets/bottom_icon/store.png')}
-          style={[{ width: wp(6), height: wp(6), tintColor: '#0477a4' }, focused && { tintColor: '#EF9A9A' }]}
-        />
+            source={focused ? require('../tppl/src/Assets/bottom_icon/store.png') : require('../tppl/src/Assets/bottom_icon/store.png')}
+            style={[{ width: wp(6), height: wp(6), tintColor: '#29B6F6' }, focused && { tintColor: '#0277BD' }]}
+          />
         ),
       }} />
 
@@ -115,9 +135,9 @@ function MyTab() {
         tabBarLabel: 'Supplier',
         tabBarIcon: ({ size, focused }) => (
           <Image
-          source={focused ? require('../tppl/src/Assets/bottom_icon/fast-delivery.png') : require('../tppl/src/Assets/bottom_icon/fast-delivery.png')}
-          style={[{ width: wp(6), height: wp(6), tintColor: '#0477a4' }, focused && { tintColor: '#EF9A9A' }]}
-        />
+            source={focused ? require('../tppl/src/Assets/bottom_icon/fast-delivery.png') : require('../tppl/src/Assets/bottom_icon/fast-delivery.png')}
+            style={[{ width: wp(6), height: wp(6), tintColor: '#29B6F6' }, focused && { tintColor: '#0277BD' }]}
+          />
         ),
       }} />
 
@@ -126,7 +146,7 @@ function MyTab() {
         tabBarIcon: ({ focused, size }) => (
           <Image
             source={focused ? require('../tppl/src/Assets/bottom_icon/playlist.png') : require('../tppl/src/Assets/bottom_icon/playlist.png')}
-            style={[{ width: wp(6), height: wp(6), tintColor: '#0477a4' }, focused && { tintColor: '#EF9A9A' }]}
+            style={[{ width: wp(6), height: wp(6), tintColor: '#29B6F6' }, focused && { tintColor: '#0277BD' }]}
           />
         ),
       }} />
@@ -136,7 +156,7 @@ function MyTab() {
         tabBarIcon: ({ focused, size }) => (
           <Image
             source={focused ? require('../tppl/src/Assets/bottom_icon/reverse-logistic.png') : require('../tppl/src/Assets/bottom_icon/reverse-logistic.png')}
-            style={[{ width: wp(6), height: wp(6), tintColor: '#0477a4' }, focused && { tintColor: '#EF9A9A' }]}
+            style={[{ width: wp(6), height: wp(6), tintColor: '#29B6F6' }, focused && { tintColor: '#0277BD' }]}
           />
         ),
       }} />

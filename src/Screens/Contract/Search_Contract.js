@@ -1,4 +1,4 @@
-import { Text, View, StyleSheet, Alert,Image } from 'react-native'
+import { Text, View, StyleSheet, Alert, Image, TouchableOpacity } from 'react-native'
 import React, { Component } from 'react'
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { Table, Row } from 'react-native-table-component';
@@ -23,15 +23,14 @@ export default class Search_Contract extends Component {
         try {
             const { contract_id } = this.props.route.params;
             const params = { contract_id };
-            console.log("idididididdiddid", contract_id);
+            // console.log("ContractSearch", contract_id);
             const response = await makeRequest(BASE_URL + '/mobile/searchcontract', params)
-            console.log("vvvfff", response);
             const { success, message, contractDetails } = response;
+            // console.log("ContractSearch", response);
             if (success) {
                 this.setState({ rowData: contractDetails });
-                Alert.alert(message);
             } else {
-                Alert.alert(message);
+                console.log(message);
             }
         } catch (error) {
             console.log(error);
@@ -84,6 +83,9 @@ export default class Search_Contract extends Component {
         );
     };
 
+    handleGoBackHome = () => {
+        this.props.navigation.navigate('Contract');
+    }
     render() {
         const { tableHead, rowData } = this.state;
         return (
@@ -100,21 +102,33 @@ export default class Search_Contract extends Component {
                         flexDirection: 'row'
 
                     }}>
-                    <Image source={require('../../Assets/applogo.png')}
-                        style={{
-                            width: wp(16),
-                            height: wp(13),
-                            marginLeft: wp(2)
+                    <TouchableOpacity onPress={this.handleGoBackHome}>
+                        <Image source={require('../../Assets/goback/contract.png')}
+                            style={{
+                                width: wp(8),
+                                height: wp(8),
+                                marginLeft: wp(2)
+                            }} />
+                    </TouchableOpacity>
 
-                        }} />
+
                     <Text
                         style={{
                             color: '#333',
                             fontSize: wp(5),
                             fontWeight: '500',
-                            marginRight: wp(40),
                             letterSpacing: wp(0.4),
+                            textTransform: 'uppercase'
                         }}>Contract</Text>
+
+
+                    <Image source={require('../../Assets/applogo.png')}
+                        style={{
+                            width: wp(16),
+                            height: wp(13),
+                            resizeMode: 'contain',
+                            marginRight: wp(2)
+                        }} />
 
                 </View>
 
