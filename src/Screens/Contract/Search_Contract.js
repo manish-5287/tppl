@@ -3,6 +3,8 @@ import React, { Component } from 'react'
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { Table, Row } from 'react-native-table-component';
 import { BASE_URL, makeRequest } from '../../api/Api_info';
+import CustomLoader from '../../Component/loader/Loader';
+import ProcessingLoader from '../../Component/loader/ProcessingLoader';
 
 
 export default class Search_Contract extends Component {
@@ -11,12 +13,33 @@ export default class Search_Contract extends Component {
         this.state = {
             tableHead: ['Title', 'Supplier Name', 'Cost', 'Date'],
             rowData: [],
+            showProcessingLoader: false,
+            isRefreshing: false,
+            isLoading: false
         };
     };
 
     componentDidMount() {
         this.handleContractSearch();
+        this._handleListRefresh();
 
+    };
+    _handleListRefresh = () => {
+        try {
+            // pull-to-refresh
+            this.setState({ isRefreshing: true }, () => {
+                // setTimeout with a delay of 1000 milliseconds (1 second)
+                setTimeout(() => {
+                    // updating list after the delay
+                    this.handleContractSearch();
+                    // resetting isRefreshing after the update
+                    this.setState({ isRefreshing: false });
+                }, 100);
+            });
+        } catch (error) {
+            console.log(error);
+
+        }
     };
 
     handleContractSearch = async () => {
@@ -24,16 +47,20 @@ export default class Search_Contract extends Component {
             const { contract_id } = this.props.route.params;
             const params = { contract_id };
             // console.log("ContractSearch", contract_id);
+            this.setState({ showProcessingLoader: true, isRefreshing: true });
             const response = await makeRequest(BASE_URL + '/mobile/searchcontract', params)
             const { success, message, contractDetails } = response;
             // console.log("ContractSearch", response);
             if (success) {
-                this.setState({ rowData: contractDetails });
+                this.setState({ rowData: contractDetails, showProcessingLoader: false, isRefreshing: false });
+
             } else {
                 console.log(message);
+                this.setState({ showProcessingLoader: false, isRefreshing: false });
             }
         } catch (error) {
             console.log(error);
+            this.setState({ showProcessingLoader: false, isRefreshing: false });
         }
     }
 
@@ -88,6 +115,10 @@ export default class Search_Contract extends Component {
     }
     render() {
         const { tableHead, rowData } = this.state;
+        if (this.state.isLoading) {
+            return <CustomLoader />;
+        }
+        const { showProcessingLoader } = this.state;
         return (
             <>
 
@@ -139,6 +170,7 @@ export default class Search_Contract extends Component {
                     </Table>
 
                 </View>
+                {showProcessingLoader && <ProcessingLoader />}
             </>
 
         );

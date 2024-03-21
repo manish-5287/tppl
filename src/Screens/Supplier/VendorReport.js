@@ -17,8 +17,6 @@ export class VendorReport extends Component {
             rowsPerPage: 11,
             isPopoverVisible: false,
             popoverContent: "",
-            showProcessingLoader: false,
-            isRefreshing: false,
             searchName: '',
             contractName: [],
             isDateTimePickerVisible: false,
@@ -26,7 +24,12 @@ export class VendorReport extends Component {
             selectedDateFrom: '',
             selectedDateTo: '',
             pickerType: '',
-            vendorid: ''
+            vendorid: '',
+            showProcessingLoader: false,
+            isRefreshing: false,
+            isLoading: false,
+            errorMessage:''
+
         };
     }
 
@@ -36,17 +39,21 @@ export class VendorReport extends Component {
 
     handleVendorReport = async () => {
         try {
-            this.setState({ showProcessingLoader: true })
+            this.setState({ showProcessingLoader: true, isRefreshing: true });
             const response = await makeRequest(BASE_URL + '/mobile/vendorsreport')
             // console.log("VendorReport",response);
             const { success, message, vendorTrack } = response;
             if (success) {
-                this.setState({ rowData: vendorTrack, showProcessingLoader: false });
+                this.setState({ rowData: vendorTrack, showProcessingLoader: false, isRefreshing: false });
             } else {
                 console.log(message);
+                this.setState({ showProcessingLoader: false, isRefreshing: false });
+
             }
         } catch (error) {
             console.log(error);
+            this.setState({ showProcessingLoader: false, isRefreshing: false });
+
         }
     }
 
@@ -173,12 +180,12 @@ export class VendorReport extends Component {
                     this.handleVendorReport();
                     // resetting isRefreshing after the update
                     this.setState({
-                         isRefreshing: false,
-                         selectedDateFrom: '',
-                         selectedDateTo: '',
-                         searchName: ''
-                         });
-                }, 100);
+                        isRefreshing: false,
+                        selectedDateFrom: '',
+                        selectedDateTo: '',
+                        searchName: ''
+                    });
+                }, 2000);
             });
         } catch (error) {
             console.log(error.message);
@@ -218,20 +225,25 @@ export class VendorReport extends Component {
 
     handleSearch = async (searchName) => {
         try {
+            if (searchName.length < 1) {
+                this.setState({ contractName: [] }); // Clear the search results
+                return;
+              }
             const params = {
                 vendorname: searchName
             };
             console.log('search', params);
+   
             const response = await makeRequest(BASE_URL + '/mobile/searchvendorname', params);
             const { success, message, vendorName } = response;
             if (success) {
-                this.setState({ contractName: vendorName, showFlatList: true });
+                this.setState({ contractName: vendorName, showFlatList: true});
             } else {
                 this.setState({ contractName: [], errorMessage: message, showFlatList: true })
             }
         } catch (error) {
             console.log(error);
-            this.setState({ contractName: [], errorMessage: 'Please try again ', showFlatList: false })
+            this.setState({ contractName: [],showFlatList: false })
         }
     };
 
@@ -354,7 +366,7 @@ export class VendorReport extends Component {
                     >
                         <View style={styles.search}>
                             <TextInput
-                                placeholder={this.state.nameInput}
+                                placeholder="Search Vendor"
                                 placeholderTextColor='#00838F'
                                 maxLength={25}
                                 keyboardType='name-phone-pad'
@@ -612,7 +624,7 @@ const styles = StyleSheet.create({
     DateTimepicker_Box: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent:'space-between',
+        justifyContent: 'space-between',
         marginTop: wp(3),
         alignContent: "center"
     },

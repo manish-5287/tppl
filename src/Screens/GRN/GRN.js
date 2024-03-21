@@ -1,144 +1,113 @@
-import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, Modal, Alert, Keyboard, TouchableWithoutFeedback, ScrollViewBase, RefreshControl } from 'react-native'
+import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, Modal, Alert, Keyboard, TouchableWithoutFeedback, ScrollViewBase, RefreshControl, Linking } from 'react-native'
 import React, { Component } from 'react'
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import { Table, Row } from 'react-native-table-component';
 import { BASE_URL, makeRequest } from '../../api/Api_info';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
 import CustomLoader from '../../Component/loader/Loader';
+ 
 
-export class GRN extends Component {
+
+
+export default class GRN extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            tableHead: ['No.', 'Id', 'Date', 'Bill Date', 'Supplier', 'Amount '],
+            tableHead: ['Id', 'Po Id', 'Date', 'Bill Date', 'Supplier', 'Amount '],
             rowData: [],
             currentPage: 0,
-            rowsPerPage: 20,
-            isPopoverVisible: false,
-            popoverContent: "",
+            rowsPerPage: 9,
             searchGRN: '',
             showProcessingLoader: false,
-            isRefreshing: false
+            isRefreshing: false,
+            isLoading: false,
+            goodsID: '',
+            cellData: ''
 
         };
     }
 
     componentDidMount() {
         this.handleGRN();
+        this.props.navigation.addListener('focus', this._handleListRefreshing); // Add listener for screen focus
+    }
+
+    componentWillUnmount() {
+        this.props.navigation.removeListener('focus', this._handleListRefreshing); // Remove listener on component unmount
+    }
+
+
+    handlePress = (cellData) => {
+        this.setState({ goodsID: cellData }, () => {
+            this._handleGRNPdf();
+        });
+    }
+    _handleGRNPdf = async () => {
+        try {
+            const { goodsID } = this.state;
+            const params = { goods_id: goodsID };
+            console.log('papapapapapap', params);
+            const response = await makeRequest(BASE_URL + '/mobile/grnpopup', params);
+            const { success, message, pdfLink } = response;
+            console.log('pdfpdfpdf', response);
+            if (success) {
+                this.setState({ cellData: pdfLink });
+                Linking.openURL(pdfLink)
+            } else {
+                Alert.alert(message)
+            }
+        } catch (error) {
+            console.log(error);
+        }
     };
 
     handleGRN = async () => {
         try {
 
-            this.setState({ showProcessingLoader: true })
+            this.setState({ isRefreshing: true })
             const response = await makeRequest(BASE_URL + '/mobile/grn')
             const { success, message, grnDetails } = response;
             // console.log("grn",response);
             if (success) {
-                this.setState({ rowData: grnDetails, showProcessingLoader: false });
+                this.setState({ rowData: grnDetails,  isRefreshing: false });
 
             } else {
                 console.log(message);
+                this.setState({  isRefreshing: false });
+
 
             }
         } catch (error) {
             console.log(error);
+            this.setState({ isRefreshing: false });
+
         }
     };
 
     handlesearchGrn = async (searchGRN) => {
         try {
+            if (!searchGRN.trim()) {
+                this.setState({ rowData: [] });
+                this.handleGRN();
+                return;
+            }
 
             const params = { po_id: searchGRN };
-            // console.log('search', params);
             const response = await makeRequest(BASE_URL + '/mobile/searchgrn', params);
             const { success, message, grnreceiveDetails } = response;
-             
+
             if (success) {
                 this.setState({ rowData: grnreceiveDetails });
             } else {
-                console.log(message);
+                console.log(message); // Log the error message for debugging
+                // Optionally, you can show an alert or toast message to inform the user about the error
             }
         } catch (error) {
-            console.log(error);
+            console.log(error); // Log any network or other errors for debugging
+            // Optionally, you can show an alert or toast message to inform the user about the error
         }
     };
 
-    renderRowData = (rowData, rowIndex) => {
-        if (typeof rowData === 'object' && rowData !== null) {
-            return (
-                <Row
-                    key={rowIndex}
-                    data={Object.values(rowData)}
-                    textStyle={styles.rowText}
-                    style={[rowIndex % 2 === 0 ? styles.rowEven : styles.rowOdd]}
-                    flexArr={[0, 0, 2, 2, 3, 2]}
-                />
-            );
-        } else if (Array.isArray(rowData)) {
-            let maxLines = 2;
-            rowData.forEach(cellData => {
-                const lines = Math.ceil(cellData.length / 20);
-                if (lines > maxLines) {
-                    maxLines = lines;
-                }
-            });
-        }
-
-        const rowHeight = maxLines * 25; // Assuming font size of 25
-
-        return (
-            <Row
-                key={rowIndex}
-                data={rowData.map((cellData, columnIndex) => {
-                    if (columnIndex === 0) {
-                        return (
-                            <TouchableOpacity key={columnIndex} onPress={() => this.handleCellPress(cellData)}>
-                                <Text style={[styles.rowText1, { lineHeight: 15 }]}>{cellData}</Text>
-                            </TouchableOpacity>
-                        );
-                    } else if (columnIndex === 1) {
-                        return (
-                            <TouchableOpacity key={columnIndex} onPress={() => this.handleCellPress1(cellData)}>
-                                <Text style={[styles.rowText1, { lineHeight: 15 }]}>{cellData}</Text>
-                            </TouchableOpacity>
-                        );
-                    } else {
-                        return <Text key={columnIndex} style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>;
-                    }
-                })}
-                textStyle={styles.rowText}
-                style={[rowIndex % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
-                flexArr={[0, 0, 2, 2, 3, 2]}
-            />
-        );
-    };
-
-
-    handleCellPress = (cellData) => {
-        // Set the content of the popover based on the pressed cell data
-        this.setState({
-            isPopoverVisible: true,
-            popoverContent: cellData
-        });
-    };
-
-    handleCellPress1 = (cellData) => {
-        // Set the content of the popover based on the pressed cell data
-        this.setState({
-            isPopoverVisible: true,
-            popoverContent: cellData
-        });
-    };
-
-
-    closePopover = () => {
-        // Close the popover
-        this.setState({
-            isPopoverVisible: false,
-            popoverContent: ""
-        });
-    };
 
     nextPage = () => {
         const { currentPage } = this.state;
@@ -152,30 +121,7 @@ export class GRN extends Component {
         }
     };
 
-    renderPopoverContent = () => {
-        // Render the content of the popover
-        return (
-            <View style={styles.popoverContent}>
-                <Text>{this.state.popoverContent}</Text>
-                <TouchableOpacity style={{ marginTop: wp(10) }} onPress={this.closePopover}>
-                    <Text>Close</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    };
-
-    renderPopoverContent1 = () => {
-        // Render the content of the popover
-        return (
-            <View style={styles.popoverContent}>
-                <Text>{this.state.popoverContent}</Text>
-                <TouchableOpacity style={{ marginTop: wp(10) }} onPress={this.closePopover}>
-                    <Text>Close</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    };
-
+ 
 
     _handleListRefreshing = async () => {
         try {
@@ -186,8 +132,8 @@ export class GRN extends Component {
                     // updating list after the delay
                     this.handleGRN();
                     // resetting isRefreshing after the update
-                    this.setState({ isRefreshing: false , searchGRN: ''});
-                }, 100);
+                    this.setState({ isRefreshing: false, searchGRN: '' });
+                }, 2000);
             });
         } catch (error) {
 
@@ -206,7 +152,19 @@ export class GRN extends Component {
         if (this.state.isLoading) {
             return <CustomLoader />;
         }
-        const { showProcessingLoader } = this.state
+        const { showProcessingLoader } = this.state;
+
+        // Calculate the maximum number of lines for each cell in a row
+        let maxLines = 2;
+        rowData.forEach(cellData => {
+            const lines = Math.ceil(cellData.length / 20); // Assuming each line has 20 characters
+            if (lines > maxLines) {
+                maxLines = lines;
+            }
+        });
+
+        // Calculate row height based on the maximum number of lines and font size
+        const rowHeight = maxLines * 25; // Assuming font size of 25
 
         return (
             <>
@@ -222,7 +180,7 @@ export class GRN extends Component {
                         flexDirection: 'row'
 
                     }}>
-                 <TouchableOpacity onPress={this.handleGoBackHome}>
+                    <TouchableOpacity onPress={this.handleGoBackHome}>
                         <Image source={require('../../Assets/goback/grn.png')}
                             style={{
                                 width: wp(8),
@@ -251,10 +209,23 @@ export class GRN extends Component {
                         }} />
 
                 </View>
+                <View style={styles.search}>
+                    <TextInput
+                        placeholder='Search Purchase Order Id'
+                        placeholderTextColor='#8D6E63'
+                        maxLength={25}
+                        keyboardType='number-pad'
+                        value={this.state.searchGRN}
+                        onChangeText={(searchGRN) => {
+                            this.setState({ searchGRN });
+                            this.handlesearchGrn(searchGRN);
+                        }}
+                        
+                        style={styles.search_text} />
+                </View>
 
                 <View style={styles.container}>
                     <ScrollView
-                        style={{ marginBottom: wp(16) }}
                         showsVerticalScrollIndicator={false}
                         refreshControl={
                             <RefreshControl
@@ -264,23 +235,36 @@ export class GRN extends Component {
                             />
                         }
                     >
-                        <View style={styles.search}>
-                            <TextInput
-                                placeholder='Search Purchase Order Id'
-                                placeholderTextColor='#8D6E63'
-                                maxLength={25}
-                                keyboardType='number-pad'
-                                value={this.state.searchGRN}
-                                onChangeText={(searchGRN) => {
-                                    this.setState({ searchGRN });
-                                    this.handlesearchGrn(searchGRN);
-                                }}
-                                style={styles.search_text} />
-                        </View>
 
-                        <Table style={{ marginTop: wp(3) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
+                        <Table style={{ marginTop: wp(2) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
                             <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[0, 0, 2, 2, 3, 2]} />
-                            {slicedData.map((rowData, index) => this.renderRowData(rowData, index))}
+                            {slicedData.map((rowData, index) => (
+                                <Row
+                                    key={index}
+                                    data={Object.values(rowData).map((cellData, cellIndex) => {
+                                        if (cellIndex === 0) {
+                                            return (
+                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePress(cellData)}>
+                                                    <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
+                                                </TouchableOpacity>
+                                            );
+                                        } else if (cellIndex === 1) {
+                                            return (
+                                                <TouchableOpacity key={cellIndex}>
+                                                    <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
+                                                </TouchableOpacity>
+                                            );
+                                        }
+
+                                        else {
+                                            return <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>;
+                                        }
+                                    })}
+                                    textStyle={styles.rowText}
+                                    style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
+                                    flexArr={[0, 0, 2, 2, 3, 2]}
+                                />
+                            ))}
                         </Table>
 
 
@@ -295,32 +279,6 @@ export class GRN extends Component {
                             </TouchableOpacity>
                         </View>
 
-
-                        {/* Popover */}
-                        <Modal
-                            animationType='fade'
-                            transparent={true}
-                            visible={this.state.isPopoverVisible}
-                            onRequestClose={this.closePopover}
-
-                        >
-                            <View style={styles.popoverContainer}>
-                                {this.renderPopoverContent()}
-                            </View>
-                        </Modal>
-
-                        {/* Popover */}
-                        <Modal
-                            animationType='fade'
-                            transparent={true}
-                            visible={this.state.isPopoverVisible}
-                            onRequestClose={this.closePopover}
-
-                        >
-                            <View style={styles.popoverContainer}>
-                                {this.renderPopoverContent1()}
-                            </View>
-                        </Modal>
                     </ScrollView>
                 </View>
 
@@ -335,8 +293,6 @@ export class GRN extends Component {
 const styles = StyleSheet.create({
     container: {
         alignSelf: 'center',
-        marginTop: wp(2),
-
     },
     head: {
         backgroundColor: '#8D6E63',
@@ -362,20 +318,24 @@ const styles = StyleSheet.create({
     rowText: {
         color: '#212529',
         textAlign: 'left',
-        fontSize: wp(2.6),
+        fontSize: wp(2.5),
         paddingHorizontal: wp(0.3),
-        marginLeft: 4
+        marginLeft: 4,
+        fontWeight: '400'
     },
-    rowText1: {
+    Highlight: {
         color: 'red',
-        textAlign: 'center',
-        fontSize: wp(2.6),
-        // Optional: add underline to indicate touchability
+        textAlign: 'left',
+        fontSize: wp(2.5),
+        fontWeight: '500',
+        paddingHorizontal: wp(0.3),
+        marginLeft: 4,
+
     },
     pagination: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: wp(4),
+        marginTop: wp(6),
         paddingHorizontal: wp(3)
     },
     paginationText: {
@@ -402,7 +362,7 @@ const styles = StyleSheet.create({
 
     },
     search_text: {
-        color: '#212529',
+        color: '#8D6E63',
         fontSize: wp(3.5),
         marginLeft: wp(2),
         fontWeight: "500"
@@ -424,4 +384,3 @@ const styles = StyleSheet.create({
 
 });
 
-export default GRN

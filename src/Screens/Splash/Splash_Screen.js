@@ -1,74 +1,91 @@
-import React, { Component } from 'react';
-import { View, StyleSheet, Animated, Text } from 'react-native';
+import React, {Component} from 'react';
+import {View, StyleSheet, Animated, Text, Image} from 'react-native';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
 
+// Import your logo image
+import logo from '../../Assets/applogo.png';
 class SplashScreen extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            logoOpacity: new Animated.Value(0), // Initial opacity of logo
-            logoScale: new Animated.Value(0.5)   // Initial scale of logo
-        };
-    }
+  constructor(props) {
+    super(props);
+    this.state = {
+      logoOpacity: new Animated.Value(0), // Initial opacity of logo
+      logoScale: new Animated.Value(0.85), // Initial scale of logo
+    };
+  }
 
-    componentDidMount() {
-        // Animation configuration
-        const animationConfig = {
-            toValue: 1,            // Final value of opacity
-            duration: 2000,        // Duration of the animation in milliseconds
-            useNativeDriver: true  // Use native driver for performance
-        };
+  componentDidMount() {
+    // Animation configuration
+    const animationConfig = {
+      toValue: 1, // Final value of opacity
+      duration: 2000, // Duration of the animation in milliseconds
+      useNativeDriver: true, // Use native driver for performance
+    };
 
-        // Sequence of animations
-        Animated.sequence([
-            Animated.timing(this.state.logoOpacity, { ...animationConfig }),
-            Animated.spring(this.state.logoScale, { toValue: 1, friction: 1, useNativeDriver: true }) // Spring animation for scaling
-        ]).start(() => {
-            // Animation finished, navigate to the next screen
-            // Replace 'NextScreen' with the name of your next screen
-            this.props.navigation.replace('login');
-        });
-    }
+    // Sequence of animations
+    Animated.timing(this.state.logoOpacity, {
+      ...animationConfig,
+      delay: 500, // Adding delay to match the spring animation in the previous implementation
+    }).start();
 
-    render() {
-        return (
-            <View style={styles.container}>
-                <Animated.Image
-                    source={require('../../Assets/applogo.png')}
-                    style={[styles.logo, { opacity: this.state.logoOpacity, transform: [{ scale: this.state.logoScale }] }]}
-                    resizeMode="contain"
-                />
-                <Text style={{
-                    color: '#0477a4',
-                    fontSize: wp(6.8),
-                    fontWeight: '800',
-                    textAlign: 'center',
-                    marginTop: wp(-5)
-                }}>Tirupati Plastomatics Pvt.Ltd</Text>
+    Animated.spring(this.state.logoScale, {
+      toValue: 1,
+      friction: 1,
+      useNativeDriver: true,
+    }).start();
+  }
 
-                <Text style={{
-                    color: '#0477a4',
-                    fontSize: wp(3),
-                    fontWeight: '500',
-                    textAlign: 'center'
-                }}>(Integrated Mangement System(IMS) Certified Company)</Text>
-            </View>
-        );
-    }
+  render() {
+    const {logoOpacity, logoScale} = this.state;
+
+    return (
+      <View style={styles.container}>
+        <Animated.Image
+          source={logo}
+          style={[
+            styles.logo,
+            {
+              opacity: logoOpacity,
+              transform: [{scale: logoScale}],
+            },
+          ]}
+          resizeMode="cover"
+        />
+        <Text
+          style={{
+            color: '#0477a4',
+            fontSize: hp(3.5),
+            fontWeight: '500',
+            textAlign: 'center',
+          }}>
+          Tirupati Plastomatics Pvt.Ltd
+        </Text>
+        <Text
+          style={{
+            color: '#0477a4',
+            fontSize: hp(1.5),
+            fontWeight: '400',
+            textAlign: 'center',
+          }}>
+          (Integrated Management System (IMS) Certified Company)
+        </Text>
+      </View>
+    );
+  }
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: 'white',
-        justifyContent: 'center',
-        alignItems: 'center'
-    },
-    logo: {
-        width: 150, // Adjust size of logo as needed
-        height: 150 // Adjust size of logo as needed
-    }
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logo: {
+   width:wp(30),
+   height:wp(30),
+  
+  },
 });
 
 export default SplashScreen;

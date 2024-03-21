@@ -1,79 +1,68 @@
 import React, { Component } from 'react';
-import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, Modal, RefreshControl } from 'react-native';
+import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, RefreshControl } from 'react-native';
 import { Table, Row } from 'react-native-table-component';
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import CustomLoader from '../../Component/loader/Loader';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
+
+
 
 export class Stock extends Component {
     constructor(props) {
         super(props);
         this.state = {
             tableHead: ['Date', 'Opening Stock', 'Received Stock', 'Dispatched Stock', 'Closing Stock'],
-            rowData: [
-                ['Date', 'Opening Stock', 'Received Stock', 'Dispatched Stock', 'Closing Stock'],
-                ['Date', 'Opening Stock', 'Received Stock', 'Dispatched Stock', 'Closing Stock'],
-                ['Date', 'Opening Stock', 'Received Stock', 'Dispatched Stock', 'Closing Stock'],
-                ['Date', 'Opening Stock', 'Received Stock', 'Dispatched Stock', 'Closing Stock'],
-
-            ],
+            rowData: [],
             currentPage: 0,
             rowsPerPage: 10,
             isPopoverVisible: false,
-            popoverContent: "",
             showProcessingLoader: false,
-            isRefreshing: false
+            isRefreshing: false,
+
         };
     }
 
-    renderRowData = (rowData, rowIndex) => {
-        let maxLines = 2; // Initialize with minimum one line
-        rowData.forEach(cellData => {
-            const lines = Math.ceil(cellData.length / 20); // Assuming 20 characters per line for calculation
-            if (lines > maxLines) {
-                maxLines = lines;
-            }
-        });
+    // renderRowData = (rowData, rowIndex) => {
+    //     let maxLines = 2; // Initialize with minimum one line
+    //     rowData.forEach(cellData => {
+    //         const lines = Math.ceil(cellData.length / 20); // Assuming 20 characters per line for calculation
+    //         if (lines > maxLines) {
+    //             maxLines = lines;
+    //         }
+    //     });
 
-        const rowHeight = maxLines * 24; // Assuming font size of 25
+    //     const rowHeight = maxLines * 24; // Assuming font size of 25
 
-        return (
+    //     return (
 
-            <Row
-                key={rowIndex}
-                data={rowData.map((cellData, columnIndex) => {
-                    if (columnIndex === 0) {
-                        return (
-                            <TouchableOpacity key={columnIndex} onPress={() => this.handleCellPress(cellData)}>
-                                <Text style={[styles.rowText1, { lineHeight: 14 }]}>{cellData}</Text>
-                            </TouchableOpacity>
-                        );
-                    } else {
-                        return <Text key={columnIndex} style={[styles.rowText, { lineHeight: 14 }]}>{cellData}</Text>;
-                    }
-                })}
-                textStyle={styles.rowText}
-                style={[rowIndex % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
-                flexArr={[0, 2, 2, 2, 2, 2]}
-            />
-        );
-    };
+    //         <Row
+    //             key={rowIndex}
+    //             data={rowData.map((cellData, columnIndex) => {
+    //                 if (columnIndex === 0) {
+    //                     return (
+    //                         <TouchableOpacity key={columnIndex} onPress={() => this.handleCellPress(cellData)}>
+    //                             <Text style={[styles.rowText1, { lineHeight: 14 }]}>{cellData}</Text>
+    //                         </TouchableOpacity>
+    //                     );
+    //                 } else {
+    //                     return <Text key={columnIndex} style={[styles.rowText, { lineHeight: 14 }]}>{cellData}</Text>;
+    //                 }
+    //             })}
+    //             textStyle={styles.rowText}
+    //             style={[rowIndex % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
+    //             flexArr={[0, 2, 2, 2, 2, 2]}
+    //         />
+    //     );
+    // };
 
-    handleCellPress = (cellData) => {
-        // Set the content of the popover based on the pressed cell data
-        this.setState({
-            isPopoverVisible: true,
-            popoverContent: cellData
-        });
-    };
+    componentDidMount() {
+        this.props.navigation.addListener('focus', this._handleListRefresh); // Add listener for screen focus    
+    }
 
-    closePopover = () => {
-        // Close the popover
-        this.setState({
-            isPopoverVisible: false,
-            popoverContent: ""
-        });
-    };
+    componentWillUnmount() {
+        this.props.navigation.removeListener('focus', this._handleListRefresh); // Remove listener on component unmount
+    }
+
 
     nextPage = () => {
         const { currentPage } = this.state;
@@ -87,17 +76,7 @@ export class Stock extends Component {
         }
     };
 
-    renderPopoverContent = () => {
-        // Render the content of the popover
-        return (
-            <View style={styles.popoverContent}>
-                <Text>{this.state.popoverContent}</Text>
-                <TouchableOpacity style={{ marginTop: wp(10) }} onPress={this.closePopover}>
-                    <Text>Close</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    };
+
 
     _handleListRefresh = async () => {
         try {
@@ -106,7 +85,7 @@ export class Stock extends Component {
                 // setTimeout with a delay of 1000 milliseconds (1 second)
                 setTimeout(() => {
                     // updating list after the delay
-                    this.renderRowData();
+                    // this.renderRowData();
                     // resetting isRefreshing after the update
                     this.setState({ isRefreshing: false });
                 }, 100);
@@ -120,7 +99,7 @@ export class Stock extends Component {
         this.props.navigation.navigate('home');
     }
     render() {
-        const { tableHead, rowData, currentPage, rowsPerPage } = this.state;
+        const { tableHead, rowData, currentPage, rowsPerPage, } = this.state;
         const startIndex = currentPage * rowsPerPage;
         const endIndex = Math.min(startIndex + rowsPerPage, rowData.length); // Calculate end index while considering the last page
         const slicedData = rowData.slice(startIndex, endIndex);
@@ -187,7 +166,7 @@ export class Stock extends Component {
 
                         <Table style={{ marginTop: wp(3) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
                             <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[0, 2, 2, 2, 2, 2]} />
-                            {slicedData.map((rowData, index) => this.renderRowData(rowData, index))}
+                            {/* {slicedData.map((rowData, index) => this.renderRowData(rowData, index))} */}
                         </Table>
 
                         <View style={styles.pagination}>
@@ -201,18 +180,6 @@ export class Stock extends Component {
                             </TouchableOpacity>
                         </View>
 
-                        {/* Popover */}
-                        <Modal
-                            animationType='fade'
-                            transparent={true}
-                            visible={this.state.isPopoverVisible}
-                            onRequestClose={this.closePopover}
-
-                        >
-                            <View style={styles.popoverContainer}>
-                                {this.renderPopoverContent()}
-                            </View>
-                        </Modal>
                     </ScrollView>
                 </View>
 
@@ -287,25 +254,21 @@ const styles = StyleSheet.create({
         alignSelf: 'center'
     },
     search_text: {
-        color: '#212529',
+        color: '#9575CD',
         fontSize: wp(3.5),
         marginLeft: wp(2),
         fontWeight: "500"
     },
     popoverContainer: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'white',
+        padding: wp(2),
+        borderRadius: 10,
+        width: wp(90),
+        height: wp(160)
 
     },
-    popoverContent: {
-        backgroundColor: 'white',
-        padding: 20,
-        borderRadius: 10,
-        width: wp(60),
-        height: wp(60)
-    },
+
 });
 
 export default Stock;

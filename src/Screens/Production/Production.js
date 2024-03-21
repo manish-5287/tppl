@@ -16,13 +16,13 @@ export class Production extends Component {
             tableHead: ['Id', 'Date', 'Contract Name', 'Product', 'Plan Qty', 'Prep Qty'],
             rowData: [],
             currentPage: 0,
-            rowsPerPage: 15,
-            isPopoverVisible: false,
-            popoverContent: "",
+            rowsPerPage: 10,
             searchName: '',
             contractName: [],
             showProcessingLoader: false,
-            isRefreshing: false
+            isRefreshing: false,
+            isLoading: false,
+            errorMessage: ''
         };
     };
 
@@ -33,96 +33,24 @@ export class Production extends Component {
 
     handleProduction = async () => {
         try {
-            this.setState({ showProcessingLoader: true })
+            this.setState({ showProcessingLoader: true, isRefreshing: true })
             const response = await makeRequest(BASE_URL + '/mobile/production')
             const { success, message, productionDetails } = response;
             // console.log("production",response);
             if (success) {
-                this.setState({ rowData: productionDetails, showProcessingLoader: false });
+                this.setState({ rowData: productionDetails, showProcessingLoader: false, isRefreshing: false });
 
             } else {
                 console.log(message);
-
+                this.setState({ showProcessingLoader: false, isRefreshing: false });
             }
         } catch (error) {
             console.log(error);
+            this.setState({ showProcessingLoader: false, isRefreshing: false });
         }
     };
 
-    renderRowData = (rowData, rowIndex) => {
-        if (typeof rowData === 'object' && rowData !== null) {
-            return (
-                <Row
-                    key={rowIndex}
-                    data={Object.values(rowData)}
-                    textStyle={styles.rowText}
-                    style={[rowIndex % 2 === 0 ? styles.rowEven : styles.rowOdd]}
-                    flexArr={[0, 2, 3, 3, 1, 1]}
-                />
-            );
-        } else if (Array.isArray(rowData)) {
-            let maxLines = 2;
-            rowData.forEach(cellData => {
-                const lines = Math.ceil(cellData.length / 20);
-                if (lines > maxLines) {
-                    maxLines = lines;
-                }
-            });
-        }
 
-        const rowHeight = maxLines * 25; // Assuming font size of 25
-
-        return (
-            <Row
-                key={rowIndex}
-                data={rowData.map((cellData, columnIndex) => {
-                    if (columnIndex === 0) {
-                        return (
-                            <TouchableOpacity key={columnIndex} onPress={() => this.handleCellPress(cellData)}>
-                                <Text style={[styles.rowText1, { lineHeight: 15 }]}>{cellData}</Text>
-                            </TouchableOpacity>
-                        );
-                    } else if (columnIndex === 2) {
-                        return (
-                            <TouchableOpacity key={columnIndex} onPress={() => this.handleCellPress1(cellData)}>
-                                <Text style={[styles.rowText2, { lineHeight: 15 }]}>{cellData}</Text>
-                            </TouchableOpacity>
-                        );
-                    } else {
-                        return <Text key={columnIndex} style={[styles.rowText, { lineHeight: 12 }]}>{cellData}</Text>;
-                    }
-                })}
-                textStyle={styles.rowText}
-                style={[rowIndex % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
-                flexArr={[0, 2, 3, 3, 1, 1]}
-            />
-        );
-    };
-
-    handleCellPress = (cellData) => {
-        // Set the content of the popover based on the pressed cell data
-        this.setState({
-            isPopoverVisible: true,
-            popoverContent: cellData
-        });
-    };
-
-    handleCellPress1 = (cellData) => {
-        // Set the content of the popover based on the pressed cell data
-        this.setState({
-            isPopoverVisible: true,
-            popoverContent: cellData
-        });
-    };
-
-
-    closePopover = () => {
-        // Close the popover
-        this.setState({
-            isPopoverVisible: false,
-            popoverContent: ""
-        });
-    };
     nextPage = () => {
         const { currentPage } = this.state;
         this.setState({ currentPage: currentPage + 1 });
@@ -161,6 +89,10 @@ export class Production extends Component {
 
     handleSearch = async (searchName) => {
         try {
+            if (searchName.length < 1) {
+                this.setState({ contractName: [] }); // Clear the search results
+                return;
+            }
             const params = { workorderno: searchName };
             // console.log(' Search', params);
             const response = await makeRequest(BASE_URL + '/mobile/searchcontractname', params);
@@ -168,12 +100,13 @@ export class Production extends Component {
             // console.log(response);
             if (success) {
                 this.setState({ contractName: contractName });
+
             } else {
                 this.setState({ contractName: [], errorMessage: message })
             }
         } catch (error) {
             console.log(error);
-            this.setState({ contractName: [], errorMessage: 'please try again' })
+            this.setState({ contractName: [] })
         }
     };
 
@@ -185,6 +118,8 @@ export class Production extends Component {
 
         // Stop refreshing and clear search term and results
         this.setState({ searchName: '', contractName: [] });
+
+
     };
 
     componentDidFocus = () => {
@@ -218,8 +153,8 @@ export class Production extends Component {
                     // updating list after the delay
                     this.handleProduction();
                     // resetting isRefreshing after the update
-                    this.setState({ isRefreshing: false , searchName: ''});
-                }, 100);
+                    this.setState({ isRefreshing: false, searchName: '' });
+                }, 2000);
             });
         } catch (error) {
             console.log(error.message);
@@ -238,7 +173,18 @@ export class Production extends Component {
         if (this.state.isLoading) {
             return <CustomLoader />;
         }
-        const { showProcessingLoader } = this.state
+        const { showProcessingLoader } = this.state;
+        // Calculate the maximum number of lines for each cell in a row
+        let maxLines = 2;
+        rowData.forEach(cellData => {
+            const lines = Math.ceil(cellData.length / 20); // Assuming each line has 20 characters
+            if (lines > maxLines) {
+                maxLines = lines;
+            }
+        });
+
+        // Calculate row height based on the maximum number of lines and font size
+        const rowHeight = maxLines * 25; // Assuming font size of 25
 
         return (
             <>
@@ -285,8 +231,39 @@ export class Production extends Component {
                 </View>
 
                 <View style={styles.container}>
+
+                    <View style={styles.search}>
+                        <TextInput
+                            placeholder='Search Work Order No.'
+                            placeholderTextColor='#40856f'
+                            maxLength={25}
+                            keyboardType='number-pad'
+                            value={this.state.searchName}
+                            onChangeText={(searchName) => {
+                                this.setState({ searchName });
+                                this.handleSearch(searchName);
+                            }}
+                            style={styles.search_text} />
+                    </View>
+
+                    {this.state.searchName.length > 0 ? (
+                        <View style={styles.searchResultsContainer}>
+                            {this.state.contractName.length > 0 ? (
+                                <FlatList
+                                    data={this.state.contractName}
+                                    renderItem={this.renderProductItem}
+                                    // keyExtractor={(item) => item.id.toString()}
+                                    style={styles.searchResultsList}
+                                />
+                            ) : (
+                                <View style={styles.noResultsContainer}>
+                                    <Text style={styles.noResultsText}>{this.state.errorMessage}</Text>
+                                </View>
+                            )}
+                        </View>
+                    ) : null}
+
                     <ScrollView
-                        style={{ marginBottom: wp(16) }}
                         showsVerticalScrollIndicator={false}
                         refreshControl={
                             <RefreshControl
@@ -295,44 +272,40 @@ export class Production extends Component {
                                 colors={['#40856f']}
                             />
                         }
-
                     >
-                        <View style={styles.search}>
-                            <TextInput
-                                placeholder='Search Work Order No.'
-                                placeholderTextColor='#40856f'
-                                maxLength={25}
-                                keyboardType='number-pad'
-                                value={this.state.searchName}
-                                onChangeText={(searchName) => {
-                                    this.setState({ searchName });
-                                    this.handleSearch(searchName);
-                                }}
-                                style={styles.search_text} />
-                        </View>
 
-                        {this.state.searchName.length > 0 ? (
-                            <View style={styles.searchResultsContainer}>
-                                {this.state.contractName.length > 0 ? (
-                                    <FlatList
-                                        data={this.state.contractName}
-                                        renderItem={this.renderProductItem}
-                                        // keyExtractor={(item) => item.id.toString()}
-                                        style={styles.searchResultsList}
-                                    />
-                                ) : (
-                                    <View style={styles.noResultsContainer}>
-                                        <Text style={styles.noResultsText}>{this.state.errorMessage}</Text>
-                                    </View>
-                                )}
-                            </View>
-                        ) : null}
 
-                        <Table style={{ marginTop: wp(3) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
+
+
+                        <Table style={{ marginTop: wp(2) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
                             <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[0, 2, 3, 3, 1, 1]} />
-                            {slicedData.map((rowData, index) => this.renderRowData(rowData, index))}
+                            {slicedData.map((rowData, index) => (
+                                <Row
+                                    key={index}
+                                    data={Object.values(rowData).map((cellData, cellIndex) => {
+                                        if (cellIndex === 0) {
+                                            return (
+                                                <TouchableOpacity key={cellIndex}>
+                                                    <Text style={styles.Highlight}>{cellData}</Text>
+                                                </TouchableOpacity>
+                                            );
+                                        } else if ((cellIndex === 2)) {
+                                            return (
+                                                <TouchableOpacity key={cellIndex}>
+                                                    <Text style={styles.Highlight}>{cellData}</Text>
+                                                </TouchableOpacity>
+                                            );
+                                        }
+                                        else {
+                                            return <Text style={styles.rowText}>{cellData}</Text>;
+                                        }
+                                    })}
+                                    textStyle={styles.rowText}
+                                    style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
+                                    flexArr={[0, 2, 3, 3, 1, 1]}
+                                />
+                            ))}
                         </Table>
-
 
                         <View style={styles.pagination}>
                             <TouchableOpacity onPress={this.prevPage} disabled={currentPage === 0}>
@@ -345,35 +318,12 @@ export class Production extends Component {
                             </TouchableOpacity>
                         </View>
 
-                        {/* Popover */}
-                        <Modal
-                            animationType='fade'
-                            transparent={true}
-                            visible={this.state.isPopoverVisible}
-                            onRequestClose={this.closePopover}
-
-                        >
-                            <View style={styles.popoverContainer}>
-                                {this.renderPopoverContent()}
-                            </View>
-                        </Modal>
-
-                        {/* Popover */}
-                        <Modal
-                            animationType='fade'
-                            transparent={true}
-                            visible={this.state.isPopoverVisible}
-                            onRequestClose={this.closePopover}
-
-                        >
-                            <View style={styles.popoverContainer}>
-                                {this.renderPopoverContent1()}
-                            </View>
-                        </Modal>
                     </ScrollView>
-                </View>
 
+
+                </View>
                 {showProcessingLoader && <ProcessingLoader />}
+
             </>
         );
     }
@@ -383,7 +333,6 @@ export class Production extends Component {
 const styles = StyleSheet.create({
     container: {
         alignSelf: 'center',
-        marginTop: wp(2),
 
     },
     head: {
@@ -412,15 +361,19 @@ const styles = StyleSheet.create({
     rowText: {
         color: '#212529',
         textAlign: 'left',
-        fontSize: wp(2.6),
+        fontSize: wp(2.5),
         paddingHorizontal: wp(0.3),
-        marginLeft: 4
+        marginLeft: 4,
+        fontWeight: '400'
     },
-    rowText1: {
+    Highlight: {
         color: 'red',
-        textAlign: 'center',
-        fontSize: wp(2.6),
-        // Optional: add underline to indicate touchability
+        textAlign: 'left',
+        fontSize: wp(2.5),
+        fontWeight: '500',
+        paddingHorizontal: wp(0.3),
+        marginLeft: 4,
+
     },
     rowText2: {
         color: 'red',
@@ -432,8 +385,8 @@ const styles = StyleSheet.create({
     pagination: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: wp(4),
-        paddingHorizontal: wp(3)
+        paddingHorizontal: wp(3),
+        marginTop: wp(4)
     },
     paginationText: {
         fontSize: wp(3.5),
@@ -459,7 +412,7 @@ const styles = StyleSheet.create({
 
     },
     search_text: {
-        color: '#212529',
+        color: '#40856f',
         fontSize: wp(3.5),
         marginLeft: wp(2),
         fontWeight: "500"
@@ -509,4 +462,4 @@ const styles = StyleSheet.create({
 });
 
 
-export default Production
+export default Production;

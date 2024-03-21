@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1035965732264",
+    "project_id": "tppl-7e950",
+    "storage_bucket": "tppl-7e950.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1035965732264:android:01c77019d5597d1b9db99d",
+        "android_client_info": {
+          "package_name": "com.tppl"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBUZVF4HPwoVsxnww0VLE65EB9WCwfZl3Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -76,14 +76,7 @@ export class Header_comp extends Component {
                     alignItems: 'center',
                     justifyContent: 'center'
                 }}>
-                    <TouchableOpacity  >
-                        <Image source={require('../../Assets/Image/notification.png')}
-                            style={{
-                                width: wp(7),
-                                height: wp(7),
-                                marginRight: wp(3)
-                            }} />
-                    </TouchableOpacity>
+                
 
                     <TouchableOpacity onPress={this.handleLogout}>
                         <Image source={require('../../Assets/Image/logout.png')}

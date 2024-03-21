@@ -3,6 +3,8 @@ import React, { Component } from 'react'
 import { Table, Row } from 'react-native-table-component';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { BASE_URL, makeRequest } from '../../api/Api_info';
+import ProcessingLoader from '../../Component/loader/ProcessingLoader';
+import CustomLoader from '../../Component/loader/Loader';
 
 
 export default class Search_Production extends Component {
@@ -12,7 +14,10 @@ export default class Search_Production extends Component {
             tableHead: ['Id', 'Date', 'Contract Name', 'Product', 'Plan Qty', 'Prep Qty'],
             rowData: [],
             isPopoverVisible: false,
-            popoverContent: ""
+            popoverContent: "",
+            showProcessingLoader: false,
+            isRefreshing: false,
+            isLoading: false
         }
     };
 
@@ -87,25 +92,49 @@ export default class Search_Production extends Component {
     };
 
     componentDidMount() {
-        this.handleContractSearch();
+        this.handleProductSearch();
+        this._handleListRefresh();
+
+    };
+    _handleListRefresh = () => {
+        try {
+            // pull-to-refresh
+            this.setState({ isRefreshing: true }, () => {
+                // setTimeout with a delay of 1000 milliseconds (1 second)
+                setTimeout(() => {
+                    // updating list after the delay
+                    this.handleProductSearch();
+                    // resetting isRefreshing after the update
+                    this.setState({ isRefreshing: false });
+                }, 100);
+            });
+        } catch (error) {
+            console.log(error);
+
+        }
     };
 
-    handleContractSearch = async () => {
+    handleProductSearch = async () => {
         try {
             const { contract_id } = this.props.route.params;
             const params = { contract_id };
             // console.log("handleContractSearch", contract_id);
+            this.setState({ showProcessingLoader: true, isRefreshing: true })
             const response = await makeRequest(BASE_URL + '/mobile/searchproduction', params)
             const { success, message, searchProduction } = response;
             // console.log("handleContractSearch_response", response);
             if (success) {
-                this.setState({ rowData: searchProduction });
+                this.setState({ rowData: searchProduction,showProcessingLoader: false, isRefreshing: false });
 
             } else {
                 console.log(message);
+            this.setState({ showProcessingLoader: false, isRefreshing: false });
+
             }
         } catch (error) {
             console.log(error);
+            this.setState({ showProcessingLoader: false, isRefreshing: false });
+
         }
     }
     handleGoBackHome = () => {
@@ -114,6 +143,10 @@ export default class Search_Production extends Component {
 
     render() {
         const { tableHead, rowData } = this.state;
+        if (this.state.isLoading) {
+            return <CustomLoader />;
+        }
+        const { showProcessingLoader } = this.state
         return (
             <>
                 <View
@@ -175,6 +208,8 @@ export default class Search_Production extends Component {
                         </View>
                     </Modal>
                 </View>
+                {showProcessingLoader && <ProcessingLoader />}
+
             </>
         );
     }

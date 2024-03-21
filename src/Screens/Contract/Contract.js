@@ -15,13 +15,15 @@ export default class Contract extends Component {
             tableHead: ['Title', 'Supplier Name', 'Cost', 'Date'],
             rowData: [],
             currentPage: 0,
-            rowsPerPage: 11,
+            rowsPerPage: 10,
             isPopoverVisible: false,
             popoverContent: "",
-            showProcessingLoader: false,
             searchName: '',
             contractName: [],
-            isRefreshing: false
+            showProcessingLoader: false,
+            isRefreshing: false,
+            isLoading: false,
+            errorMessage: ''
 
         };
 
@@ -34,37 +36,23 @@ export default class Contract extends Component {
 
     handleContract = async () => {
         try {
-            this.setState({ showProcessingLoader: true })
+            this.setState({ showProcessingLoader: true, isRefreshing: true })
             const response = await makeRequest(BASE_URL + '/mobile/contract')
             const { success, message, contractDetails } = response;
             // console.log("Contract", response);
             if (success) {
-                this.setState({ rowData: contractDetails, showProcessingLoader: false });
+                this.setState({ rowData: contractDetails, showProcessingLoader: false, isRefreshing: false });
             } else {
                 console.log(message);
+                this.setState({ showProcessingLoader: false, isRefreshing: false });
             }
         } catch (error) {
             console.log(error);
+            this.setState({ showProcessingLoader: false, isRefreshing: false });
+
+
         }
     }
-
-
-    handleCellTitlePress = (cellData) => {
-        // Set the content of the popover based on the pressed cell data
-        this.setState({
-            isPopoverVisible: true,
-            popoverContent: cellData
-        });
-    };
-
-
-    closePopover = () => {
-        // Close the popover
-        this.setState({
-            isPopoverVisible: false,
-            popoverContent: ""
-        });
-    };
 
     nextPage = () => {
         const { currentPage } = this.state;
@@ -78,66 +66,13 @@ export default class Contract extends Component {
         }
     };
 
-    renderPopoverContent = () => {
-        // Render the content of the popover
-        return (
-            <View style={styles.popoverContent}>
-                <Text>{this.state.popoverContent}</Text>
-                <TouchableOpacity style={{ marginTop: wp(10) }} onPress={this.closePopover}>
-                    <Text>Close</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    };
-
-
-    renderRowData = (rowData, rowIndex) => {
-        if (typeof rowData === 'object' && rowData !== null) {
-            return (
-                <Row
-                    key={rowIndex}
-                    data={Object.values(rowData)}
-                    textStyle={styles.rowText}
-                    style={[rowIndex % 2 === 0 ? styles.rowEven : styles.rowOdd]}
-                    flexArr={[3, 3, 2, 2]}
-                />
-            );
-        } else if (Array.isArray(rowData)) {
-            let maxLines = 2;
-            rowData.forEach(cellData => {
-                const lines = Math.ceil(cellData.length / 20);
-                if (lines > maxLines) {
-                    maxLines = lines;
-                }
-            });
-        }
-        const rowHeight = maxLines * 25; // Assuming font size of 25
-
-        return (
-            <Row
-                key={rowIndex}
-                data={rowData.map((cellData, columnIndex) => {
-                    if (columnIndex === 0) {
-                        return (
-                            <TouchableOpacity key={columnIndex} onPress={() => this.handleCellTitlePress(cellData)}>
-                                <Text style={[styles.rowText1, { lineHeight: 15 }]}>{cellData}</Text>
-                            </TouchableOpacity>
-                        );
-                    } else {
-                        return (
-                            <Text key={columnIndex} style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>
-                        );
-                    }
-                })}
-                textStyle={styles.rowText}
-                style={[rowIndex % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
-                flexArr={[3, 3, 2, 2]}
-            />
-        );
-    }
-
-    handleSearch = async (searchName) => {
+    handleSearch = async () => {
         try {
+            if (searchName.length < 1) {
+                this.setState({ contractName: [] }); // Clear the search results
+                return;
+            }
+            const { searchName } = this.state;
             const params = { workorderno: searchName };
             // console.log('Search', params);
             const response = await makeRequest(BASE_URL + '/mobile/searchcontractname', params);
@@ -146,10 +81,13 @@ export default class Contract extends Component {
                 this.setState({ contractName: contractName });
             } else {
                 this.setState({ contractName: [], errorMessage: message });
+
             }
         } catch (error) {
             console.log(error);
-            this.setState({ contractName: [], errorMessage: 'An error occurred. Please try again.' });
+            this.setState({ contractName: [], showProcessingLoader: false });
+
+
         }
     };
 
@@ -194,8 +132,8 @@ export default class Contract extends Component {
                     // updating list after the delay
                     this.handleContract();
                     // resetting isRefreshing after the update
-                    this.setState({ isRefreshing: false,searchName: '' });
-                }, 100);
+                    this.setState({ isRefreshing: false, searchName: '' });
+                }, 2000);
             });
         } catch (error) {
             console.log(error);
@@ -216,6 +154,18 @@ export default class Contract extends Component {
             return <CustomLoader />;
         }
         const { showProcessingLoader } = this.state
+
+        // Calculate the maximum number of lines for each cell in a row
+        let maxLines = 2;
+        rowData.forEach(cellData => {
+            const lines = Math.ceil(cellData.length / 20); // Assuming each line has 20 characters
+            if (lines > maxLines) {
+                maxLines = lines;
+            }
+        });
+
+        // Calculate row height based on the maximum number of lines and font size
+        const rowHeight = maxLines * 25; // Assuming font size of 25
 
 
         return (
@@ -261,16 +211,8 @@ export default class Contract extends Component {
 
                 </View>
 
-                <ScrollView
-                    style={styles.container}
-                    refreshControl={
-                        <RefreshControl
-                            colors={['grey']}
-                            refreshing={this.state.isRefreshing}
-                            onRefresh={this._handleListRefresh}
-                        />
-                    }
-                >
+                <View style={styles.container}>
+
                     <View style={styles.search}>
                         <TextInput
                             placeholder='Search Work Order No.'
@@ -302,12 +244,29 @@ export default class Contract extends Component {
                         </View>
                     ) : null}
 
-
-                    <Table style={{ marginTop: wp(3) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
+                    <Table style={{ marginTop: wp(2) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
                         <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[3, 3, 2, 2]} />
-                        {slicedData.map((rowData, index) => this.renderRowData(rowData, index))}
+                        {slicedData.map((rowData, index) => (
+                            <Row
+                                key={index}
+                                data={Object.values(rowData).map((cellData, cellIndex) => {
+                                    if (cellIndex === 0) {
+                                        return (
+                                            <TouchableOpacity key={cellIndex}>
+                                                <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
+                                            </TouchableOpacity>
+                                        );
+                                    }
+                                    else {
+                                        return <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>;
+                                    }
+                                })}
+                                textStyle={styles.rowText}
+                                style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
+                                flexArr={[3, 3, 2, 2]}
+                            />
+                        ))}
                     </Table>
-
 
                     <View style={styles.pagination}>
                         <TouchableOpacity onPress={this.prevPage} disabled={currentPage === 0}>
@@ -318,23 +277,16 @@ export default class Contract extends Component {
                         <TouchableOpacity onPress={this.nextPage} disabled={endIndex >= rowData.length}>
                             <Text style={styles.paginationText}>Next</Text>
                         </TouchableOpacity>
+
                     </View>
+                </View>
 
-                    {/* Popover */}
-                    <Modal
-                        animationType='fade'
-                        transparent={true}
-                        visible={this.state.isPopoverVisible}
-                        onRequestClose={this.closePopover}
-
-                    >
-                        <View style={styles.popoverContainer}>
-                            {this.renderPopoverContent()}
-                        </View>
-                    </Modal>
-
-                </ScrollView>
                 {showProcessingLoader && <ProcessingLoader />}
+                <RefreshControl
+                    colors={['grey']}
+                    refreshing={this.state.isRefreshing}
+                    onRefresh={this._handleListRefresh}
+                />
             </>
         );
     }
@@ -344,7 +296,6 @@ export default class Contract extends Component {
 const styles = StyleSheet.create({
     container: {
         alignSelf: 'center',
-        marginTop: wp(2),
 
     },
     head: {
@@ -371,23 +322,25 @@ const styles = StyleSheet.create({
     rowText: {
         color: '#212529',
         textAlign: 'left',
-        fontSize: wp(2.6),
+        fontSize: wp(2.5),
         paddingHorizontal: wp(0.3),
-        marginLeft: 4
+        marginLeft: 4,
+        fontWeight: '400'
     },
-
-    rowText1: {
+    Highlight: {
         color: 'red',
         textAlign: 'left',
-        fontSize: wp(2.6),
+        fontSize: wp(2.5),
+        fontWeight: '500',
         paddingHorizontal: wp(0.3),
-        marginLeft: 4
+        marginLeft: 4,
+
     },
     pagination: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: wp(4),
-        paddingHorizontal: wp(3)
+        paddingHorizontal: wp(3),
+        marginTop: wp(5)
     },
     paginationText: {
         fontSize: wp(3.5),

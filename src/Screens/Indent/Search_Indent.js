@@ -3,6 +3,7 @@ import React, { Component } from 'react';
 import { Table, Row } from 'react-native-table-component';
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import { BASE_URL, makeRequest } from '../../api/Api_info';
+import ProcessingLoader from '../../Component/loader/ProcessingLoader';
 
 export class Search_Indent extends Component {
     constructor(props) {
@@ -11,7 +12,10 @@ export class Search_Indent extends Component {
             tableHead: ['Id', 'Contract name', 'Product', 'Issue By', 'Date'],
             rowData: [],
             isPopoverVisible: false,
-            popoverContent: ""
+            popoverContent: "",
+            showProcessingLoader: false,
+            isRefreshing: false,
+            isLoading: false
         };
     }
 
@@ -116,7 +120,25 @@ export class Search_Indent extends Component {
 
     componentDidMount() {
         this.handleIndentSearch();
+        this._handleListRefresh();
 
+    };
+    _handleListRefresh = () => {
+        try {
+            // pull-to-refresh
+            this.setState({ isRefreshing: true }, () => {
+                // setTimeout with a delay of 1000 milliseconds (1 second)
+                setTimeout(() => {
+                    // updating list after the delay
+                    this.handleIndentSearch();
+                    // resetting isRefreshing after the update
+                    this.setState({ isRefreshing: false });
+                }, 100);
+            });
+        } catch (error) {
+            console.log(error);
+
+        }
     };
 
     handleIndentSearch = async () => {
@@ -124,26 +146,36 @@ export class Search_Indent extends Component {
             const { contract_id } = this.props.route.params;
             const params = { contract_id };
             // console.log("IndentSearch", contract_id);
+            this.setState({ showProcessingLoader: true, isRefreshing: true })
+
             const response = await makeRequest(BASE_URL + '/mobile/searchindent', params)
             // console.log("IndentSearch", response);
             const { success, message, searchIndent } = response;
             if (success) {
-                this.setState({ rowData: searchIndent });
+                this.setState({ rowData: searchIndent,showProcessingLoader: false, isRefreshing: false });
 
             } else {
                 console.log(message);
+            this.setState({ showProcessingLoader: false, isRefreshing: false });
+
             }
         } catch (error) {
             console.log(error);
+            this.setState({ showProcessingLoader: false, isRefreshing: false });
+
         }
     }
 
     handleGoBackHome = () => {
-        this.props.navigation.navigate('Indent');
+        this.props.navigation.navigate('indent');
     }
 
     render() {
         const { tableHead, rowData } = this.state;
+        if (this.state.isLoading) {
+            return <CustomLoader />;
+        }
+        const { showProcessingLoader } = this.state
         return (
             <>
 
@@ -220,6 +252,8 @@ export class Search_Indent extends Component {
                         </View>
                     </Modal>
                 </View>
+                {showProcessingLoader && <ProcessingLoader />}
+
             </>
         );
     }
@@ -280,3 +314,5 @@ const styles = StyleSheet.create({
         height: wp(60)
     },
 });
+
+export default Search_Indent;

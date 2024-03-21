@@ -17,17 +17,32 @@ export class Login extends Component {
     }
   };
 
-
   handleLogin = async () => {
     try {
       const { mobile, password } = this.state;
       Keyboard.dismiss();
 
-      this.setState({ showProcessingLoader: true })
+      // Validation
+      if (!mobile) {
+        Alert.alert('Please enter your mobile number.');
+        return;
+      }
+
+      if (!/^\d{10}$/.test(mobile)) {
+        Alert.alert('Please enter a valid 10-digit mobile number.');
+        return;
+      }
+
+      if (!password) {
+        Alert.alert('Please enter your password.');
+        return;
+      }
+
+      this.setState({ showProcessingLoader: true });
 
       const params = { mobile, password };
       console.log('mobile_params', params);
-      
+
       const response = await makeRequest(BASE_URL + '/mobile/login', params);
       const { status, message } = response;
       console.log("login", response);
@@ -36,21 +51,21 @@ export class Login extends Component {
           // store data 
           const info = await storeData({ mobile });
           console.log('m5m1m651mmmm', info);
-
-          this.setState({ showProcessingLoader: false });
           this.props.navigation.navigate('mytab', { mobile, password });
-          this.setState({ mobile: '', password: '' });
+          this.setState({ mobile: '', password: '', showProcessingLoader: false });
         } else {
           Alert.alert(message);
-          this.props.navigation.navigate('login')
-          this.setState({ showProcessingLoader: false })
-
+          this.props.navigation.navigate('login');
+          this.setState({ showProcessingLoader: false });
         }
       }
     } catch (error) {
       console.log(error);
     }
   };
+
+
+
   handleMobileLogin = (Text) => {
     this.setState({ mobile: Text });
   };

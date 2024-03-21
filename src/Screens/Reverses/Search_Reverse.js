@@ -3,6 +3,8 @@ import React, { Component } from 'react';
 import { Table, Row, Rows } from 'react-native-table-component';
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import { BASE_URL, makeRequest } from '../../api/Api_info';
+import CustomLoader from '../../Component/loader/Loader';
+import ProcessingLoader from '../../Component/loader/ProcessingLoader';
 
 export class Search_Reverse extends Component {
     constructor(props) {
@@ -115,25 +117,48 @@ export class Search_Reverse extends Component {
     };
 
     componentDidMount() {
-        this.handleContractSearch();
-
+        this.handleReverseSearch();
+        this._handleListRefresh();
     };
 
-    handleContractSearch = async () => {
+    _handleListRefresh = () => {
+        try {
+            // pull-to-refresh
+            this.setState({ isRefreshing: true }, () => {
+                // setTimeout with a delay of 1000 milliseconds (1 second)
+                setTimeout(() => {
+                    // updating list after the delay
+                    this.handleReverseSearch();
+                    // resetting isRefreshing after the update
+                    this.setState({ isRefreshing: false });
+                }, 100);
+            });
+        } catch (error) {
+            console.log(error);
+
+        }
+    };
+
+    handleReverseSearch = async () => {
         try {
             const { contract_id } = this.props.route.params;
             const params = { contract_id };
             // console.log("handleContractSearch", contract_id);
+            this.setState({ showProcessingLoader: true, isRefreshing: true })
             const response = await makeRequest(BASE_URL + '/mobile/searchreverse', params)
             // console.log("handleContractSearch", response);
             const { success, message, searchReverse } = response;
             if (success) {
-                this.setState({ rowData: searchReverse });
+                this.setState({ rowData: searchReverse, showProcessingLoader: false, isRefreshing: false  });
             } else {
                 console.log(message);
+                this.setState({ showProcessingLoader: false, isRefreshing: false });
+
             }
         } catch (error) {
             console.log(error);
+            this.setState({ showProcessingLoader: false, isRefreshing: false });
+
         }
     };
 
@@ -142,6 +167,10 @@ export class Search_Reverse extends Component {
     }
     render() {
         const { tableHead, rowData } = this.state;
+        if (this.state.isLoading) {
+            return <CustomLoader />;
+        }
+        const { showProcessingLoader } = this.state;
         return (
             <>
                 <View
@@ -216,6 +245,8 @@ export class Search_Reverse extends Component {
                         </View>
                     </Modal>
                 </View>
+                {showProcessingLoader && <ProcessingLoader />}
+
             </>
         );
     }
@@ -276,3 +307,5 @@ const styles = StyleSheet.create({
         height: wp(60)
     },
 });
+
+export default Search_Reverse

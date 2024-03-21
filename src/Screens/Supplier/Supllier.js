@@ -6,8 +6,6 @@ import { BASE_URL, makeRequest } from '../../api/Api_info';
 import CustomLoader from '../../Component/loader/Loader';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
 import DateTimePicker from 'react-native-modal-datetime-picker';
-import { clearData } from '../../api/User_Preference';
-
 
 
 export class Supllier extends Component {
@@ -18,8 +16,6 @@ export class Supllier extends Component {
             rowData: [],
             currentPage: 0,
             rowsPerPage: 10,
-            isPopoverVisible: false,
-            popoverContent: "",
             showProcessingLoader: false,
             searchName: '',
             contractName: [],
@@ -30,8 +26,10 @@ export class Supllier extends Component {
             selectedDateTo: '',
             pickerType: '',
             vendorid: '',
-            nameInput:'',
+            nameInput: '',
             isLoading: false,
+            errorMessage: '',
+            searchDataAvailable: true
 
         };
     }
@@ -39,24 +37,33 @@ export class Supllier extends Component {
     componentDidMount() {
         // Call your data fetching function when the component mounts
         this.handleSUpplier();
-       
-      }
+        this.props.navigation.addListener('focus', this._handleListRefresh); // Add listener for screen focus
 
+    }
+
+    componentWillUnmount() {
+        this.props.navigation.removeListener('focus', this._handleListRefresh); // Remove listener on component unmount
+    }
 
     handleSUpplier = async () => {
         try {
-            this.setState({ showProcessingLoader: true })
+            this.setState({ isRefreshing: true })
+
             const response = await makeRequest(BASE_URL + '/mobile/vendor')
             // console.log("SUpplier",response);
             const { success, message, vendorDetails, name } = response;
             if (success) {
-                this.setState({ rowData: vendorDetails, showProcessingLoader: false,nameInput:name });
+                this.setState({ rowData: vendorDetails, nameInput: name, isRefreshing: false });
 
             } else {
                 console.log(message);
+                this.setState({ isRefreshing: false });
+
             }
         } catch (error) {
             console.log(error);
+            this.setState({ isRefreshing: false });
+
         }
     }
 
@@ -67,102 +74,27 @@ export class Supllier extends Component {
                 // setTimeout with a delay of 1000 milliseconds (1 second)
                 setTimeout(() => {
                     // updating list after the delay
-                  this.handleSUpplier();
-                  this.handleSearch();
-                  this.handleShowSearch();
+                    this.handleSUpplier();
                     // resetting isRefreshing after the update
-                    this.setState({ 
+                    this.setState({
                         isRefreshing: false,
                         selectedDateFrom: '',
                         selectedDateTo: '',
                         searchName: ''
-                     });
-                }, 100);
+                    });
+                }, 2000);
             });
         } catch (error) {
             console.log(error.message);
         }
     };
 
-    renderRowData = (rowData, rowIndex) => {
-        if (typeof rowData === 'object' && rowData !== null) {
-            return (
-                <Row
-                    key={rowIndex}
-                    data={Object.values(rowData)}
-                    textStyle={styles.rowText}
-                    style={[rowIndex % 2 === 0 ? styles.rowEven : styles.rowOdd]}
-                    flexArr={[2, 3, 2, 2, 2]}
-                />
-            );
-        } else if (Array.isArray(rowData)) {
-            let maxLines = 2;
-            rowData.forEach(cellData => {
-                const lines = Math.ceil(cellData.length / 20);
-                if (lines > maxLines) {
-                    maxLines = lines;
-                }
-            });
-        }
-
-        const rowHeight = maxLines * 25; // Assuming font size of 25
-
-        return (
-            <Row
-                key={rowIndex}
-                data={rowData.map((cellData, columnIndex) => {
-                    if (columnIndex === 1) {
-                        return (
-                            <TouchableOpacity key={columnIndex} onPress={() => this.handleCellPress(cellData)}>
-                                <Text style={[styles.rowText1, { lineHeight: 15 }]}>{cellData}</Text>
-                            </TouchableOpacity>
-                        );
-                    } else if (columnIndex === 2) {
-                        return (
-                            <TouchableOpacity key={columnIndex} onPress={() => this.handleCellPress1(cellData)}>
-                                <Text style={[styles.rowText1, { lineHeight: 15 }]}>{cellData}</Text>
-                            </TouchableOpacity>
-                        );
-                    }
-                    else {
-                        return <Text key={columnIndex} style={[styles.rowText, { lineHeight: 11 }]}>{cellData}</Text>;
-                    }
-                })}
-                textStyle={styles.rowText}
-                style={[rowIndex % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
-                flexArr={[2, 3, 2, 2, 2]}
-            />
-        );
-    };
 
     handleVendorReport = () => {
         this.props.navigation.navigate('report')
-    }
-
-    handleCellPress = (cellData) => {
-        // Set the content of the popover based on the pressed cell data
-        this.setState({
-            isPopoverVisible: true,
-            popoverContent: cellData
-        });
-    };
-
-    handleCellPress1 = (cellData) => {
-        // Set the content of the popover based on the pressed cell data
-        this.setState({
-            isPopoverVisible: true,
-            popoverContent: cellData
-        });
     };
 
 
-    closePopover = () => {
-        // Close the popover
-        this.setState({
-            isPopoverVisible: false,
-            popoverContent: ""
-        });
-    };
     nextPage = () => {
         const { currentPage } = this.state;
         this.setState({ currentPage: currentPage + 1 });
@@ -175,74 +107,53 @@ export class Supllier extends Component {
         }
     };
 
-    renderPopoverContent = () => {
-        // Render the content of the popover
-        return (
-            <View style={styles.popoverContent}>
-                <Text>{this.state.popoverContent}</Text>
-                <TouchableOpacity style={{ marginTop: wp(10) }} onPress={this.closePopover}>
-                    <Text>Close</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    };
-
-    renderPopoverContent1 = () => {
-        // Render the content of the popover
-        return (
-            <View style={styles.popoverContent}>
-                <Text>{this.state.popoverContent}</Text>
-                <TouchableOpacity style={{ marginTop: wp(10) }} onPress={this.closePopover}>
-                    <Text>Close</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    };
-
-    // show search venfor //
-
     handleShowSearch = async () => {
         try {
-     
             const { selectedDateFrom, selectedDateTo, vendorid } = this.state;
             const params = {
                 vendor_id: vendorid,
                 date_from: selectedDateFrom,
                 date_to: selectedDateTo
-            }
+            };
             console.log("showVendor", params);
-            const response = await makeRequest(BASE_URL + '/mobile/searchvendor', params)
-            const { success, message, vendorDetails } = response
+            const response = await makeRequest(BASE_URL + '/mobile/searchvendor', params);
+            const { success, message, vendorDetails } = response;
             if (success) {
-                this.setState({ rowData: vendorDetails })
+                this.setState({ rowData: vendorDetails, searchDataAvailable: vendorDetails.length > 0 });
             } else {
                 console.log(message);
+                this.setState({ searchDataAvailable: false });
             }
         } catch (error) {
             console.log(error);
+            this.setState({ searchDataAvailable: false });
         }
-    }
+    };
 
-    // search vendor //
 
-    handleSearch = async ( ) => {
+
+
+    handleSearch = async () => {
         try {
-            const {searchName}=this.state;
+            const { searchName } = this.state;
+            if (searchName.length < 1) {
+                this.setState({ contractName: [] }); // Clear the search results
+                return;
+            }
             const params = {
                 vendorname: searchName
             };
             // console.log('search', params);
-            this.setState({ showProcessingLoader: true })
             const response = await makeRequest(BASE_URL + '/mobile/searchvendorname', params);
             const { success, message, vendorName } = response;
             if (success) {
-                this.setState({ contractName: vendorName, showFlatList: true , showProcessingLoader:false });
+                this.setState({ contractName: vendorName, showFlatList: true });
             } else {
                 this.setState({ contractName: [], errorMessage: message, showFlatList: true })
             }
         } catch (error) {
             console.log(error);
-            this.setState({ contractName: [], errorMessage: 'Please try again ', showFlatList: false})
+            this.setState({ contractName: [], showFlatList: false })
         }
     };
 
@@ -303,19 +214,32 @@ export class Supllier extends Component {
     };
 
     handleVendorReport = () => {
-        
+
         this.props.navigation.navigate('report');
     };
 
+
+
     render() {
-        const { tableHead, rowData, currentPage, rowsPerPage, isLoading,showProcessingLoader} = this.state;
+        const { tableHead, rowData, currentPage, rowsPerPage, isLoading, showProcessingLoader } = this.state;
         const startIndex = currentPage * rowsPerPage;
         const endIndex = Math.min(startIndex + rowsPerPage, rowData.length); // Calculate end index while considering the last page
         const slicedData = rowData.slice(startIndex, endIndex);
         if (isLoading) {
             return <CustomLoader />;
         }
-       
+        // Calculate the maximum number of lines for each cell in a row
+        let maxLines = 2;
+        rowData.forEach(cellData => {
+            const lines = Math.ceil(cellData.length / 20); // Assuming each line has 20 characters
+            if (lines > maxLines) {
+                maxLines = lines;
+            }
+        });
+
+        // Calculate row height based on the maximum number of lines and font size
+        const rowHeight = maxLines * 25; // Assuming font size of 25
+
         return (
             <>
                 <View
@@ -383,6 +307,7 @@ export class Supllier extends Component {
                                     this.setState({ searchName });
                                     this.handleSearch(searchName);
                                 }}
+
                                 style={styles.search_text} />
                         </View>
                         {this.state.showFlatList && this.state.searchName.length > 0 ? (
@@ -401,6 +326,7 @@ export class Supllier extends Component {
                                 )}
                             </View>
                         ) : null}
+
 
                         {/* Date Time picker View */}
                         <View style={styles.DateTimepicker_Box}>
@@ -461,9 +387,27 @@ export class Supllier extends Component {
 
                         <Table style={{ marginTop: wp(2) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
                             <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[2, 3, 2, 2, 2]} />
-                            {slicedData.map((rowData, index) => this.renderRowData(rowData, index))}
+                            {slicedData.map((rowData, index) => (
+                                <Row
+                                    key={index}
+                                    data={Object.values(rowData).map((cellData, cellIndex) => {
+                                        if (cellIndex === 0) {
+                                            return (
+                                                <TouchableOpacity key={cellIndex}>
+                                                    <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>
+                                                </TouchableOpacity>
+                                            );
+                                        }
+                                        else {
+                                            return <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>;
+                                        }
+                                    })}
+                                    textStyle={styles.rowText}
+                                    style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
+                                    flexArr={[2, 3, 2, 2, 2]}
+                                />
+                            ))}
                         </Table>
-
 
                         <View style={styles.pagination}>
                             <TouchableOpacity onPress={this.prevPage} disabled={currentPage === 0}>
@@ -476,35 +420,8 @@ export class Supllier extends Component {
                             </TouchableOpacity>
                         </View>
 
-
-                        {/* Popover */}
-                        <Modal
-                            animationType='fade'
-                            transparent={true}
-                            visible={this.state.isPopoverVisible}
-                            onRequestClose={this.closePopover}
-
-                        >
-                            <View style={styles.popoverContainer}>
-                                {this.renderPopoverContent()}
-                            </View>
-                        </Modal>
-
-                        {/* Popover */}
-                        <Modal
-                            animationType='fade'
-                            transparent={true}
-                            visible={this.state.isPopoverVisible}
-                            onRequestClose={this.closePopover}
-
-                        >
-                            <View style={styles.popoverContainer}>
-                                {this.renderPopoverContent1()}
-                            </View>
-                        </Modal>
-
                     </ScrollView>
-                {showProcessingLoader && <ProcessingLoader />}
+                    {showProcessingLoader && <ProcessingLoader />}
                 </View>
 
             </>
@@ -546,16 +463,19 @@ const styles = StyleSheet.create({
     rowText: {
         color: '#212529',
         textAlign: 'left',
-        fontSize: wp(2.6),
+        fontSize: wp(2.5),
         paddingHorizontal: wp(0.3),
-        marginLeft: 4
-
+        marginLeft: 4,
+        fontWeight: '400'
     },
-    rowText1: {
+    Highlight: {
         color: 'red',
-        textAlign: 'center',
-        fontSize: wp(2.6),
-        // Optional: add underline to indicate touchability
+        textAlign: 'left',
+        fontSize: wp(2.5),
+        fontWeight: '500',
+        paddingHorizontal: wp(0.3),
+        marginLeft: 4,
+
     },
     pagination: {
         flexDirection: 'row',

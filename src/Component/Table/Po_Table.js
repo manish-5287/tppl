@@ -10,8 +10,7 @@ export default class Po_Table extends Component {
         this.state = {
             tableHead: ['Id', 'Date', 'Vendor', 'Quantity', 'Amount', 'Delivery'],
             rowData: [],
-            isPopoverVisible: false,
-            popoverContent: ""
+          
         };
     };
     componentDidMount() {
@@ -25,88 +24,17 @@ export default class Po_Table extends Component {
             const { success, message, poDetails } = response;
             if (success) {
                 this.setState({ rowData: poDetails });
-
             } else {
-                Alert.alert(message);
-
+                console.log(message);
             }
         } catch (error) {
             console.log(error);
         }
     }
-
-    renderRowData = (rowData, rowIndex) => {
-        if (typeof rowData === 'object' && rowData !== null) {
-            return (
-                <Row
-                    key={rowIndex}
-                    data={Object.values(rowData)}
-                    textStyle={styles.rowText}
-                    style={[rowIndex % 2 === 0 ? styles.rowEven : styles.rowOdd]}
-                    flexArr={[0, 2, 3, 2, 2, 2]}
-
-                />
-            );
-        } else if (Array.isArray(rowData)) {
-            let maxLines = 2;
-            rowData.forEach(cellData => {
-                const lines = Math.ceil(cellData.length / 20);
-                if (lines > maxLines) {
-                    maxLines = lines;
-                }
-            });
-        }
-
-        const rowHeight = maxLines * 20; // Assuming font size of 25
-
-        return (
-            <Row
-                key={rowIndex}
-                data={rowData.map((cellData, columnIndex) => {
-                    if (columnIndex === 0) { 
-
-                        <TouchableOpacity key={columnIndex} onPress={() => this.handleCellPress(cellData)}>
-                            <Text style={[styles.rowText1, { lineHeight: 14, color: 'red' }]}>{cellData}</Text>
-                        </TouchableOpacity>
-
-                    } else {
-                        <Text key={columnIndex} style={[styles.rowText, { lineHeight: 14 }]}>{cellData}</Text>
-                    }
-                })}
-                textStyle={styles.rowText}
-                style={[rowIndex % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
-                flexArr={[0, 2, 3, 2, 2, 2]}
-            />
-        );
-    };
-
-
-    handleCellPress = (cellData) => {
-        // Set the content of the popover based on the pressed cell data
-        this.setState({
-            isPopoverVisible: true,
-            popoverContent: cellData
-        });
-    };
-
-    closePopover = () => {
-        // Close the popover
-        this.setState({
-            isPopoverVisible: false,
-            popoverContent: ""
-        });
-    };
-
-    renderPopoverContent = () => {
-        // Render the content of the popover
-        return (
-            <View style={styles.popoverContent}>
-                <Text>{this.state.popoverContent}</Text>
-                <TouchableOpacity style={{ marginTop: wp(10) }} onPress={this.closePopover}>
-                    <Text>Close</Text>
-                </TouchableOpacity>
-            </View>
-        );
+    handleIdPress = (id) => {
+        // Handle onPress for Id here
+        console.log('Pressed Id:', id);
+        // You can add your logic for handling the Id press, such as navigating to another screen
     };
 
     render() {
@@ -115,19 +43,28 @@ export default class Po_Table extends Component {
             <View style={styles.container}>
                 <Table borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
                     <Row data={tableHead} style={styles.head} textStyle={styles.headText} flexArr={[0, 2, 3, 2, 2, 2]} />
-                    {rowData.map((rowData, index) => this.renderRowData(rowData, index))}
+                    {rowData.map((rowData, index) => (
+                        <Row
+                            key={index}
+                            data={Object.values(rowData).map((cellData, cellIndex) => {
+                                if (cellIndex === 0) {
+                                    return (
+                                        <TouchableOpacity key={cellIndex} onPress={() => this.handleIdPress(cellData)}>
+                                            <Text style={styles.Highlight}>{cellData}</Text>
+                                        </TouchableOpacity>
+                                    );
+                                }
+                                else {
+                                    return <Text style={styles.rowText}>{cellData}</Text>;
+                                }
+                            })}
+                            textStyle={styles.rowText}
+                            style={index % 2 === 0 ? styles.rowEven : styles.rowOdd}
+                            flexArr={[0, 2, 3, 2, 2, 2]}
+                        />
+                    ))}
                 </Table>
-                {/* Popover */}
-                <Modal
-                    animationType='fade'
-                    transparent={true}
-                    visible={this.state.isPopoverVisible}
-                    onRequestClose={this.closePopover}
-                >
-                    <View style={styles.popoverContainer}>
-                        {this.renderPopoverContent()}
-                    </View>
-                </Modal>
+
             </View>
         );
     }
@@ -146,7 +83,7 @@ const styles = StyleSheet.create({
         color: 'white',
         textAlign: 'center',
         fontSize: wp(3),
-        fontWeight:'500'
+        fontWeight: '500'
     },
     rowEven: {
         backgroundColor: '#81D4FA',
@@ -162,32 +99,32 @@ const styles = StyleSheet.create({
         color: '#212529',
         textAlign: 'left',
         fontSize: wp(2.5),
-        paddingHorizontal:wp(0.3),
-        marginLeft:4,
-        fontWeight:'400'
+        paddingHorizontal: wp(0.3),
+        marginLeft: 4,
+        fontWeight: '400'
     },
-    rowText1: {
+    Highlight: {
         color: 'red',
         textAlign: 'left',
         fontSize: wp(2.5),
-        fontWeight:'400',
-        paddingHorizontal:wp(0.3),
-        marginLeft:4,
-        
+        fontWeight: '500',
+        paddingHorizontal: wp(0.3),
+        marginLeft: 4,
+
     },
     popoverContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      
+
     },
     popoverContent: {
         backgroundColor: 'white',
         padding: 20,
         borderRadius: 10,
-        width:wp(60),
-        height:wp(60)
+        width: wp(60),
+        height: wp(60)
     },
 
 });

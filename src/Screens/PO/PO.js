@@ -1,10 +1,11 @@
-import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, Modal, Alert, TouchableWithoutFeedback, Keyboard, RefreshControl } from 'react-native'
+import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, RefreshControl, ScrollView, FlatList } from 'react-native'
 import React, { Component } from 'react'
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import { Table, Row } from 'react-native-table-component';
 import { BASE_URL, makeRequest } from '../../api/Api_info';
 import CustomLoader from '../../Component/loader/Loader';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
+
 
 
 export class PO extends Component {
@@ -14,39 +15,46 @@ export class PO extends Component {
             tableHead: ['Id', 'Date', 'Vendor', 'Qty', 'Amount', 'Delivery'],
             rowData: [],
             currentPage: 0,
-            rowsPerPage: 15,
-            isPopoverVisible: false,
-            popoverContent: "",
+            rowsPerPage: 9,
             searchPO: '',
             showProcessingLoader: false,
-            isRefreshing: false
+            isRefreshing: false,
+            isLoading: false
         };
     };
 
     componentDidMount() {
         this.handlePO();
-    };
+        this.props.navigation.addListener('focus', this._handleListRefreshing); // Add listener for screen focus
+    }
+
+    componentWillUnmount() {
+        this.props.navigation.removeListener('focus', this._handleListRefreshing); // Remove listener on component unmount
+    }
 
     handlePO = async () => {
         try {
-            this.setState({ showProcessingLoader: true })
+            this.setState({ isRefreshing: true })
             const response = await makeRequest(BASE_URL + '/mobile/purchaseorder')
             const { success, message, poDetails } = response;
             // console.log("po",response); 
             if (success) {
-                this.setState({ rowData: poDetails, showProcessingLoader: false });
+                this.setState({ rowData: poDetails, isRefreshing: false });
             } else {
                 console.log(message);
+                this.setState({  isRefreshing: false });
             }
         } catch (error) {
             console.log(error);
+            this.setState({isRefreshing: false });
         }
     }
 
     handlePOSearch = async (searchPO) => {
         try {
             if (searchPO.length < 1) {
-                this.setState({ searchPO, rowData: [] });
+                this.setState({rowData: [] });
+                this.handlePO();
                 return;
             }
             const params = { po_id: searchPO };
@@ -66,66 +74,6 @@ export class PO extends Component {
         }
     }
 
-    renderRowData = (rowData, rowIndex) => {
-        if (typeof rowData === 'object' && rowData !== null) {
-            return (
-                <Row
-                    key={rowIndex}
-                    data={Object.values(rowData)}
-                    textStyle={styles.rowText}
-                    style={[rowIndex % 2 === 0 ? styles.rowEven : styles.rowOdd]}
-                    flexArr={[0, 2, 3, 2, 2, 2]}
-                />
-            );
-        } else if (Array.isArray(rowData)) {
-            let maxLines = 2;
-            rowData.forEach(cellData => {
-                const lines = Math.ceil(cellData.length / 20);
-                if (lines > maxLines) {
-                    maxLines = lines;
-                }
-            });
-        }
-        const rowHeight = maxLines * 25; // Assuming font size of 25
-
-        return (
-            <Row
-                key={rowIndex}
-                data={rowData.map((cellData, columnIndex) => {
-                    if (columnIndex === 0) {
-                        return (
-                            <TouchableOpacity key={columnIndex} onPress={() => this.handleCellPress(cellData)}>
-                                <Text style={[styles.rowText1, { lineHeight: 15 }]}>{cellData}</Text>
-                            </TouchableOpacity>
-                        );
-                    } else {
-                        return <Text key={columnIndex} style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>;
-                    }
-                })}
-                textStyle={styles.rowText}
-                style={[rowIndex % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
-                flexArr={[0, 2, 3, 2, 2, 2]}
-            />
-        );
-    };
-
-    handleCellPress = (cellData) => {
-        // Set the content of the popover based on the pressed cell data
-        this.setState({
-            isPopoverVisible: true,
-            popoverContent: cellData
-        });
-    };
-
-
-    closePopover = () => {
-        // Close the popover
-        this.setState({
-            isPopoverVisible: false,
-            popoverContent: ""
-        });
-    };
-
     nextPage = () => {
         const { currentPage } = this.state;
         this.setState({ currentPage: currentPage + 1 });
@@ -138,18 +86,6 @@ export class PO extends Component {
         }
     };
 
-    renderPopoverContent = () => {
-        // Render the content of the popover
-        return (
-            <View style={styles.popoverContent}>
-                <Text>{this.state.popoverContent}</Text>
-                <TouchableOpacity style={{ marginTop: wp(10) }} onPress={this.closePopover}>
-                    <Text>Close</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    };
-
     _handleListRefreshing = async () => {
         try {
             // pull-to-refresh
@@ -159,8 +95,8 @@ export class PO extends Component {
                     // updating list after the delay
                     this.handlePO();
                     // resetting isRefreshing after the update
-                    this.setState({ isRefreshing: false , searchPO: ''});
-                }, 100);
+                    this.setState({ isRefreshing: false, searchPO: '' });
+                }, 2000);
             });
         } catch (error) {
 
@@ -169,7 +105,10 @@ export class PO extends Component {
 
     handleGoBackHome = () => {
         this.props.navigation.navigate('home');
-    }
+    };
+
+  
+
     render() {
         const { tableHead, rowData, currentPage, rowsPerPage, } = this.state;
         const startIndex = currentPage * rowsPerPage;
@@ -178,10 +117,23 @@ export class PO extends Component {
         if (this.state.isLoading) {
             return <CustomLoader />;
         }
-        const { showProcessingLoader } = this.state
+        const { showProcessingLoader } = this.state;
+
+        // Calculate the maximum number of lines for each cell in a row
+        let maxLines = 2;
+        rowData.forEach(cellData => {
+            const lines = Math.ceil(cellData.length / 20); // Assuming each line has 20 characters
+            if (lines > maxLines) {
+                maxLines = lines;
+            }
+        });
+
+        // Calculate row height based on the maximum number of lines and font size
+        const rowHeight = maxLines * 25; // Assuming font size of 25
 
         return (
             <>
+
 
                 <View
                     style={{
@@ -225,68 +177,72 @@ export class PO extends Component {
 
                 </View>
 
-                <View style={styles.container}>
-                    <ScrollView
-                        style={{ marginBottom: wp(16) }}
-                        showsVerticalScrollIndicator={false}
-                        refreshControl={
-                            <RefreshControl
-                                refreshing={this.state.isRefreshing}
-                                onRefresh={this._handleListRefreshing}
-                                colors={['#039BE5']}
-                            />
-                        }
-                    >
+                <View style={styles.search}>
+                    <TextInput
 
-                        <View style={styles.search}>
-                            <TextInput
-                                placeholder='Search Purchase order ID'
-                                placeholderTextColor='#039BE5'
-                                maxLength={25}
-                                keyboardType='number-pad'
-                                value={this.state.searchPO}
-                                onChangeText={(searchPO) => {
-                                    this.setState({ searchPO });
-                                    this.handlePOSearch(searchPO);
-                                }}
-                                style={styles.search_text} />
-                        </View>
-
-
-
-                        <Table style={{ marginTop: wp(3) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
-                            <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[0, 2, 3, 2, 2, 2]} />
-                            {slicedData.map((rowData, index) => this.renderRowData(rowData, index))}
-                        </Table>
-
-
-                        <View style={styles.pagination}>
-                            <TouchableOpacity onPress={this.prevPage} disabled={currentPage === 0}>
-                                <Text style={styles.paginationText}>Previous</Text>
-                            </TouchableOpacity>
-                            <Text style={styles.paginationText}>Page {currentPage + 1}</Text>
-                            <Text style={styles.paginationText}>Showing {startIndex + 1} - {endIndex} of {rowData.length} records</Text>
-                            <TouchableOpacity onPress={this.nextPage} disabled={endIndex >= rowData.length}>
-                                <Text style={styles.paginationText}>Next</Text>
-                            </TouchableOpacity>
-                        </View>
-
-                        {/* Popover */}
-                        <Modal
-                            animationType='fade'
-                            transparent={true}
-                            visible={this.state.isPopoverVisible}
-                            onRequestClose={this.closePopover}
-
-                        >
-                            <View style={styles.popoverContainer}>
-                                {this.renderPopoverContent()}
-                            </View>
-                        </Modal>
-                    </ScrollView>
+                        placeholder='Search Purchase order ID'
+                        placeholderTextColor='#039BE5'
+                        maxLength={25}
+                        keyboardType='number-pad'
+                        value={this.state.searchPO}
+                        onChangeText={(searchPO) => {
+                            this.setState({ searchPO });
+                            this.handlePOSearch(searchPO);
+                        }}
+                        style={styles.search_text} />
                 </View>
+                <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={
+                        <RefreshControl
+                            colors={['#039BE5']}
+                            refreshing={this.state.isRefreshing}
+                            onRefresh={this._handleListRefreshing}
+                            style={{bottom:wp(8)}}
+                        />
+                    }
+                    style={styles.container}>
 
+
+
+                    <Table style={{ marginTop: wp(2) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
+                        <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[0, 2, 3, 2, 2, 2]} />
+                        {slicedData.map((rowData, index) => (
+                            <Row
+                                key={index}
+                                data={Object.values(rowData).map((cellData, cellIndex) => {
+                                    if (cellIndex === 0) {
+                                        return (
+                                            <TouchableOpacity key={cellIndex}>
+                                                <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
+                                            </TouchableOpacity>
+                                        );
+                                    }
+                                    else {
+                                        return <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>;
+                                    }
+                                })}
+                                textStyle={styles.rowText}
+                                style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
+                                flexArr={[0, 2, 3, 2, 2, 2]}
+                            />
+                        ))}
+                    </Table>
+
+
+                    <View style={styles.pagination}>
+                        <TouchableOpacity onPress={this.prevPage} disabled={currentPage === 0}>
+                            <Text style={styles.paginationText}>Previous</Text>
+                        </TouchableOpacity>
+                        <Text style={styles.paginationText}>Page {currentPage + 1}</Text>
+                        <Text style={styles.paginationText}>Showing {startIndex + 1} - {endIndex} of {rowData.length} records</Text>
+                        <TouchableOpacity onPress={this.nextPage} disabled={endIndex >= rowData.length}>
+                            <Text style={styles.paginationText}>Next</Text>
+                        </TouchableOpacity>
+                    </View>
+                </ScrollView>
                 {showProcessingLoader && <ProcessingLoader />}
+
             </>
         );
     }
@@ -296,7 +252,7 @@ export class PO extends Component {
 const styles = StyleSheet.create({
     container: {
         alignSelf: 'center',
-        marginTop: wp(2),
+
     },
     head: {
         backgroundColor: '#039BE5',
@@ -322,21 +278,24 @@ const styles = StyleSheet.create({
     rowText: {
         color: '#212529',
         textAlign: 'left',
-        fontSize: wp(2.6),
+        fontSize: wp(2.5),
         paddingHorizontal: wp(0.3),
-        marginLeft: 4
-
+        marginLeft: 4,
+        fontWeight: '400'
     },
-    rowText1: {
+    Highlight: {
         color: 'red',
-        textAlign: 'center',
-        fontSize: wp(2.6),
-        // Optional: add underline to indicate touchability
+        textAlign: 'left',
+        fontSize: wp(2.5),
+        fontWeight: '500',
+        paddingHorizontal: wp(0.3),
+        marginLeft: 4,
+
     },
     pagination: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: wp(4),
+        marginTop: wp(5),
         paddingHorizontal: wp(3)
     },
     paginationText: {
@@ -363,7 +322,7 @@ const styles = StyleSheet.create({
 
     },
     search_text: {
-        color: '#212529',
+        color: '#039BE5',
         fontSize: wp(3.5),
         marginLeft: wp(2),
         fontWeight: "500"

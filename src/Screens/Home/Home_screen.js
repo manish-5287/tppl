@@ -4,13 +4,14 @@ import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import Header_comp from '../../Component/Header/Header_comp';
 import Po_Table from '../../Component/Table/Po_Table';
 import GRN_Table from '../../Component/Table/GRN_Table';
-import  { Indents_Table } from '../../Component/Table/Indents_Table';
-import  { Reverses_Table } from '../../Component/Table/Reverses_Table';
+import { Indents_Table } from '../../Component/Table/Indents_Table';
+import { Reverses_Table } from '../../Component/Table/Reverses_Table';
 import { BASE_URL, makeRequest } from '../../api/Api_info';
 import Production_Table from '../../Component/Table/Production_Table';
 import { KEYS, getData } from '../../api/User_Preference';
 import CustomLoader from '../../Component/loader/Loader';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
+
 
 
 export default class Dashboard extends Component {
@@ -50,24 +51,26 @@ export default class Dashboard extends Component {
         monthmaintenancecount: 0
       },
       isRefreshing: false,
-      showProcessingLoader:false
-      
-
-
+      showProcessingLoader: false,
+      isLoading: false
     }
+
   };
 
   componentDidMount() {
     this.handleSliderBox();
+    this.props.navigation.addListener('focus', this._handleListRefresh); // Add listener for screen focus
+         
+  }
 
-  };
+  componentWillUnmount() {
+      this.props.navigation.removeListener('focus', this._handleListRefresh); // Remove listener on component unmount
+  }
 
   handleSliderBox = async () => {
     try {
       const Info = await getData(KEYS.USER_INFO)
       console.log('StoreData_info', Info);
-
-
       const response = await makeRequest(BASE_URL + '/mobile/dashboard');
       const { success, message, contractHeader, poHeader, grnHeader, supplierHeader, maintenanceHeader } = response;
       // console.log('Slider_box', response);
@@ -94,7 +97,7 @@ export default class Dashboard extends Component {
   handlePO = () => {
     try {
 
-      this.props.navigation.navigate('PO')
+      this.props.navigation.navigate('PO_AAA')
     } catch (error) {
       console.log(error);
     }
@@ -110,7 +113,7 @@ export default class Dashboard extends Component {
   }
   handleGRN = () => {
     try {
-      this.props.navigation.navigate('GRN')
+      this.props.navigation.navigate('GRN_AA')
     } catch (error) {
       console.log(error);
     }
@@ -126,8 +129,7 @@ export default class Dashboard extends Component {
 
   handleIndent = () => {
     try {
-
-      this.props.navigation.navigate('Indent')
+      this.props.navigation.navigate('Indent_A')
     } catch (error) {
       console.log(error);
     }
@@ -136,7 +138,7 @@ export default class Dashboard extends Component {
   handleReverse = () => {
     try {
 
-      this.props.navigation.navigate('Reverse')
+      this.props.navigation.navigate('Reverse_AA')
     } catch (error) {
       console.log(error);
     }
@@ -145,7 +147,7 @@ export default class Dashboard extends Component {
   handleSupplier = () => {
     try {
 
-      this.props.navigation.navigate('supplier')
+      this.props.navigation.navigate('vendor_bar')
     } catch (error) {
       console.log(error);
     }
@@ -161,7 +163,7 @@ export default class Dashboard extends Component {
           this.handleSliderBox();
           // resetting isRefreshing after the update
           this.setState({ isRefreshing: false });
-        }, 100);
+        }, 1000);
       });
     } catch (error) {
       console.log(error.message);
@@ -179,7 +181,8 @@ export default class Dashboard extends Component {
       <>
         <Header_comp navigation={this.props.navigation} />
         <ScrollView
-          style={{ padding: wp(2), flex: 1, backgroundColor: '#fefefc' }}
+        showsVerticalScrollIndicator={false}
+          style={{ padding: wp(2), flex: 1, backgroundColor: '#fefefc',marginBottom:wp(2) }}
           refreshControl={
             <RefreshControl
               colors={['#0068b1']}
