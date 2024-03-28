@@ -20,7 +20,7 @@ export default class Indent_A extends Component {
             showProcessingLoader: false,
             isRefreshing: false,
             isLoading: false,
-            errorMessage:''
+            errorMessage: ''
 
 
         };
@@ -68,16 +68,16 @@ export default class Indent_A extends Component {
     handleSearch = async (searchName) => {
         try {
             if (searchName.length < 1) {
-                this.setState({ contractName: [] }); // Clear the search results
+                this.setState({ contractName: [],  currentPage: 0 }); // Clear the search results
                 return;
-              }
+            }
             const params = { workorderno: searchName };
             // console.log('Search', params);
             const response = await makeRequest(BASE_URL + '/mobile/searchcontractname', params);
             const { success, message, contractName } = response;
 
             if (success) {
-                this.setState({ contractName: contractName });
+                this.setState({ contractName: contractName ,  currentPage: 0});
             } else {
                 this.setState({ contractName: [], errorMessage: message })
             }
@@ -105,7 +105,7 @@ export default class Indent_A extends Component {
         if (!item) {
             return (
                 <View style={{ alignItems: 'center', paddingVertical: wp(2) }}>
-                    <Text>{this.state.errorMessage}</Text>
+                    <Text>NO Data</Text>
                 </View>
             );
         }
@@ -128,7 +128,7 @@ export default class Indent_A extends Component {
                     // updating list after the delay
                     this.handleIndent();
                     // resetting isRefreshing after the update
-                    this.setState({ isRefreshing: false, searchName: '' });
+                    this.setState({ isRefreshing: false, searchName: '',  currentPage: 0 });
                 }, 2000);
             });
         } catch (error) {
@@ -206,7 +206,7 @@ export default class Indent_A extends Component {
 
                 <View style={styles.container}>
                     <ScrollView
-                        style={{ marginBottom: wp(16) }}
+                        contentContainerStyle={{flexGrow:1}}
                         showsVerticalScrollIndicator={false}
                         refreshControl={
                             <RefreshControl
@@ -242,7 +242,7 @@ export default class Indent_A extends Component {
                                     />
                                 ) : (
                                     <View style={styles.noResultsContainer}>
-                                        <Text style={styles.noResultsText}>{this.state.errorMessage}</Text>
+                                        <Text style={styles.noResultsText}>No Data Found</Text>
                                     </View>
                                 )}
                             </View>
@@ -261,7 +261,7 @@ export default class Indent_A extends Component {
                                                     <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
                                                 </TouchableOpacity>
                                             );
-                                        } else if(cellIndex === 1) {
+                                        } else if (cellIndex === 1) {
                                             return (
                                                 <TouchableOpacity key={cellIndex}>
                                                     <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
@@ -410,5 +410,4 @@ const styles = StyleSheet.create({
 });
 
 
- 
- 
+

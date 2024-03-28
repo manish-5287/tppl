@@ -20,9 +20,9 @@ class NotificationHandler {
     // console.log('User Info:', info);
     if (Platform.OS === token.os) {
       let uniqueId = getUniqueId();
-      // console.log('====================================');
-      // console.log('dada', uniqueId);
-      // console.log('====================================');
+      console.log('====================================');
+      console.log('dada', uniqueId);
+      console.log('====================================');
       const params = {
         token: token.token,
         // userId: null,
@@ -32,6 +32,7 @@ class NotificationHandler {
         BASE_URL + '/mobile/uploadToken',
         params,
       );
+      console.log('afafafa', response);
       if (response.success) {
         //   const deviceId = response.userInfo.deviceId;
         await storeData(KEYS.USER_INFO);
@@ -50,6 +51,7 @@ class NotificationHandler {
     if (notification.action === 'Yes') {
       PushNotification.invokeApp(notification);
     }
+    
   }
 
   // (optional) Called when the user fails to register for remote notifications. Typically occurs when APNS is having issues, or the device is a simulator. (iOS)

@@ -1,4 +1,4 @@
-import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, Modal, FlatList, Alert, RefreshControl, ScrollViewBase } from 'react-native'
+import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, FlatList, RefreshControl, ScrollView, } from 'react-native'
 import React, { Component } from 'react'
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { Table, Row } from 'react-native-table-component';
@@ -66,26 +66,26 @@ export default class Contract extends Component {
         }
     };
 
-    handleSearch = async () => {
+    handleSearch = async (searchName) => {
         try {
             if (searchName.length < 1) {
-                this.setState({ contractName: [] }); // Clear the search results
+                this.setState({ contractName: [],  currentPage: 0 }); // Clear the search results
                 return;
             }
-            const { searchName } = this.state;
+
             const params = { workorderno: searchName };
             // console.log('Search', params);
             const response = await makeRequest(BASE_URL + '/mobile/searchcontractname', params);
             const { success, message, contractName } = response;
             if (success) {
-                this.setState({ contractName: contractName });
+                this.setState({ contractName: contractName,  currentPage: 0 });
             } else {
                 this.setState({ contractName: [], errorMessage: message });
 
             }
         } catch (error) {
             console.log(error);
-            this.setState({ contractName: [], showProcessingLoader: false });
+            this.setState({ contractName: [] });
 
 
         }
@@ -109,7 +109,7 @@ export default class Contract extends Component {
         if (!item) {
             return (
                 <View style={{ alignItems: 'center', paddingVertical: wp(2) }}>
-                    <Text>{this.state.errorMessage}</Text>
+                    <Text>No data </Text>
                 </View>
             );
         }
@@ -126,20 +126,20 @@ export default class Contract extends Component {
     _handleListRefresh = () => {
         try {
             // pull-to-refresh
-            this.setState({ isRefreshing: true }, () => {
-                // setTimeout with a delay of 1000 milliseconds (1 second)
-                setTimeout(() => {
-                    // updating list after the delay
-                    this.handleContract();
-                    // resetting isRefreshing after the update
-                    this.setState({ isRefreshing: false, searchName: '' });
-                }, 2000);
-            });
+            this.setState({ isRefreshing: true });
+
+            setTimeout(() => {
+                // updating list after the delay
+                this.handleContract();
+
+                // resetting isRefreshing after the update
+                this.setState({ isRefreshing: false, searchName: '',  currentPage: 0 });
+            }, 2000);
         } catch (error) {
             console.log(error);
-
         }
     };
+
 
     handleGoBackHome = () => {
         this.props.navigation.navigate('home');
@@ -210,83 +210,88 @@ export default class Contract extends Component {
                         }} />
 
                 </View>
+                <ScrollView
+                    contentContainerStyle={{ flexGrow: 1 }}
+                    refreshControl={
+                        <RefreshControl
+                            colors={['grey']}
+                            refreshing={this.state.isRefreshing}
+                            onRefresh={this._handleListRefresh}
+                        />
+                    }>
 
-                <View style={styles.container}>
+                    <View style={styles.container}>
 
-                    <View style={styles.search}>
-                        <TextInput
-                            placeholder='Search Work Order No.'
-                            placeholderTextColor='#212529'
-                            maxLength={25}
-                            keyboardType='number-pad'
-                            value={this.state.searchName}
-                            onChangeText={(searchName) => {
-                                this.setState({ searchName });
-                                this.handleSearch(searchName);
-                            }}
-                            style={styles.search_text} />
-                    </View>
-
-                    {this.state.searchName.length > 0 ? (
-                        <View style={styles.searchResultsContainer}>
-                            {this.state.contractName.length > 0 ? (
-                                <FlatList
-                                    data={this.state.contractName}
-                                    renderItem={this.renderProductItem}
-                                    // keyExtractor={(item) => item.id.toString()}
-                                    style={styles.searchResultsList}
-                                />
-                            ) : (
-                                <View style={styles.noResultsContainer}>
-                                    <Text style={styles.noResultsText}>{this.state.errorMessage}</Text>
-                                </View>
-                            )}
+                        <View style={styles.search}>
+                            <TextInput
+                                placeholder='Search Work Order No.'
+                                placeholderTextColor='#212529'
+                                maxLength={25}
+                                keyboardType='number-pad'
+                                value={this.state.searchName}
+                                onChangeText={(searchName) => {
+                                    this.setState({ searchName });
+                                    this.handleSearch(searchName);
+                                }}
+                                style={styles.search_text} />
                         </View>
-                    ) : null}
 
-                    <Table style={{ marginTop: wp(2) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
-                        <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[3, 3, 2, 2]} />
-                        {slicedData.map((rowData, index) => (
-                            <Row
-                                key={index}
-                                data={Object.values(rowData).map((cellData, cellIndex) => {
-                                    if (cellIndex === 0) {
-                                        return (
-                                            <TouchableOpacity key={cellIndex}>
-                                                <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
-                                            </TouchableOpacity>
-                                        );
-                                    }
-                                    else {
-                                        return <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>;
-                                    }
-                                })}
-                                textStyle={styles.rowText}
-                                style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
-                                flexArr={[3, 3, 2, 2]}
-                            />
-                        ))}
-                    </Table>
+                        {this.state.searchName.length > 0 ? (
+                            <View style={styles.searchResultsContainer}>
+                                {this.state.contractName.length > 0 ? (
+                                    <FlatList
+                                        data={this.state.contractName}
+                                        renderItem={this.renderProductItem}
+                                        // keyExtractor={(item) => item.id.toString()}
+                                        style={styles.searchResultsList}
+                                    />
+                                ) : (
+                                    <View style={styles.noResultsContainer}>
+                                        <Text style={styles.noResultsText}>No Data Found</Text>
+                                    </View>
+                                )}
+                            </View>
+                        ) : null}
 
-                    <View style={styles.pagination}>
-                        <TouchableOpacity onPress={this.prevPage} disabled={currentPage === 0}>
-                            <Text style={styles.paginationText}>Previous</Text>
-                        </TouchableOpacity>
-                        <Text style={styles.paginationText}>Page {currentPage + 1}</Text>
-                        <Text style={styles.paginationText}>Showing {startIndex + 1} - {endIndex} of {rowData.length} records</Text>
-                        <TouchableOpacity onPress={this.nextPage} disabled={endIndex >= rowData.length}>
-                            <Text style={styles.paginationText}>Next</Text>
-                        </TouchableOpacity>
+                        <Table style={{ marginTop: wp(2) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
+                            <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[3, 3, 2, 2]} />
+                            {slicedData.map((rowData, index) => (
+                                <Row
+                                    key={index}
+                                    data={Object.values(rowData).map((cellData, cellIndex) => {
+                                        if (cellIndex === 0) {
+                                            return (
+                                                <TouchableOpacity key={cellIndex}>
+                                                    <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
+                                                </TouchableOpacity>
+                                            );
+                                        }
+                                        else {
+                                            return <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>;
+                                        }
+                                    })}
+                                    textStyle={styles.rowText}
+                                    style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
+                                    flexArr={[3, 3, 2, 2]}
+                                />
+                            ))}
+                        </Table>
 
+                        <View style={styles.pagination}>
+                            <TouchableOpacity onPress={this.prevPage} disabled={currentPage === 0}>
+                                <Text style={styles.paginationText}>Previous</Text>
+                            </TouchableOpacity>
+                            <Text style={styles.paginationText}>Page {currentPage + 1}</Text>
+                            <Text style={styles.paginationText}>Showing {startIndex + 1} - {endIndex} of {rowData.length} records</Text>
+                            <TouchableOpacity onPress={this.nextPage} disabled={endIndex >= rowData.length}>
+                                <Text style={styles.paginationText}>Next</Text>
+                            </TouchableOpacity>
+
+                        </View>
                     </View>
-                </View>
-
+                </ScrollView>
                 {showProcessingLoader && <ProcessingLoader />}
-                <RefreshControl
-                    colors={['grey']}
-                    refreshing={this.state.isRefreshing}
-                    onRefresh={this._handleListRefresh}
-                />
+
             </>
         );
     }

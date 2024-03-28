@@ -47,26 +47,36 @@ export class PO_AAA extends Component {
     handlePOSearch = async (searchPO) => {
         try {
             if (searchPO.length < 1) {
-                this.setState({rowData: [] });
+                // Reset search results and fetch all data
+                this.setState({ rowData: [], currentPage: 0 });
                 this.handlePO();
                 return;
             }
-            const params = { po_id: searchPO };
-            // console.log('Search', params);
-            const response = await makeRequest(BASE_URL + '/mobile/searchpurchaseorder', params)
-            const { success, message, purchaseDetails } = response;
-            // console.log('2222222', response);
-            if (success) {
-                this.setState({ rowData: purchaseDetails })
-            } else {
-                console.log(message);
-            }
 
+            // Check if there are existing search results
+            const { searchResults } = this.state;
+            if (searchResults && searchResults.length > 0) {
+                // Filter search results based on new search query
+                const filteredResults = searchResults.filter(item =>
+                    item.po_id.includes(searchPO)
+                );
+                this.setState({ rowData: filteredResults, currentPage: 0 });
+            } else {
+                // Fetch new data based on search query
+                const params = { po_id: searchPO };
+                const response = await makeRequest(BASE_URL + '/mobile/searchpurchaseorder', params);
+                const { success, message, purchaseDetails } = response;
+                if (success) {
+                    this.setState({ rowData: purchaseDetails, currentPage: 0 });
+                } else {
+                    console.log(message);
+                }
+            }
         } catch (error) {
             console.log(error);
-
         }
     }
+
 
     nextPage = () => {
         const { currentPage } = this.state;
@@ -89,7 +99,7 @@ export class PO_AAA extends Component {
                     // updating list after the delay
                     this.handlePO();
                     // resetting isRefreshing after the update
-                    this.setState({ isRefreshing: false, searchPO: '' });
+                    this.setState({ isRefreshing: false, searchPO: '', currentPage: 0 });
                 }, 2000);
             });
         } catch (error) {
@@ -166,21 +176,11 @@ export class PO_AAA extends Component {
 
 
                 </View>
-                <View style={styles.search}>
-                    <TextInput
-                        placeholder='Search Purchase order ID'
-                        placeholderTextColor='#039BE5'
-                        maxLength={25}
-                        keyboardType='number-pad'
-                        value={this.state.searchPO}
-                        onChangeText={(searchPO) => {
-                            this.setState({ searchPO });
-                            this.handlePOSearch(searchPO);
-                        }}
-                        style={styles.search_text} />
-                </View>
+
+
                 <ScrollView
-                showsVerticalScrollIndicator={false}
+                    contentContainerStyle={{ flexGrow: 1 }}
+                    showsVerticalScrollIndicator={false}
                     refreshControl={
                         <RefreshControl
                             colors={['#039BE5']}
@@ -190,7 +190,19 @@ export class PO_AAA extends Component {
                     }
                     style={styles.container}>
 
-
+                    <View style={styles.search}>
+                        <TextInput
+                            placeholder='Search Purchase order ID'
+                            placeholderTextColor='#039BE5'
+                            maxLength={25}
+                            keyboardType='number-pad'
+                            value={this.state.searchPO}
+                            onChangeText={(searchPO) => {
+                                this.setState({ searchPO });
+                                this.handlePOSearch(searchPO);
+                            }}
+                            style={styles.search_text} />
+                    </View>
 
                     <Table style={{ marginTop: wp(2) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
                         <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[0, 2, 3, 2, 2, 2]} />
@@ -227,6 +239,7 @@ export class PO_AAA extends Component {
                             <Text style={styles.paginationText}>Next</Text>
                         </TouchableOpacity>
                     </View>
+
                 </ScrollView>
                 {showProcessingLoader && <ProcessingLoader />}
 
@@ -239,7 +252,7 @@ export class PO_AAA extends Component {
 const styles = StyleSheet.create({
     container: {
         alignSelf: 'center',
-       
+
     },
     head: {
         backgroundColor: '#039BE5',

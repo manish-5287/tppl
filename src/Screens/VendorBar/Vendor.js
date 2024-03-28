@@ -77,7 +77,8 @@ export class Vendor extends Component {
                         isRefreshing: false,
                         selectedDateFrom: '',
                         selectedDateTo: '',
-                        searchName: ''
+                        searchName: '',
+                        currentPage: 0
                     });
                 }, 2000);
             });
@@ -135,9 +136,9 @@ export class Vendor extends Component {
         try {
             const { searchName } = this.state;
             if (searchName.length < 1) {
-                this.setState({ contractName: [] }); // Clear the search results
+                this.setState({ contractName: [],  currentPage: 0 }); // Clear the search results
                 return;
-              }
+            }
             const params = {
                 vendorname: searchName
             };
@@ -145,7 +146,7 @@ export class Vendor extends Component {
             const response = await makeRequest(BASE_URL + '/mobile/searchvendorname', params);
             const { success, message, vendorName } = response;
             if (success) {
-                this.setState({ contractName: vendorName, showFlatList: true });
+                this.setState({ contractName: vendorName, showFlatList: true,  currentPage: 0 });
             } else {
                 this.setState({ contractName: [], errorMessage: message, showFlatList: true })
             }
@@ -172,7 +173,7 @@ export class Vendor extends Component {
         if (!item) {
             return (
                 <View style={{ alignItems: 'center', paddingVertical: wp(2) }}>
-                    <Text>{this.state.errorMessage}</Text>
+                    <Text>No Data</Text>
                 </View>
             );
         }
@@ -282,7 +283,8 @@ export class Vendor extends Component {
 
                 <View style={styles.container}>
                     <ScrollView
-                        style={{ marginBottom: wp(16) }}
+                        contentContainerStyle={{ flexGrow: 1 }}
+                        style={{marginBottom:wp(16)}}
                         showsVerticalScrollIndicator={false}
                         refreshControl={
                             <RefreshControl
@@ -316,7 +318,7 @@ export class Vendor extends Component {
                                     />
                                 ) : (
                                     <View style={styles.noResultsContainer}>
-                                        <Text style={styles.noResultsText}>{this.state.errorMessage}</Text>
+                                        <Text style={styles.noResultsText}>No Data Found</Text>
                                     </View>
                                 )}
                             </View>
@@ -427,8 +429,6 @@ export class Vendor extends Component {
 const styles = StyleSheet.create({
     container: {
         alignSelf: 'center',
-
-
     },
     head: {
         backgroundColor: '#00838F',

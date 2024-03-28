@@ -6,6 +6,7 @@ import { BASE_URL, makeRequest } from '../../api/Api_info';
 import CustomLoader from '../../Component/loader/Loader';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
 import DateTimePicker from 'react-native-modal-datetime-picker';
+import showToast from '../../Component/tost/ShowToast';
 
 
 export class Supllier extends Component {
@@ -80,7 +81,8 @@ export class Supllier extends Component {
                         isRefreshing: false,
                         selectedDateFrom: '',
                         selectedDateTo: '',
-                        searchName: ''
+                        searchName: '',
+                        currentPage: 0
                     });
                 }, 2000);
             });
@@ -120,6 +122,7 @@ export class Supllier extends Component {
             const { success, message, vendorDetails } = response;
             if (success) {
                 this.setState({ rowData: vendorDetails, searchDataAvailable: vendorDetails.length > 0 });
+                
             } else {
                 console.log(message);
                 this.setState({ searchDataAvailable: false });
@@ -127,6 +130,7 @@ export class Supllier extends Component {
         } catch (error) {
             console.log(error);
             this.setState({ searchDataAvailable: false });
+     
         }
     };
 
@@ -174,7 +178,7 @@ export class Supllier extends Component {
         if (!item) {
             return (
                 <View style={{ alignItems: 'center', paddingVertical: wp(2) }}>
-                    <Text>{this.state.errorMessage}</Text>
+                    <Text>No Data </Text>
                 </View>
             );
         }
@@ -286,7 +290,8 @@ export class Supllier extends Component {
 
                 <View style={styles.container}>
                     <ScrollView
-                        style={{ marginBottom: wp(16) }}
+                        contentContainerStyle={{ flexGrow: 1 }}
+                        style={{marginBottom:wp(16)}}
                         showsVerticalScrollIndicator={false}
                         refreshControl={
                             <RefreshControl
@@ -321,9 +326,9 @@ export class Supllier extends Component {
                                     />
                                 ) : (
                                     <View style={styles.noResultsContainer}>
-                                        <Text style={styles.noResultsText}>{this.state.errorMessage}</Text>
+                                        <Text style={styles.noResultsText}>No Data Found</Text>
                                     </View>
-                                )}
+                                )} 
                             </View>
                         ) : null}
 
@@ -391,10 +396,10 @@ export class Supllier extends Component {
                                 <Row
                                     key={index}
                                     data={Object.values(rowData).map((cellData, cellIndex) => {
-                                        if (cellIndex === 0) {
+                                        if (cellIndex === 1) {
                                             return (
                                                 <TouchableOpacity key={cellIndex}>
-                                                    <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>
+                                                    <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
                                                 </TouchableOpacity>
                                             );
                                         }
@@ -469,7 +474,7 @@ const styles = StyleSheet.create({
         fontWeight: '400'
     },
     Highlight: {
-        color: 'red',
+        color: '#212529',
         textAlign: 'left',
         fontSize: wp(2.5),
         fontWeight: '500',

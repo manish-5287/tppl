@@ -13,7 +13,7 @@ export class PO extends Component {
         super(props);
         this.state = {
             tableHead: ['Id', 'Date', 'Vendor', 'Qty', 'Amount', 'Delivery'],
-            rowData: [],
+            rowData: [], // Initialize as an empty array
             currentPage: 0,
             rowsPerPage: 9,
             searchPO: '',
@@ -42,37 +42,47 @@ export class PO extends Component {
                 this.setState({ rowData: poDetails, isRefreshing: false });
             } else {
                 console.log(message);
-                this.setState({  isRefreshing: false });
+                this.setState({ isRefreshing: false });
             }
         } catch (error) {
             console.log(error);
-            this.setState({isRefreshing: false });
+            this.setState({ isRefreshing: false });
         }
     }
 
     handlePOSearch = async (searchPO) => {
         try {
             if (searchPO.length < 1) {
-                this.setState({rowData: [] });
+                // Reset search results and fetch all data
+                this.setState({ rowData: [], currentPage: 0 });
                 this.handlePO();
                 return;
             }
-            const params = { po_id: searchPO };
-            // console.log('Search', params);
-            const response = await makeRequest(BASE_URL + '/mobile/searchpurchaseorder', params)
-            const { success, message, purchaseDetails } = response;
-            // console.log('2222222', response);
-            if (success) {
-                this.setState({ rowData: purchaseDetails })
-            } else {
-                console.log(message);
-            }
 
+            // Check if there are existing search results
+            const { searchResults } = this.state;
+            if (searchResults && searchResults.length > 0) {
+                // Filter search results based on new search query
+                const filteredResults = searchResults.filter(item =>
+                    item.po_id.includes(searchPO)
+                );
+                this.setState({ rowData: filteredResults, currentPage: 0 });
+            } else {
+                // Fetch new data based on search query
+                const params = { po_id: searchPO };
+                const response = await makeRequest(BASE_URL + '/mobile/searchpurchaseorder', params);
+                const { success, message, purchaseDetails } = response;
+                if (success) {
+                    this.setState({ rowData: purchaseDetails, currentPage: 0 });
+                } else {
+                    console.log(message);
+                }
+            }
         } catch (error) {
             console.log(error);
-
         }
     }
+
 
     nextPage = () => {
         const { currentPage } = this.state;
@@ -95,7 +105,7 @@ export class PO extends Component {
                     // updating list after the delay
                     this.handlePO();
                     // resetting isRefreshing after the update
-                    this.setState({ isRefreshing: false, searchPO: '' });
+                    this.setState({ isRefreshing: false, searchPO: '', currentPage: 0 });
                 }, 2000);
             });
         } catch (error) {
@@ -107,13 +117,14 @@ export class PO extends Component {
         this.props.navigation.navigate('home');
     };
 
-  
+
 
     render() {
         const { tableHead, rowData, currentPage, rowsPerPage, } = this.state;
         const startIndex = currentPage * rowsPerPage;
         const endIndex = Math.min(startIndex + rowsPerPage, rowData.length); // Calculate end index while considering the last page
         const slicedData = rowData.slice(startIndex, endIndex);
+
         if (this.state.isLoading) {
             return <CustomLoader />;
         }
@@ -192,13 +203,14 @@ export class PO extends Component {
                         style={styles.search_text} />
                 </View>
                 <ScrollView
+                    contentContainerStyle={{ flexGrow: 1 }}
                     showsVerticalScrollIndicator={false}
                     refreshControl={
                         <RefreshControl
                             colors={['#039BE5']}
                             refreshing={this.state.isRefreshing}
                             onRefresh={this._handleListRefreshing}
-                            style={{bottom:wp(8)}}
+                            style={{ bottom: wp(8) }}
                         />
                     }
                     style={styles.container}>

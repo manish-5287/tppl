@@ -5,7 +5,7 @@ import { Table, Row } from 'react-native-table-component';
 import { BASE_URL, makeRequest } from '../../api/Api_info';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
 import CustomLoader from '../../Component/loader/Loader';
- 
+
 
 
 
@@ -35,7 +35,6 @@ export default class GRN extends Component {
     componentWillUnmount() {
         this.props.navigation.removeListener('focus', this._handleListRefreshing); // Remove listener on component unmount
     }
-
 
     handlePress = (cellData) => {
         this.setState({ goodsID: cellData }, () => {
@@ -69,11 +68,11 @@ export default class GRN extends Component {
             const { success, message, grnDetails } = response;
             // console.log("grn",response);
             if (success) {
-                this.setState({ rowData: grnDetails,  isRefreshing: false });
+                this.setState({ rowData: grnDetails, isRefreshing: false });
 
             } else {
                 console.log(message);
-                this.setState({  isRefreshing: false });
+                this.setState({ isRefreshing: false });
 
 
             }
@@ -83,24 +82,33 @@ export default class GRN extends Component {
 
         }
     };
-
     handlesearchGrn = async (searchGRN) => {
         try {
             if (!searchGRN.trim()) {
-                this.setState({ rowData: [] });
+                this.setState({ rowData: [], currentPage: 0 });
                 this.handleGRN();
                 return;
             }
 
-            const params = { po_id: searchGRN };
-            const response = await makeRequest(BASE_URL + '/mobile/searchgrn', params);
-            const { success, message, grnreceiveDetails } = response;
-
-            if (success) {
-                this.setState({ rowData: grnreceiveDetails });
+            // Check if there are existing search results
+            const { searchResults } = this.state;
+            if (searchResults && searchResults.length > 0) {
+                // Filter search results based on new search query
+                const filteredResults = searchResults.filter(item =>
+                    item.po_id.includes(searchPO)
+                );
+                this.setState({ rowData: filteredResults, currentPage: 0 });
             } else {
-                console.log(message); // Log the error message for debugging
-                // Optionally, you can show an alert or toast message to inform the user about the error
+                const params = { po_id: searchGRN };
+                const response = await makeRequest(BASE_URL + '/mobile/searchgrn', params);
+                const { success, message, grnreceiveDetails } = response;
+
+                if (success) {
+                    this.setState({ rowData: grnreceiveDetails, currentPage: 0 });
+                } else {
+                    console.log(message); // Log the error message for debugging
+                    // Optionally, you can show an alert or toast message to inform the user about the error
+                }
             }
         } catch (error) {
             console.log(error); // Log any network or other errors for debugging
@@ -121,7 +129,7 @@ export default class GRN extends Component {
         }
     };
 
- 
+
 
     _handleListRefreshing = async () => {
         try {
@@ -132,7 +140,7 @@ export default class GRN extends Component {
                     // updating list after the delay
                     this.handleGRN();
                     // resetting isRefreshing after the update
-                    this.setState({ isRefreshing: false, searchGRN: '' });
+                    this.setState({ isRefreshing: false, searchGRN: '', currentPage: 0 });
                 }, 2000);
             });
         } catch (error) {
@@ -209,9 +217,10 @@ export default class GRN extends Component {
                         }} />
 
                 </View>
+
                 <View style={styles.search}>
                     <TextInput
-                        placeholder='Search Purchase Order Id'
+                        placeholder='Search Grn Id'
                         placeholderTextColor='#8D6E63'
                         maxLength={25}
                         keyboardType='number-pad'
@@ -220,12 +229,13 @@ export default class GRN extends Component {
                             this.setState({ searchGRN });
                             this.handlesearchGrn(searchGRN);
                         }}
-                        
+
                         style={styles.search_text} />
                 </View>
 
                 <View style={styles.container}>
                     <ScrollView
+                        contentContainerStyle={{ flexGrow: 1 }}
                         showsVerticalScrollIndicator={false}
                         refreshControl={
                             <RefreshControl
@@ -233,8 +243,7 @@ export default class GRN extends Component {
                                 onRefresh={this._handleListRefreshing}
                                 colors={['#8D6E63']}
                             />
-                        }
-                    >
+                        }>
 
                         <Table style={{ marginTop: wp(2) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
                             <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[0, 0, 2, 2, 3, 2]} />

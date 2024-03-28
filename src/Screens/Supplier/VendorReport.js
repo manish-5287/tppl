@@ -6,6 +6,7 @@ import { BASE_URL, makeRequest } from '../../api/Api_info';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
 import CustomLoader from '../../Component/loader/Loader';
 import DateTimePicker from 'react-native-modal-datetime-picker';
+import { showToast } from '../../Component/tost/ShowToast';
 
 export class VendorReport extends Component {
     constructor(props) {
@@ -28,7 +29,8 @@ export class VendorReport extends Component {
             showProcessingLoader: false,
             isRefreshing: false,
             isLoading: false,
-            errorMessage:''
+            errorMessage: '',
+
 
         };
     }
@@ -108,30 +110,7 @@ export class VendorReport extends Component {
     };
 
 
-    handleCellPress = (cellData) => {
-        // Set the content of the popover based on the pressed cell data
-        this.setState({
-            isPopoverVisible: true,
-            popoverContent: cellData
-        });
-    };
 
-    handleCellPress1 = (cellData) => {
-        // Set the content of the popover based on the pressed cell data
-        this.setState({
-            isPopoverVisible: true,
-            popoverContent: cellData
-        });
-    };
-
-
-    closePopover = () => {
-        // Close the popover
-        this.setState({
-            isPopoverVisible: false,
-            popoverContent: ""
-        });
-    };
 
     nextPage = () => {
         const { currentPage } = this.state;
@@ -145,29 +124,6 @@ export class VendorReport extends Component {
         }
     };
 
-    renderPopoverContent = () => {
-        // Render the content of the popover
-        return (
-            <View style={styles.popoverContent}>
-                <Text>{this.state.popoverContent}</Text>
-                <TouchableOpacity style={{ marginTop: wp(10) }} onPress={this.closePopover}>
-                    <Text>Close</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    };
-
-    renderPopoverContent1 = () => {
-        // Render the content of the popover
-        return (
-            <View style={styles.popoverContent}>
-                <Text>{this.state.popoverContent}</Text>
-                <TouchableOpacity style={{ marginTop: wp(10) }} onPress={this.closePopover}>
-                    <Text>Close</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    };
 
 
     _handleListRefresh = async () => {
@@ -183,7 +139,8 @@ export class VendorReport extends Component {
                         isRefreshing: false,
                         selectedDateFrom: '',
                         selectedDateTo: '',
-                        searchName: ''
+                        searchName: '',
+                        currentPage: 0
                     });
                 }, 2000);
             });
@@ -212,12 +169,17 @@ export class VendorReport extends Component {
             const { success, message, vendorsData } = response
             if (success) {
                 this.setState({ rowData: vendorsData })
-
+                showToast(message);
             } else {
-                console.log(message);
+                showToast(message);
+
             }
         } catch (error) {
             console.log(error);
+            showToast(message);
+
+
+
         }
     }
 
@@ -228,22 +190,22 @@ export class VendorReport extends Component {
             if (searchName.length < 1) {
                 this.setState({ contractName: [] }); // Clear the search results
                 return;
-              }
+            }
             const params = {
                 vendorname: searchName
             };
             console.log('search', params);
-   
+
             const response = await makeRequest(BASE_URL + '/mobile/searchvendorname', params);
             const { success, message, vendorName } = response;
             if (success) {
-                this.setState({ contractName: vendorName, showFlatList: true});
+                this.setState({ contractName: vendorName, showFlatList: true, searchDataFound: true });
             } else {
-                this.setState({ contractName: [], errorMessage: message, showFlatList: true })
+                this.setState({ contractName: [], errorMessage: message, showFlatList: true, searchDataFound: false })
             }
         } catch (error) {
             console.log(error);
-            this.setState({ contractName: [],showFlatList: false })
+            this.setState({ contractName: [], showFlatList: false, searchDataFound: false })
         }
     };
 
@@ -264,7 +226,7 @@ export class VendorReport extends Component {
         if (!item) {
             return (
                 <View style={{ alignItems: 'center', paddingVertical: wp(2) }}>
-                    <Text>{this.state.errorMessage}</Text>
+                    <Text>No Data </Text>
                 </View>
             );
         }
@@ -354,7 +316,8 @@ export class VendorReport extends Component {
 
                 <View style={styles.container}>
                     <ScrollView
-                        style={{ marginBottom: wp(16) }}
+                        contentContainerStyle={{ flexGrow: 1 }}
+                        style={{marginBottom:wp(16)}}
                         showsVerticalScrollIndicator={false}
                         refreshControl={
                             <RefreshControl
@@ -388,7 +351,7 @@ export class VendorReport extends Component {
                                     />
                                 ) : (
                                     <View style={styles.noResultsContainer}>
-                                        <Text style={styles.noResultsText}>{this.state.errorMessage}</Text>
+                                        <Text style={styles.noResultsText}>No Data Found</Text>
                                     </View>
                                 )}
                             </View>
@@ -464,31 +427,6 @@ export class VendorReport extends Component {
                         </View>
 
 
-                        {/* Popover */}
-                        <Modal
-                            animationType='fade'
-                            transparent={true}
-                            visible={this.state.isPopoverVisible}
-                            onRequestClose={this.closePopover}
-
-                        >
-                            <View style={styles.popoverContainer}>
-                                {this.renderPopoverContent()}
-                            </View>
-                        </Modal>
-
-                        {/* Popover */}
-                        <Modal
-                            animationType='fade'
-                            transparent={true}
-                            visible={this.state.isPopoverVisible}
-                            onRequestClose={this.closePopover}
-
-                        >
-                            <View style={styles.popoverContainer}>
-                                {this.renderPopoverContent1()}
-                            </View>
-                        </Modal>
                     </ScrollView>
                 </View>
                 {showProcessingLoader && <ProcessingLoader />}

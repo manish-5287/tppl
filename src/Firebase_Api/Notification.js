@@ -109,3 +109,57 @@ export default class notification {
     PushNotification.getDeliveredNotifications(callback);
   }
 }
+componentDidMount = async () => {
+    await this.checkAppVersion();
+    this.handleSliderBox();
+    // this.onRegister();
+    AppState.addEventListener('change', this.handleAppStateChange);
+  };
+  handleAppStateChange = async nextAppState => {
+    try {
+      const {appState} = this.state;
+      if (appState.match(/inactive|background/) && nextAppState === 'active') {
+        await this.checkAppVersion();
+      }
+
+      this.setState({appState: nextAppState});
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
+  checkAppVersion = async () => {
+    try {
+      let buildNumber = null;
+      let IosbuildNumber = null;
+      if (Platform.OS === 'ios') {
+        IosbuildNumber = Number(DeviceInfo.getBuildNumber());
+      } else {
+        buildNumber = Number(deviceInfoModule.getBuildNumber());
+      }
+      console.log('====================================');
+      console.log('dada', buildNumber);
+      console.log('====================================');
+
+      let params = {
+        IosbuildNumber: IosbuildNumber,
+        build_no: buildNumber,
+      };
+
+      const response = await makeRequest(
+        BASE_URL + '/mobile/versioncheck',
+        params,
+      );
+      const {success, app_url, message, app_url_ios} = response;
+      console.log('====================================');
+      console.log('dada111', response);
+      console.log('====================================');
+
+      if (success === false) {
+        this.setState({isUpdateVisible: true});
+        const storeUrl = Platform.OS === 'ios' ? app_url_ios : app_url;
+        this.setState({isStoreUrl: storeUrl});
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };

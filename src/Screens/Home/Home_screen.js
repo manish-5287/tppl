@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, View, TouchableOpacity, Image, RefreshControl } from 'react-native'
+import { ScrollView, StyleSheet, Text, View, TouchableOpacity, Image, RefreshControl, AppState } from 'react-native'
 import React, { Component } from 'react'
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import Header_comp from '../../Component/Header/Header_comp';
@@ -11,6 +11,9 @@ import Production_Table from '../../Component/Table/Production_Table';
 import { KEYS, getData } from '../../api/User_Preference';
 import CustomLoader from '../../Component/loader/Loader';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
+import UpdateBanner from '../../Component/UpdateBanner/UpdateBanner';
+import { getUniqueId } from 'react-native-device-info';
+import deviceInfoModule from 'react-native-device-info';
 
 
 
@@ -52,20 +55,84 @@ export default class Dashboard extends Component {
       },
       isRefreshing: false,
       showProcessingLoader: false,
-      isLoading: false
+      isLoading: false,
+      appState: AppState.currentState,
+      isUpdateVisible: false,
     }
+
 
   };
 
-  componentDidMount() {
+  componentDidMount = async () => {
+    await this.checkAppVersion();
     this.handleSliderBox();
-    this.props.navigation.addListener('focus', this._handleListRefresh); // Add listener for screen focus
-         
-  }
+    // this.onRegister();
+    AppState.addEventListener('change', this.handleAppStateChange);
+  };
+
 
   componentWillUnmount() {
-      this.props.navigation.removeListener('focus', this._handleListRefresh); // Remove listener on component unmount
+    this.props.navigation.removeListener('focus', this._handleListRefresh); // Remove listener on component unmount
   }
+
+
+
+  handleAppStateChange = async nextAppState => {
+    try {
+      const { appState } = this.state;
+      if (appState.match(/inactive|background/) && nextAppState === 'active') {
+        await this.checkAppVersion();
+      }
+
+      this.setState({ appState: nextAppState });
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
+
+  checkAppVersion = async () => {
+    try {
+      let buildNumber = null;
+      let IosbuildNumber = null;
+      if (Platform.OS === 'ios') {
+        IosbuildNumber = Number(DeviceInfo.getBuildNumber());
+      } else {
+        buildNumber = Number(deviceInfoModule.getBuildNumber());
+      }
+      console.log('====================================');
+      console.log('dada', buildNumber);
+      console.log('====================================');
+
+      let params = {
+        IosbuildNumber: IosbuildNumber,
+        build_no: buildNumber,
+      };
+
+      const response = await makeRequest(
+        BASE_URL + '/mobile/versioncheck',
+        params,
+      );
+      const { success, app_url, message, app_url_ios } = response;
+      console.log('====================================');
+      console.log('dada111', response);
+      console.log('====================================');
+
+      if (success === false) {
+        this.setState({ isUpdateVisible: true });
+        const storeUrl = Platform.OS === 'ios' ? app_url_ios : app_url;
+        this.setState({ isStoreUrl: storeUrl });
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+
+
+  handleCloseUpdateBanner = () => {
+    this.setState({ isUpdateVisible: false });
+  };
+
 
   handleSliderBox = async () => {
     try {
@@ -181,8 +248,8 @@ export default class Dashboard extends Component {
       <>
         <Header_comp navigation={this.props.navigation} />
         <ScrollView
-        showsVerticalScrollIndicator={false}
-          style={{ padding: wp(2), flex: 1, backgroundColor: '#fefefc',marginBottom:wp(2) }}
+          showsVerticalScrollIndicator={false}
+          style={{ padding: wp(2), flex: 1, backgroundColor: '#fefefc', marginBottom: wp(2) }}
           refreshControl={
             <RefreshControl
               colors={['#0068b1']}
@@ -615,6 +682,12 @@ export default class Dashboard extends Component {
 
 
         </ScrollView>
+
+        <UpdateBanner
+          isVisible={this.state.isUpdateVisible}
+          onClose={this.handleCloseUpdateBanner}
+          storeUrl={this.state.isStoreUrl}
+        />
         {showProcessingLoader && <ProcessingLoader />}
       </>
     )

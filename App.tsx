@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
-import { Image } from "react-native";
+import { Image, PlatformColor } from "react-native";
 import SplashScreen from "./src/Screens/Splash/Splash_Screen";
 import Login from "./src/Screens/Login_Screen/Login";
 import PO from "./src/Screens/PO/PO";
@@ -30,6 +30,7 @@ import Reverse_AA from "./src/Screens/Reverses/Reverse_AA";
 import Search_RevAA from "./src/Screens/Reverses/Search_RevAA";
 import PO_AAA from "./src/Screens/PO/PO_AAA";
 import GRN_AA from "./src/Screens/GRN/GRN_AA";
+import handler from "./src/Firebase_Api/notificationHandler";
 
 const handleBackgroundMessage = async remoteMessage => {
   console.log('Message handled in the background:', remoteMessage);
@@ -38,7 +39,6 @@ const handleBackgroundMessage = async remoteMessage => {
 
 // Set up background message handler
 messaging().setBackgroundMessageHandler(handleBackgroundMessage);
-
 
 
 
@@ -63,6 +63,9 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    // Set up notification handler
+    handler.attachNotification();
+    handler.onRegister();
     const timer = setTimeout(() => {
       setSplashLoaded(true);
     }, 2000);

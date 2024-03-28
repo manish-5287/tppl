@@ -28,7 +28,7 @@ export class Vendor_Report_View extends Component {
             showProcessingLoader: false,
             isRefreshing: false,
             isLoading: false,
-            errorMessage:''
+            errorMessage: ''
 
         };
     }
@@ -40,7 +40,7 @@ export class Vendor_Report_View extends Component {
     handleVendorReport = async () => {
         try {
             this.setState({ showProcessingLoader: true, isRefreshing: true });
-            const response = await makeRequest(BASE_URL + '/mobile/vendorsreport')
+            const response = await makeRequest(BASE_URL + '/mobile/vendorsreport');
             // console.log("VendorReport",response);
             const { success, message, vendorTrack } = response;
             if (success) {
@@ -183,7 +183,8 @@ export class Vendor_Report_View extends Component {
                         isRefreshing: false,
                         selectedDateFrom: '',
                         selectedDateTo: '',
-                        searchName: ''
+                        searchName: '',
+                        currentPage: 0
                     });
                 }, 2000);
             });
@@ -226,24 +227,24 @@ export class Vendor_Report_View extends Component {
     handleSearch = async (searchName) => {
         try {
             if (searchName.length < 1) {
-                this.setState({ contractName: [] }); // Clear the search results
+                this.setState({ contractName: [],  currentPage: 0 }); // Clear the search results
                 return;
-              }
+            }
             const params = {
                 vendorname: searchName
             };
             console.log('search', params);
-   
+
             const response = await makeRequest(BASE_URL + '/mobile/searchvendorname', params);
             const { success, message, vendorName } = response;
             if (success) {
-                this.setState({ contractName: vendorName, showFlatList: true});
+                this.setState({ contractName: vendorName, showFlatList: true ,  currentPage: 0});
             } else {
                 this.setState({ contractName: [], errorMessage: message, showFlatList: true })
             }
         } catch (error) {
             console.log(error);
-            this.setState({ contractName: [],showFlatList: false })
+            this.setState({ contractName: [], showFlatList: false })
         }
     };
 
@@ -264,7 +265,7 @@ export class Vendor_Report_View extends Component {
         if (!item) {
             return (
                 <View style={{ alignItems: 'center', paddingVertical: wp(2) }}>
-                    <Text>{this.state.errorMessage}</Text>
+                    <Text>No Data </Text>
                 </View>
             );
         }
@@ -354,7 +355,8 @@ export class Vendor_Report_View extends Component {
 
                 <View style={styles.container}>
                     <ScrollView
-                        style={{ marginBottom: wp(16) }}
+                    contentContainerStyle={{flexGrow:1}}
+                       style={{marginBottom:wp(16)}}
                         showsVerticalScrollIndicator={false}
                         refreshControl={
                             <RefreshControl
@@ -388,7 +390,7 @@ export class Vendor_Report_View extends Component {
                                     />
                                 ) : (
                                     <View style={styles.noResultsContainer}>
-                                        <Text style={styles.noResultsText}>{this.state.errorMessage}</Text>
+                                        <Text style={styles.noResultsText}>No Data Found</Text>
                                     </View>
                                 )}
                             </View>
@@ -398,8 +400,6 @@ export class Vendor_Report_View extends Component {
 
                         {/* Date Time picker View */}
                         <View style={styles.DateTimepicker_Box}>
-
-
                             <DateTimePicker
                                 mode='date'
                                 isVisible={this.state.isDateTimePickerVisible}
