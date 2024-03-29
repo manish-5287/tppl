@@ -317,7 +317,7 @@ export class VendorReport extends Component {
                 <View style={styles.container}>
                     <ScrollView
                         contentContainerStyle={{ flexGrow: 1 }}
-                        style={{marginBottom:wp(16)}}
+                        style={{ marginBottom: wp(16) }}
                         showsVerticalScrollIndicator={false}
                         refreshControl={
                             <RefreshControl

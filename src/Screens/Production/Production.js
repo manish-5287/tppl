@@ -286,14 +286,14 @@ export class Production extends Component {
                                         if (cellIndex === 0) {
                                             return (
                                                 <TouchableOpacity key={cellIndex}>
-                                                    <Text style={styles.Highlight}>{cellData}</Text>
+                                                    <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
                                                 </TouchableOpacity>
                                             );
                                         } else if ((cellIndex === 2)) {
                                             return (
                                                 <TouchableOpacity key={cellIndex}>
-                                                    <Text style={styles.Highlight}>{cellData}</Text>
-                                                </TouchableOpacity>
+                                                <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
+                                            </TouchableOpacity>
                                             );
                                         }
                                         else {

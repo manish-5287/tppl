@@ -1,4 +1,4 @@
-import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, FlatList, RefreshControl } from 'react-native'
+import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, FlatList, RefreshControl, Linking } from 'react-native'
 import React, { Component } from 'react'
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { Table, Row } from 'react-native-table-component';
@@ -20,7 +20,8 @@ export class Reverses extends Component {
             showProcessingLoader: false,
             isRefreshing: false,
             isLoading: false,
-            errorMessages: ''
+            errorMessages: '',
+            reverseId: ''
 
         };
     };
@@ -35,20 +36,20 @@ export class Reverses extends Component {
     }
     handleReverse = async () => {
         try {
-            this.setState({  isRefreshing: true })
+            this.setState({ isRefreshing: true })
             const response = await makeRequest(BASE_URL + '/mobile/reverse')
             const { success, message, reverseDetails } = response;
             // console.log("reverse",response);
             if (success) {
-                this.setState({ rowData: reverseDetails,  isRefreshing: false });
+                this.setState({ rowData: reverseDetails, isRefreshing: false });
 
             } else {
                 console.log(message);
-                this.setState({  isRefreshing: false });
+                this.setState({ isRefreshing: false });
             }
         } catch (error) {
             console.log(error);
-            this.setState({isRefreshing: false });
+            this.setState({ isRefreshing: false });
         }
     };
 
@@ -64,19 +65,48 @@ export class Reverses extends Component {
         }
     };
 
+
+    handlePress = (cellData) => {
+        this.setState({ reverseId: cellData }, () => {
+            this._handleReversePdf();
+        })
+    };
+
+    _handleReversePdf = async () => {
+        try {
+            const { reverseId } = this.state;
+            const params = { reverse_id: reverseId };
+            const response = await makeRequest(BASE_URL + '/mobile/reversepdf', params);
+            const { success, message, pdfLink } = response;
+            if (success) {
+                this.setState({ cellData: pdfLink });
+                Linking.openURL(pdfLink);
+
+            } else {
+                console.log('====================================');
+                console.log(message);
+                console.log('====================================');
+            }
+        } catch (error) {
+            console.log('====================================');
+            console.log(error);
+            console.log('====================================');
+        }
+    };
+
     handleSearch = async (searchName) => {
         try {
             if (searchName.length < 1) {
-                this.setState({ contractName: [],  currentPage: 0 }); // Clear the search results
+                this.setState({ contractName: [], currentPage: 0 }); // Clear the search results
                 return;
-              }
+            }
             const params = { workorderno: searchName };
             // console.log('searc', params);
             const response = await makeRequest(BASE_URL + '/mobile/searchcontractname', params);
             const { success, message, contractName } = response;
             // console.log(response);
             if (success) {
-                this.setState({ contractName: contractName ,  currentPage: 0});
+                this.setState({ contractName: contractName, currentPage: 0 });
             } else {
                 this.setState({ contractName: [], errorMessages: message })
             }
@@ -127,7 +157,7 @@ export class Reverses extends Component {
                     // updating list after the delay
                     this.handleReverse();
                     // resetting isRefreshing after the update
-                    this.setState({ isRefreshing: false, searchName: '',  currentPage: 0 });
+                    this.setState({ isRefreshing: false, searchName: '', currentPage: 0 });
                 }, 2000);
             });
         } catch (error) {
@@ -205,7 +235,7 @@ export class Reverses extends Component {
 
                 <View style={styles.container}>
                     <ScrollView
-                         contentContainerStyle={{flexGrow:1}}
+                        contentContainerStyle={{ flexGrow: 1 }}
                         showsVerticalScrollIndicator={false}
                         refreshControl={
                             <RefreshControl
@@ -254,13 +284,7 @@ export class Reverses extends Component {
                                     data={Object.values(rowData).map((cellData, cellIndex) => {
                                         if (cellIndex === 0) {
                                             return (
-                                                <TouchableOpacity key={cellIndex}>
-                                                    <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
-                                                </TouchableOpacity>
-                                            );
-                                        } else if (cellIndex === 1) {
-                                            return (
-                                                <TouchableOpacity key={cellIndex}>
+                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePress(cellData)}>
                                                     <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
                                                 </TouchableOpacity>
                                             );

@@ -1,4 +1,4 @@
-import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, FlatList, RefreshControl } from 'react-native'
+import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, FlatList, RefreshControl, Linking } from 'react-native'
 import React, { Component } from 'react'
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { Table, Row } from 'react-native-table-component';
@@ -20,7 +20,8 @@ export default class Reverse_AA extends Component {
             showProcessingLoader: false,
             isRefreshing: false,
             isLoading: false,
-            errorMessages: ''
+            errorMessages: '',
+            reverseId:''
 
         };
     };
@@ -29,6 +30,35 @@ export default class Reverse_AA extends Component {
         this.handleReverse();
     };
 
+    handlePress = (cellData) => {
+        this.setState({ reverseId: cellData }, () => {
+            this._handleReversePdf();
+        })
+    };
+
+    _handleReversePdf = async () => {
+        try {
+            const { reverseId } = this.state;
+            const params = { reverse_id: reverseId };
+            const response = await makeRequest(BASE_URL + '/mobile/reversepdf', params);
+            const { success, message, pdfLink } = response;
+            if (success) {
+                this.setState({ cellData: pdfLink });
+                Linking.openURL(pdfLink);
+
+            } else {
+                console.log('====================================');
+                console.log(message);
+                console.log('====================================');
+            }
+        } catch (error) {
+            console.log('====================================');
+            console.log(error);
+            console.log('====================================');
+        }
+    };
+
+     
     handleReverse = async () => {
         try {
             this.setState({ showProcessingLoader: true, isRefreshing: true })
@@ -251,17 +281,11 @@ export default class Reverse_AA extends Component {
                                     data={Object.values(rowData).map((cellData, cellIndex) => {
                                         if (cellIndex === 0) {
                                             return (
-                                                <TouchableOpacity key={cellIndex}>
+                                                <TouchableOpacity key={cellIndex} onPress={()=>this.handlePress(cellData)}>
                                                     <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
                                                 </TouchableOpacity>
                                             );
-                                        } else if (cellIndex === 1) {
-                                            return (
-                                                <TouchableOpacity key={cellIndex}>
-                                                    <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
-                                                </TouchableOpacity>
-                                            );
-                                        }
+                                        } 
                                         else {
                                             return <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>;
                                         }

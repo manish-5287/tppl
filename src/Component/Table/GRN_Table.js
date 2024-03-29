@@ -76,13 +76,7 @@ export class GRN_Table extends Component {
                                             <Text style={styles.Highlight}>{cellData}</Text>
                                         </TouchableOpacity>
                                     );
-                                } else if ((cellIndex === 1)) {
-                                    return (
-                                        <TouchableOpacity key={cellIndex}>
-                                            <Text style={styles.Highlight}>{cellData}</Text>
-                                        </TouchableOpacity>
-                                    );
-                                }
+                                }  
                                 else {
                                     return <Text style={styles.rowText}>{cellData}</Text>;
                                 }

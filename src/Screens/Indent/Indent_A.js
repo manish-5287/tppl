@@ -20,7 +20,8 @@ export default class Indent_A extends Component {
             showProcessingLoader: false,
             isRefreshing: false,
             isLoading: false,
-            errorMessage: ''
+            errorMessage: '',
+            indentId: ''
 
 
         };
@@ -29,6 +30,31 @@ export default class Indent_A extends Component {
     componentDidMount() {
         this.handleIndent();
     };
+
+    handlePress = (cellData) => {
+        this.setState({ indentId: cellData }, () => {
+            this.handleIndentPdf();
+        });
+
+    }
+
+    handleIndentPdf = async () => {
+        try {
+            const { indentId } = this.state;
+            const params = { indent_id: indentId };
+            const response = await makeRequest(BASE_URL + '/mobile/indentpdf', params);
+            const { success, message, pdfLink } = response
+            if (success) {
+                this.setState({ cellData: pdfLink });
+                Linking.openURL(pdfLink);
+
+            } else {
+                console.log(message)
+            }
+        } catch (error) {
+
+        }
+    }
 
     handleIndent = async () => {
         try {
@@ -68,7 +94,7 @@ export default class Indent_A extends Component {
     handleSearch = async (searchName) => {
         try {
             if (searchName.length < 1) {
-                this.setState({ contractName: [],  currentPage: 0 }); // Clear the search results
+                this.setState({ contractName: [], currentPage: 0 }); // Clear the search results
                 return;
             }
             const params = { workorderno: searchName };
@@ -77,7 +103,7 @@ export default class Indent_A extends Component {
             const { success, message, contractName } = response;
 
             if (success) {
-                this.setState({ contractName: contractName ,  currentPage: 0});
+                this.setState({ contractName: contractName, currentPage: 0 });
             } else {
                 this.setState({ contractName: [], errorMessage: message })
             }
@@ -128,7 +154,7 @@ export default class Indent_A extends Component {
                     // updating list after the delay
                     this.handleIndent();
                     // resetting isRefreshing after the update
-                    this.setState({ isRefreshing: false, searchName: '',  currentPage: 0 });
+                    this.setState({ isRefreshing: false, searchName: '', currentPage: 0 });
                 }, 2000);
             });
         } catch (error) {
@@ -206,7 +232,7 @@ export default class Indent_A extends Component {
 
                 <View style={styles.container}>
                     <ScrollView
-                        contentContainerStyle={{flexGrow:1}}
+                        contentContainerStyle={{ flexGrow: 1 }}
                         showsVerticalScrollIndicator={false}
                         refreshControl={
                             <RefreshControl
@@ -257,13 +283,7 @@ export default class Indent_A extends Component {
                                     data={Object.values(rowData).map((cellData, cellIndex) => {
                                         if (cellIndex === 0) {
                                             return (
-                                                <TouchableOpacity key={cellIndex}>
-                                                    <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
-                                                </TouchableOpacity>
-                                            );
-                                        } else if (cellIndex === 1) {
-                                            return (
-                                                <TouchableOpacity key={cellIndex}>
+                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePress(cellData)}>
                                                     <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
                                                 </TouchableOpacity>
                                             );

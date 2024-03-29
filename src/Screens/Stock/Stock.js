@@ -4,6 +4,7 @@ import { Table, Row } from 'react-native-table-component';
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import CustomLoader from '../../Component/loader/Loader';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
+import { BASE_URL, makeRequest } from '../../api/Api_info';
 
 
 
@@ -11,7 +12,7 @@ export class Stock extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            tableHead: ['Date', 'Opening Stock', 'Received Stock', 'Dispatched Stock', 'Closing Stock'],
+            tableHead: ['Date', 'Opening', 'Received', 'Issued', 'Reverse','Return'],
             rowData: [],
             currentPage: 0,
             rowsPerPage: 10,
@@ -22,47 +23,33 @@ export class Stock extends Component {
         };
     }
 
-    // renderRowData = (rowData, rowIndex) => {
-    //     let maxLines = 2; // Initialize with minimum one line
-    //     rowData.forEach(cellData => {
-    //         const lines = Math.ceil(cellData.length / 20); // Assuming 20 characters per line for calculation
-    //         if (lines > maxLines) {
-    //             maxLines = lines;
-    //         }
-    //     });
-
-    //     const rowHeight = maxLines * 24; // Assuming font size of 25
-
-    //     return (
-
-    //         <Row
-    //             key={rowIndex}
-    //             data={rowData.map((cellData, columnIndex) => {
-    //                 if (columnIndex === 0) {
-    //                     return (
-    //                         <TouchableOpacity key={columnIndex} onPress={() => this.handleCellPress(cellData)}>
-    //                             <Text style={[styles.rowText1, { lineHeight: 14 }]}>{cellData}</Text>
-    //                         </TouchableOpacity>
-    //                     );
-    //                 } else {
-    //                     return <Text key={columnIndex} style={[styles.rowText, { lineHeight: 14 }]}>{cellData}</Text>;
-    //                 }
-    //             })}
-    //             textStyle={styles.rowText}
-    //             style={[rowIndex % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
-    //             flexArr={[0, 2, 2, 2, 2, 2]}
-    //         />
-    //     );
-    // };
-
     componentDidMount() {
-        this.props.navigation.addListener('focus', this._handleListRefresh); // Add listener for screen focus    
+        this.handleStock();
+        this.props.navigation.addListener('focus', this._handleListRefresh); // Add listener for screen focus  
     }
 
     componentWillUnmount() {
         this.props.navigation.removeListener('focus', this._handleListRefresh); // Remove listener on component unmount
     }
 
+    handleStock = async () => {
+        try {
+            this.setState({ isRefreshing: true })
+            const response = await  makeRequest(BASE_URL + '/mobile/stock')
+            const { success, message, stockDetails } = response;
+            console.log("stock stock stock ",response);
+            if (success) {
+                this.setState({ rowData: stockDetails, isRefreshing: false });
+
+            } else {
+                console.log(message);
+                this.setState({ isRefreshing: false });
+            }
+        } catch (error) {
+            console.log(error);
+            this.setState({ isRefreshing: false });
+        }
+    };
 
     nextPage = () => {
         const { currentPage } = this.state;
@@ -85,7 +72,7 @@ export class Stock extends Component {
                 // setTimeout with a delay of 1000 milliseconds (1 second)
                 setTimeout(() => {
                     // updating list after the delay
-                    // this.renderRowData();
+                   this.handleStock();
                     // resetting isRefreshing after the update
                     this.setState({ isRefreshing: false });
                 }, 100);
@@ -97,16 +84,31 @@ export class Stock extends Component {
 
     handleGoBackHome = () => {
         this.props.navigation.navigate('home');
-    }
+    };
+
+
     render() {
-        const { tableHead, rowData, currentPage, rowsPerPage, } = this.state;
+        const { tableHead, rowData, currentPage, rowsPerPage } = this.state;
         const startIndex = currentPage * rowsPerPage;
         const endIndex = Math.min(startIndex + rowsPerPage, rowData.length); // Calculate end index while considering the last page
         const slicedData = rowData.slice(startIndex, endIndex);
         if (this.state.isLoading) {
             return <CustomLoader />;
         }
-        const { showProcessingLoader } = this.state
+        const { showProcessingLoader } = this.state;
+
+
+        // Calculate the maximum number of lines for each cell in a row
+        let maxLines = 2;
+        rowData.forEach(cellData => {
+            const lines = Math.ceil(cellData.length / 20); // Assuming each line has 20 characters
+            if (lines > maxLines) {
+                maxLines = lines;
+            }
+        });
+
+        // Calculate row height based on the maximum number of lines and font size
+        const rowHeight = maxLines * 25; // Assuming font size of 25
 
         return (
             <>
@@ -165,8 +167,27 @@ export class Stock extends Component {
                         </View>
 
                         <Table style={{ marginTop: wp(3) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
-                            <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[0, 2, 2, 2, 2, 2]} />
-                            {/* {slicedData.map((rowData, index) => this.renderRowData(rowData, index))} */}
+                            <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[2, 2, 2, 2, 2, 2]} />
+                            {slicedData.map((rowData, index) => (
+                                <Row
+                                    key={index}
+                                    data={Object.values(rowData).map((cellData, cellIndex) => {
+                                        if (cellIndex === 0) {
+                                            return (
+                                                <TouchableOpacity key={cellIndex} >
+                                                    <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
+                                                </TouchableOpacity>
+                                            );
+                                        }
+                                        else {
+                                            return <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>;
+                                        }
+                                    })}
+                                    textStyle={styles.rowText}
+                                    style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
+                                    flexArr={[2, 2, 2, 2, 2, 2]}
+                                />
+                            ))}
                         </Table>
 
                         <View style={styles.pagination}>
@@ -216,15 +237,19 @@ const styles = StyleSheet.create({
     rowText: {
         color: '#212529',
         textAlign: 'left',
-        fontSize: wp(2.6),
+        fontSize: wp(2.5),
         paddingHorizontal: wp(0.3),
         marginLeft: 4,
+        fontWeight: '400'
     },
-    rowText1: {
+    Highlight: {
         color: 'red',
-        textAlign: 'center',
-        fontSize: wp(2.6),
-        // Optional: add underline to indicate touchability
+        textAlign: 'left',
+        fontSize: wp(2.5),
+        fontWeight: '500',
+        paddingHorizontal: wp(0.3),
+        marginLeft: 4,
+
     },
     pagination: {
         flexDirection: 'row',

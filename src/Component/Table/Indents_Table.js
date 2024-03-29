@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity, Modal, Alert } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Modal, Alert, Linking } from 'react-native';
 import React, { Component } from 'react';
 import { Table, Row, Rows } from 'react-native-table-component';
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
@@ -10,21 +10,80 @@ export class Indents_Table extends Component {
         this.state = {
             tableHead: ['Id', 'Contract name', 'Product', 'Issue By', 'Date'],
             rowData: [],
+            indentId:'',
+            contractId:''
+         
         };
     }
 
 
     componentDidMount() {
-        this.handleGrnOrder();
+        this.handleIndentOrder(); // changes by manish
+    };
+    
+
+
+    // changes by manish 
+
+    handlePressIndentId = (cellData) => {
+        this.setState({ contractID: cellData }, () => {
+            this.handleIndentPdf();
+        });
+
     };
 
-    handleGrnOrder = async () => {
+    handleIndentPdf = async () => {
+        try {
+            const { indentId } = this.state;
+            const params = { indent_id: indentId };
+            const response = await makeRequest(BASE_URL + '/mobile/indentpdf', params);
+            const { success, message, pdfLink } = response
+            if (success) {
+                this.setState({ cellData: pdfLink });
+                Linking.openURL(pdfLink);
+
+            } else {
+                console.log(message)
+            }
+        } catch (error) {
+
+        }
+    }
+
+      // pdf api by manish
+      handlePressContract = (cellData) => {
+        this.setState({ contractId: cellData }, () => {
+            this._handleContractPdf();
+        });
+    }
+    _handleContractPdf = async () => {
+        try {
+            const { contractId } = this.state;
+            const params = { contract_id: contractId };
+            console.log('papapapapapap', params);
+            const response = await makeRequest(BASE_URL + '/mobile/contractpdf', params);
+            const { success, message, pdfLink } = response;
+            console.log('pdfpdfpdf', response);
+            if (success) {
+                this.setState({ cellData: pdfLink });
+                Linking.openURL(pdfLink)
+            } else {
+            console.log(message);
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    handleIndentOrder = async () => { // changes by manish 
         try {
             const response = await makeRequest(BASE_URL + '/mobile/dashboard')
             // console.log('Indent_Table',response);
             const { success, message, indentDetails } = response;
             if (success) {
-                this.setState({ rowData: indentDetails });
+
+                const modificationGrnDetails = indentDetails.map(({contract_id,...rest})=>rest) // changes by manish
+                this.setState({ rowData: modificationGrnDetails });  // chnages by manish 
 
             } else {
                 console.log(message);
@@ -34,11 +93,7 @@ export class Indents_Table extends Component {
             console.log(error);
         }
     }
-    handleIdPress = (id) => {
-        // Handle onPress for Id here
-        console.log('Pressed Id:', id);
-        // You can add your logic for handling the Id press, such as navigating to another screen
-    };
+  
     render() {
         const { tableHead, rowData } = this.state;
         return (
@@ -51,17 +106,17 @@ export class Indents_Table extends Component {
                             data={Object.values(rowData).map((cellData, cellIndex) => {
                                 if (cellIndex === 0) {
                                     return (
-                                        <TouchableOpacity key={cellIndex} onPress={() => this.handleIdPress(cellData)}>
+                                        <TouchableOpacity key={cellIndex} onPress={() => this.handlePressIndentId(cellData)}>
                                             <Text style={styles.Highlight}>{cellData}</Text>
                                         </TouchableOpacity>
                                     );
-                                } else if ((cellIndex === 1)) {
+                                }  else if (cellIndex === 1) {
                                     return (
-                                        <TouchableOpacity key={cellIndex} onPress={() => this.handleIdPress(cellData)}>
+                                        <TouchableOpacity key={cellIndex} onPress={() => this.handlePressContract(cellData)}>
                                             <Text style={styles.Highlight}>{cellData}</Text>
                                         </TouchableOpacity>
                                     );
-                                }
+                                } 
                                 else {
                                     return <Text style={styles.rowText}>{cellData}</Text>;
                                 }

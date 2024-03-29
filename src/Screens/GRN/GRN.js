@@ -257,13 +257,7 @@ export default class GRN extends Component {
                                                     <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
                                                 </TouchableOpacity>
                                             );
-                                        } else if (cellIndex === 1) {
-                                            return (
-                                                <TouchableOpacity key={cellIndex}>
-                                                    <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
-                                                </TouchableOpacity>
-                                            );
-                                        }
+                                        }  
 
                                         else {
                                             return <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>;

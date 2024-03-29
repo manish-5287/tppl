@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity, Modal, Alert } from 'react-native'
+import { StyleSheet, Text, View, TouchableOpacity, Modal, Alert, Linking } from 'react-native'
 import React, { Component } from 'react'
 import { Table, Row } from 'react-native-table-component';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
@@ -11,6 +11,8 @@ export default class Production_Table extends Component {
         this.state = {
             tableHead: ['Id', 'Date', 'Contract Name', '	Product', 'Plan Qty', 'Prep Qty'],
             rowData: [],
+            contractId: '',
+            productionId: ''
 
         }
     };
@@ -24,7 +26,8 @@ export default class Production_Table extends Component {
             // console.log("production_table",response);
             const { success, message, productionDetails } = response;
             if (success) {
-                this.setState({ rowData: productionDetails });
+                const modifiedProductionDetails = productionDetails.map(({ contract_id, ...rest }) => rest) // changes by manish
+                this.setState({ rowData: modifiedProductionDetails }); // chnages by manish
 
             } else {
                 console.log(message);
@@ -35,11 +38,63 @@ export default class Production_Table extends Component {
         }
     }
 
-    handleIdPress = (id) => {
-        // Handle onPress for Id here
-        console.log('Pressed Id:', id);
-        // You can add your logic for handling the Id press, such as navigating to another screen
+    // pdf api by manish
+    
+    handlePressProductID = (cellData) => {
+        this.setState({ productionId: cellData }, () => {
+            this._handlePressProductID();
+        });
+    }
+
+    _handlePressProductID = async () => {
+        try {
+            const { productionId } = this.state;
+            const params = { production_id: productionId };
+            console.log('papapapapapap', params);
+            const response = await makeRequest(BASE_URL + '/mobile/productionorderpdf', params);
+            const { success, message, pdfLink } = response;
+            console.log('pdfpdfpdf', response);
+            if (success) {
+                this.setState({ cellData: pdfLink });
+                Linking.openURL(pdfLink)
+            } else {
+                console.log('====================================');
+                console.log(message);
+                console.log('====================================');
+            }
+        } catch (error) {
+            console.log(error);
+        }
     };
+
+
+    // pdf api by manish
+    handlePressContract = (cellData) => {
+        this.setState({ contractId: cellData }, () => {
+            this._handleContractPdf();
+        });
+    };
+
+    _handleContractPdf = async () => {
+        try {
+            const { contractId } = this.state;
+            const params = { contract_id: contractId };
+            console.log('papapapapapap', params);
+            const response = await makeRequest(BASE_URL + '/mobile/contractpdf', params);
+            const { success, message, pdfLink } = response;
+            console.log('pdfpdfpdf', response);
+            if (success) {
+                this.setState({ cellData: pdfLink });
+                Linking.openURL(pdfLink)
+            } else {
+                Alert.alert(message)
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+
 
     render() {
         const { tableHead, rowData } = this.state;
@@ -53,13 +108,13 @@ export default class Production_Table extends Component {
                             data={Object.values(rowData).map((cellData, cellIndex) => {
                                 if (cellIndex === 0) {
                                     return (
-                                        <TouchableOpacity key={cellIndex} onPress={() => this.handleIdPress(cellData)}>
+                                        <TouchableOpacity key={cellIndex} onPress={() => this.handlePressProductID(cellData)} >
                                             <Text style={styles.Highlight}>{cellData}</Text>
                                         </TouchableOpacity>
                                     );
                                 } else if ((cellIndex === 2)) {
                                     return (
-                                        <TouchableOpacity key={cellIndex} onPress={() => this.handleIdPress(cellData)}>
+                                        <TouchableOpacity key={cellIndex} onPress={() => this.handlePressContract(cellData)}>
                                             <Text style={styles.Highlight}>{cellData}</Text>
                                         </TouchableOpacity>
                                     );

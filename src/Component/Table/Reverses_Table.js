@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity, Modal, Alert } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Modal, Alert, Linking } from 'react-native';
 import React, { Component } from 'react';
 import { Table, Row, Rows } from 'react-native-table-component';
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
@@ -10,6 +10,7 @@ export class Reverses_Table extends Component {
         this.state = {
             tableHead: ['Id', 'Contract name', 'Product', 'Received By', 'Date'],
             rowData: [],
+            reverseId: ''
         };
     }
     componentDidMount() {
@@ -32,11 +33,34 @@ export class Reverses_Table extends Component {
             console.log(error);
         }
     }
-    handleIdPress = (id) => {
-        // Handle onPress for Id here
-        console.log('Pressed Id:', id);
-        // You can add your logic for handling the Id press, such as navigating to another screen
+
+    handlePress = (cellData) => {
+        this.setState({ reverseId: cellData }, () => {
+            this._handleReversePdf();
+        })
     };
+
+    _handleReversePdf = async () => {
+        try {
+            const { reverseId } = this.state;
+            const params = { reverse_id: reverseId };
+            const response = await makeRequest(BASE_URL + '/mobile/reversepdf', params);
+            const { success, message, pdfLink } = response;
+            if (success) {
+                this.setState({ cellData: pdfLink });
+                Linking.openURL(pdfLink);
+
+            } else {
+                console.log('====================================');
+                console.log(message);
+                console.log('====================================');
+            }
+        } catch (error) {
+            console.log('====================================');
+            console.log(error);
+            console.log('====================================');
+        }
+    }
 
 
     render() {
@@ -51,13 +75,7 @@ export class Reverses_Table extends Component {
                             data={Object.values(rowData).map((cellData, cellIndex) => {
                                 if (cellIndex === 0) {
                                     return (
-                                        <TouchableOpacity key={cellIndex} onPress={() => this.handleIdPress(cellData)}>
-                                            <Text style={styles.Highlight}>{cellData}</Text>
-                                        </TouchableOpacity>
-                                    );
-                                } else if ((cellIndex === 1)) {
-                                    return (
-                                        <TouchableOpacity key={cellIndex} onPress={() => this.handleIdPress(cellData)}>
+                                        <TouchableOpacity key={cellIndex} onPress={() => this.handlePress(cellData)}>
                                             <Text style={styles.Highlight}>{cellData}</Text>
                                         </TouchableOpacity>
                                     );

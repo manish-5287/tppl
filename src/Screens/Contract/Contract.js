@@ -1,4 +1,4 @@
-import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, FlatList, RefreshControl, ScrollView, } from 'react-native'
+import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, FlatList, RefreshControl, ScrollView, Linking, } from 'react-native'
 import React, { Component } from 'react'
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { Table, Row } from 'react-native-table-component';
@@ -23,7 +23,8 @@ export default class Contract extends Component {
             showProcessingLoader: false,
             isRefreshing: false,
             isLoading: false,
-            errorMessage: ''
+            errorMessage: '',
+            contractId: ''
 
         };
 
@@ -34,14 +35,42 @@ export default class Contract extends Component {
 
     };
 
+  // pdf api by manish
+    handlePress = (cellData) => {
+        this.setState({ contractId: cellData }, () => {
+            this._handleContractPdf();
+        });
+    }
+    _handleContractPdf = async () => {
+        try {
+            const { contractId } = this.state;
+            const params = { contract_id: contractId };
+            console.log('papapapapapap', params);
+            const response = await makeRequest(BASE_URL + '/mobile/contractpdf', params);
+            const { success, message, pdfLink } = response;
+            console.log('pdfpdfpdf', response);
+            if (success) {
+                this.setState({ cellData: pdfLink });
+                Linking.openURL(pdfLink)
+            } else {
+            console.log(message);
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
     handleContract = async () => {
         try {
-            this.setState({ showProcessingLoader: true, isRefreshing: true })
-            const response = await makeRequest(BASE_URL + '/mobile/contract')
+            this.setState({ showProcessingLoader: true, isRefreshing: true });
+            const response = await makeRequest(BASE_URL + '/mobile/contract');
             const { success, message, contractDetails } = response;
-            // console.log("Contract", response);
+            
             if (success) {
-                this.setState({ rowData: contractDetails, showProcessingLoader: false, isRefreshing: false });
+                // Exclude contract_id from contractDetails
+                const modifiedContractDetails = contractDetails.map(({ contract_id, ...rest }) => rest); // change by manish
+                
+                this.setState({ rowData: modifiedContractDetails, showProcessingLoader: false, isRefreshing: false}); // change by manish
             } else {
                 console.log(message);
                 this.setState({ showProcessingLoader: false, isRefreshing: false });
@@ -49,10 +78,9 @@ export default class Contract extends Component {
         } catch (error) {
             console.log(error);
             this.setState({ showProcessingLoader: false, isRefreshing: false });
-
-
         }
     }
+    
 
     nextPage = () => {
         const { currentPage } = this.state;
@@ -69,7 +97,7 @@ export default class Contract extends Component {
     handleSearch = async (searchName) => {
         try {
             if (searchName.length < 1) {
-                this.setState({ contractName: [],  currentPage: 0 }); // Clear the search results
+                this.setState({ contractName: [], currentPage: 0 }); // Clear the search results
                 return;
             }
 
@@ -78,7 +106,7 @@ export default class Contract extends Component {
             const response = await makeRequest(BASE_URL + '/mobile/searchcontractname', params);
             const { success, message, contractName } = response;
             if (success) {
-                this.setState({ contractName: contractName,  currentPage: 0 });
+                this.setState({ contractName: contractName, currentPage: 0 });
             } else {
                 this.setState({ contractName: [], errorMessage: message });
 
@@ -133,7 +161,7 @@ export default class Contract extends Component {
                 this.handleContract();
 
                 // resetting isRefreshing after the update
-                this.setState({ isRefreshing: false, searchName: '',  currentPage: 0 });
+                this.setState({ isRefreshing: false, searchName: '', currentPage: 0 });
             }, 2000);
         } catch (error) {
             console.log(error);
@@ -261,7 +289,7 @@ export default class Contract extends Component {
                                     data={Object.values(rowData).map((cellData, cellIndex) => {
                                         if (cellIndex === 0) {
                                             return (
-                                                <TouchableOpacity key={cellIndex}>
+                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePress(cellData)}>
                                                     <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
                                                 </TouchableOpacity>
                                             );
