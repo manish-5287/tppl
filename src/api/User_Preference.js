@@ -1,43 +1,40 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-// import AsyncStorage from '@react-native-community/async-storage';
+
 // KEYS
+export const KEYS = {
+  ROLE: 'role',
+  USER_INFO: 'userInfo',
+  USER_TOKEN: 'userToken',
+};
 
-
-export const KEYS ={
-  ROLE : 'role',
-  USER_INFO:'userInfo'
-}
-const USER_PROFILE = 'userProfile';
-
-export const storeData = async userInfo => {
+// Using KEYS for consistency
+export const storeData = async (key, data) => {
   try {
-      const infoString = JSON.stringify(userInfo);
-      await AsyncStorage.setItem(USER_PROFILE, infoString);
-      console.log('====================================');
-      console.log('khush',infoString);
-      console.log('====================================');
+    const dataString = JSON.stringify(data);
+    await AsyncStorage.setItem(key, dataString);
+    console.log('Data stored successfully:', key, dataString);
   } catch (error) {
-      console.log('Failed to store data!', error);
+    console.error('Failed to store data!', error);
+    throw error; // Rethrow the error for the caller to handle
   }
 };
 
-export const getData = async () => {
+export const getData = async key => {
   try {
-      const rawData = await AsyncStorage.getItem(USER_PROFILE);
-      const userInfo = rawData ? JSON.parse(rawData) : null;
-      return userInfo;
+    const dataString = await AsyncStorage.getItem(key);
+    return dataString ? JSON.parse(dataString) : null;
   } catch (error) {
-      console.log('Failed to retrieve data!', error);
-      return null;
+    console.error('Failed to retrieve data!', error);
+    throw error; // Rethrow the error for the caller to handle
   }
 };
- 
 
 export const clearData = async () => {
   try {
     await AsyncStorage.clear();
+    console.log('AsyncStorage cleared successfully.');
   } catch (error) {
-    console.log(error.message);
-    return null;
+    console.error('Failed to clear AsyncStorage!', error);
+    throw error; // Rethrow the error for the caller to handle
   }
 };

@@ -8,7 +8,7 @@ import { Indents_Table } from '../../Component/Table/Indents_Table';
 import { Reverses_Table } from '../../Component/Table/Reverses_Table';
 import { BASE_URL, makeRequest } from '../../api/Api_info';
 import Production_Table from '../../Component/Table/Production_Table';
-import { KEYS, getData } from '../../api/User_Preference';
+import { KEYS, clearData, getData } from '../../api/User_Preference';
 import CustomLoader from '../../Component/loader/Loader';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
 import UpdateBanner from '../../Component/UpdateBanner/UpdateBanner';
@@ -92,35 +92,35 @@ export default class Dashboard extends Component {
 
   checkAppVersion = async () => {
     try {
-      let buildNumber = null;
-      let IosbuildNumber = null;
+      let buildNumber = '';
+      let IosbuildNumber = '';
       if (Platform.OS === 'ios') {
         IosbuildNumber = Number(DeviceInfo.getBuildNumber());
       } else {
         buildNumber = Number(deviceInfoModule.getBuildNumber());
       }
       console.log('====================================');
-      console.log('dada', buildNumber);
+      console.log('dada', IosbuildNumber);
       console.log('====================================');
 
       let params = {
-        IosbuildNumber: IosbuildNumber,
-        build_no: buildNumber,
+        ios_build_no: IosbuildNumber,
+        android_build_no: buildNumber,
       };
 
       const response = await makeRequest(
         BASE_URL + '/mobile/versioncheck',
         params,
       );
-      const { success, app_url, message, app_url_ios } = response;
+      const {success, app_url, message, app_url_ios} = response;
       console.log('====================================');
       console.log('dada111', response);
       console.log('====================================');
 
       if (success === false) {
-        this.setState({ isUpdateVisible: true });
+        this.setState({isUpdateVisible: true});
         const storeUrl = Platform.OS === 'ios' ? app_url_ios : app_url;
-        this.setState({ isStoreUrl: storeUrl });
+        this.setState({isStoreUrl: storeUrl});
       }
     } catch (error) {
       console.error(error);
@@ -136,21 +136,54 @@ export default class Dashboard extends Component {
 
   handleSliderBox = async () => {
     try {
-      const Info = await getData(KEYS.USER_INFO)
-      console.log('StoreData_info', Info);
-      const response = await makeRequest(BASE_URL + '/mobile/dashboard');
-      const { success, message, contractHeader, poHeader, grnHeader, supplierHeader, maintenanceHeader } = response;
-      // console.log('Slider_box', response);
-      if (success) {
+      const userData = await getData(KEYS.USER_INFO);
+      let uniqueId = getUniqueId();
 
-        if (contractHeader.length > 0 || poHeader.length > 0 || grnHeader.length > 0 || supplierHeader.length > 0 || maintenanceHeader.length > 0) {
+      const params = {
+        user_id: userData.userId,
+      };
+      console.log('====================================');
+      console.log('kkkkkkk', params);
+      console.log('====================================');
+      const response = await makeRequest(
+        BASE_URL + '/mobile/dashboard',
+        params,
+      );
+      const {
+        success,
+        message,
+        contractHeader,
+        poHeader,
+        grnHeader,
+        supplierHeader,
+        maintenanceHeader,
+        device_id: responseDeviceId,
+      } = response;
+      // console.log('Slider_box', response);
+      if (uniqueId !== responseDeviceId) {
+        console.log('Device ID mismatch. Logging out user.');
+        // Implement logout logic here
+        // For example, clear user data and navigate to login screen
+        await clearData(); // Clear stored user data
+        // Navigate to the login screen
+        // Replace 'LoginScreen' with the name of your login screen component
+        this.props.navigation.navigate('login');
+        return; // Exit the function to prevent further execution
+      }
+      if (success) {
+        if (
+          contractHeader.length > 0 ||
+          poHeader.length > 0 ||
+          grnHeader.length > 0 ||
+          supplierHeader.length > 0 ||
+          maintenanceHeader.length > 0
+        ) {
           this.setState({
             contractData: contractHeader[0],
             purchaseData: poHeader[0],
             grnData: grnHeader[0],
             supplierData: supplierHeader[0],
-            maintenanceData: maintenanceHeader[0]
-
+            maintenanceData: maintenanceHeader[0],
           });
         }
       } else {

@@ -4,7 +4,8 @@ import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import { BASE_URL, makeRequest } from '../../api/Api_info';
 import CustomLoader from '../../Component/loader/Loader';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
-import { getData, storeData } from '../../api/User_Preference';
+import { KEYS, getData, storeData } from '../../api/User_Preference';
+import { getUniqueId } from 'react-native-device-info';
 
 
 export class Login extends Component {
@@ -45,31 +46,67 @@ export class Login extends Component {
 
       this.setState({ showProcessingLoader: true });
 
-      const params = { mobile, password };
-      console.log('mobile_params', params);
+      let uniqueId = getUniqueId();
+      const params = {mobile, password, device_id: uniqueId};
+            console.log('mobile_params', params);
 
       const response = await makeRequest(BASE_URL + '/mobile/login', params);
-      const { status, message } = response;
-      console.log("login", response);
-      if (response) {
-        if (status === true) {
-          // store data 
-          const info = await storeData({ mobile });
-          console.log('m5m1m651mmmm', info);
-          this.props.navigation.navigate('mytab', { mobile, password });
+      const {status, message, userId} = response;
+      console.log('login', response);
+
+      if (status) {
+        // Store data including device ID
+        const userInfo = {mobile, userId, deviceId: uniqueId};
+        await storeData(KEYS.USER_INFO, userInfo); // Store userInfo using storeData function
+        console.log('Stored userInfo:', userInfo);
+
+        // Navigate to the appropriate screen
+        this.setState({showProcessingLoader: false});
+        this.props.navigation.navigate('mytab', {mobile, userId: userId});
           this.setState({ mobile: '', password: '', showProcessingLoader: false });
         } else {
           Alert.alert(message);
           this.props.navigation.navigate('login');
           this.setState({ showProcessingLoader: false });
         }
-      }
+      
     } catch (error) {
       console.log(error);
     }
   };
 
+  handleLogin = async () => {
+    try {
+      const {mobile, password} = this.state;
+      Keyboard.dismiss();
+      this.setState({showProcessingLoader: true});
 
+      let uniqueId = getUniqueId();
+      const params = {mobile, password, device_id: uniqueId};
+      console.log('mobile_params', params);
+
+      const response = await makeRequest(BASE_URL + '/mobile/login', params);
+      const {status, message, userId} = response;
+      console.log('login', response);
+
+      if (status) {
+        // Store data including device ID
+        const userInfo = {mobile, userId, deviceId: uniqueId};
+        await storeData(KEYS.USER_INFO, userInfo); // Store userInfo using storeData function
+        console.log('Stored userInfo:', userInfo);
+
+        // Navigate to the appropriate screen
+        this.setState({showProcessingLoader: false});
+        this.props.navigation.navigate('mytab', {mobile, userId: userId});
+        this.setState({mobile: '', password: ''});
+      } else {
+        Alert.alert(message);
+        this.setState({showProcessingLoader: false});
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   handleMobileLogin = (Text) => {
     this.setState({ mobile: Text });
