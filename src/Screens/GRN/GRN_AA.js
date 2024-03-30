@@ -30,8 +30,9 @@ export default class GRN_AA extends Component {
         this.handleGRN();
     };
 
+    // changes by manish
 
-    handlePress = (cellData) => {
+    handlePressGRN = (cellData) => {
         this.setState({ goodsID: cellData }, () => {
             this._handleGRNPdf();
         });
@@ -48,7 +49,7 @@ export default class GRN_AA extends Component {
                 this.setState({ cellData: pdfLink });
                 Linking.openURL(pdfLink)
             } else {
-                Alert.alert(message)
+             console.log(message);
             }
         } catch (error) {
             console.log(error);
@@ -68,8 +69,6 @@ export default class GRN_AA extends Component {
             } else {
                 console.log(message);
                 this.setState({ showProcessingLoader: false, isRefreshing: false });
-
-
             }
         } catch (error) {
             console.log(error);
@@ -133,7 +132,7 @@ export default class GRN_AA extends Component {
                     // updating list after the delay
                     this.handleGRN();
                     // resetting isRefreshing after the update
-                    this.setState({ isRefreshing: false, searchGRN: '',  currentPage: 0 });
+                    this.setState({ isRefreshing: false, searchGRN: '', currentPage: 0 });
                 }, 2000);
             });
         } catch (error) {
@@ -158,7 +157,7 @@ export default class GRN_AA extends Component {
         // Calculate the maximum number of lines for each cell in a row
         let maxLines = 2;
         rowData.forEach(cellData => {
-            const lines = Math.ceil(cellData.length /20); // Assuming each line has 20 characters
+            const lines = Math.ceil(cellData.length / 20); // Assuming each line has 20 characters
             if (lines > maxLines) {
                 maxLines = lines;
             }
@@ -239,16 +238,16 @@ export default class GRN_AA extends Component {
                         <Table style={{ marginTop: wp(2) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
                             <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[0, 0, 2, 2, 3, 2]} />
                             {slicedData.map((rowData, index) => (
-                                <Row 
+                                <Row
                                     key={index}
                                     data={Object.values(rowData).map((cellData, cellIndex) => {
                                         if (cellIndex === 0) {
                                             return (
-                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePress(cellData)}>
+                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePressGRN(cellData)}>
                                                     <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
                                                 </TouchableOpacity>
                                             );
-                                        }  
+                                        }
 
                                         else {
                                             return <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>;

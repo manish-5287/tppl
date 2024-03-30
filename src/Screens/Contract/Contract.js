@@ -35,8 +35,8 @@ export default class Contract extends Component {
 
     };
 
-  // pdf api by manish
-    handlePress = (cellData) => {
+    // pdf api by manish
+    handlePressContract = (cellData) => {
         this.setState({ contractId: cellData }, () => {
             this._handleContractPdf();
         });
@@ -53,7 +53,7 @@ export default class Contract extends Component {
                 this.setState({ cellData: pdfLink });
                 Linking.openURL(pdfLink)
             } else {
-            console.log(message);
+                console.log(message);
             }
         } catch (error) {
             console.log(error);
@@ -65,12 +65,12 @@ export default class Contract extends Component {
             this.setState({ showProcessingLoader: true, isRefreshing: true });
             const response = await makeRequest(BASE_URL + '/mobile/contract');
             const { success, message, contractDetails } = response;
-            
+
             if (success) {
                 // Exclude contract_id from contractDetails
                 const modifiedContractDetails = contractDetails.map(({ contract_id, ...rest }) => rest); // change by manish
-                
-                this.setState({ rowData: modifiedContractDetails, showProcessingLoader: false, isRefreshing: false}); // change by manish
+
+                this.setState({ rowData: modifiedContractDetails, showProcessingLoader: false, isRefreshing: false }); // change by manish
             } else {
                 console.log(message);
                 this.setState({ showProcessingLoader: false, isRefreshing: false });
@@ -80,7 +80,7 @@ export default class Contract extends Component {
             this.setState({ showProcessingLoader: false, isRefreshing: false });
         }
     }
-    
+
 
     nextPage = () => {
         const { currentPage } = this.state;
@@ -252,7 +252,7 @@ export default class Contract extends Component {
 
                         <View style={styles.search}>
                             <TextInput
-                                placeholder='Search Work Order No.'
+                                placeholder='Search Contract Number'
                                 placeholderTextColor='#212529'
                                 maxLength={25}
                                 keyboardType='number-pad'
@@ -289,7 +289,7 @@ export default class Contract extends Component {
                                     data={Object.values(rowData).map((cellData, cellIndex) => {
                                         if (cellIndex === 0) {
                                             return (
-                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePress(cellData)}>
+                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePressContract(cellData)}>
                                                     <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
                                                 </TouchableOpacity>
                                             );

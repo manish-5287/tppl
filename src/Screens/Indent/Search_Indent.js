@@ -69,53 +69,7 @@ export class Search_Indent extends Component {
         );
     };
 
-    handleCellPress = (cellData) => {
-        // Set the content of the popover based on the pressed cell data
-        this.setState({
-            isPopoverVisible: true,
-            popoverContent: cellData
-        });
-    };
-
-    handleCellPress1 = (cellData) => {
-        // Set the content of the popover based on the pressed cell data
-        this.setState({
-            isPopoverVisible: true,
-            popoverContent: cellData
-        });
-    };
-
-
-    closePopover = () => {
-        // Close the popover
-        this.setState({
-            isPopoverVisible: false,
-            popoverContent: ""
-        });
-    };
-    renderPopoverContent = () => {
-        // Render the content of the popover
-        return (
-            <View style={styles.popoverContent}>
-                <Text>{this.state.popoverContent}</Text>
-                <TouchableOpacity style={{ marginTop: wp(10) }} onPress={this.closePopover}>
-                    <Text>Close</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    };
-
-    renderPopoverContent1 = () => {
-        // Render the content of the popover
-        return (
-            <View style={styles.popoverContent}>
-                <Text>{this.state.popoverContent}</Text>
-                <TouchableOpacity style={{ marginTop: wp(10) }} onPress={this.closePopover}>
-                    <Text>Close</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    };
+ 
 
 
     componentDidMount() {
@@ -152,7 +106,10 @@ export class Search_Indent extends Component {
             // console.log("IndentSearch", response);
             const { success, message, searchIndent } = response;
             if (success) {
-                this.setState({ rowData: searchIndent,showProcessingLoader: false, isRefreshing: false });
+                const modificationIndentDetails = searchIndent.map(({ contract_id, ...rest }) => rest)
+
+                this.setState({ rowData: modificationIndentDetails, showProcessingLoader: false, isRefreshing: false });
+
 
             } else {
                 console.log(message);
@@ -226,31 +183,7 @@ export class Search_Indent extends Component {
                         {rowData.map((rowData, index) => this.renderRowData(rowData, index))}
                     </Table>
 
-                    {/* Popover */}
-                    <Modal
-                        animationType='fade'
-                        transparent={true}
-                        visible={this.state.isPopoverVisible}
-                        onRequestClose={this.closePopover}
-
-                    >
-                        <View style={styles.popoverContainer}>
-                            {this.renderPopoverContent()}
-                        </View>
-                    </Modal>
-
-                    {/* Popover */}
-                    <Modal
-                        animationType='fade'
-                        transparent={true}
-                        visible={this.state.isPopoverVisible}
-                        onRequestClose={this.closePopover}
-
-                    >
-                        <View style={styles.popoverContainer}>
-                            {this.renderPopoverContent()}
-                        </View>
-                    </Modal>
+                   
                 </View>
                 {showProcessingLoader && <ProcessingLoader />}
 

@@ -53,7 +53,7 @@ export default class GRN extends Component {
                 this.setState({ cellData: pdfLink });
                 Linking.openURL(pdfLink)
             } else {
-                Alert.alert(message)
+                console.log(message);
             }
         } catch (error) {
             console.log(error);
@@ -82,6 +82,7 @@ export default class GRN extends Component {
 
         }
     };
+
     handlesearchGrn = async (searchGRN) => {
         try {
             if (!searchGRN.trim()) {
@@ -115,8 +116,6 @@ export default class GRN extends Component {
             // Optionally, you can show an alert or toast message to inform the user about the error
         }
     };
-
-
     nextPage = () => {
         const { currentPage } = this.state;
         this.setState({ currentPage: currentPage + 1 });

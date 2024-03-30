@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
-import { Image, PlatformColor } from "react-native";
+import { Image} from "react-native";
 import SplashScreen from "./src/Screens/Splash/Splash_Screen";
 import Login from "./src/Screens/Login_Screen/Login";
 import PO from "./src/Screens/PO/PO";
@@ -34,6 +34,7 @@ import handler from "./src/Firebase_Api/notificationHandler";
 
 const handleBackgroundMessage = async remoteMessage => {
   console.log('Message handled in the background:', remoteMessage);
+  
   // You can add custom logic here for handling the background message
 };
 

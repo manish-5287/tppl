@@ -21,27 +21,31 @@ export class Indent extends Component {
             isRefreshing: false,
             isLoading: false,
             errorMessage: '',
-            indentId: ''
+            indentId: '',
+            contractId: ''
 
 
         };
-    }
+    };
 
     componentDidMount() {
         this.handleIndent();
         this.props.navigation.addListener('focus', this._handleListRefreshing); // Add listener for screen focus
-    }
+    };
 
     componentWillUnmount() {
         this.props.navigation.removeListener('focus', this._handleListRefreshing); // Remove listener on component unmount
-    }
+    };
+
+
+    // changes by manish 
 
     handlePress = (cellData) => {
         this.setState({ indentId: cellData }, () => {
             this.handleIndentPdf();
         });
 
-    }
+    };
 
     handleIndentPdf = async () => {
         try {
@@ -59,29 +63,59 @@ export class Indent extends Component {
         } catch (error) {
 
         }
-    }
+    };
+
+
+    // pdf api by manish
+    handlePressContract = (cellData) => {
+        this.setState({ contractId: cellData }, () => {
+            this._handleContractPdf();
+        });
+    };
+    _handleContractPdf = async () => {
+        try {
+            const { contractId } = this.state;
+            const params = { contract_id: contractId };
+            console.log('papapapapapap', params);
+            const response = await makeRequest(BASE_URL + '/mobile/contractpdf', params);
+            const { success, message, pdfLink } = response;
+            console.log('pdfpdfpdf', response);
+            if (success) {
+                this.setState({ cellData: pdfLink });
+                Linking.openURL(pdfLink)
+            } else {
+                console.log(message);
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
 
     handleIndent = async () => {
         try {
-            this.setState({ isRefreshing: true })
-            const response = await makeRequest(BASE_URL + '/mobile/indent')
+            this.setState({ isRefreshing: true });
+            const response = await makeRequest(BASE_URL + '/mobile/indent');
             const { success, message, indentDetails } = response;
-            // console.log("Indent",response);
 
             if (success) {
-                this.setState({ rowData: indentDetails, isRefreshing: false });
+                const modificationIndentDetails = indentDetails.map(({ contract_id, ...rest }) => rest)
+
+                this.setState({ rowData: modificationIndentDetails,isRefreshing: false });
 
             } else {
                 console.log(message);
-                this.setState({ isRefreshing: false });
+                this.setState({isRefreshing: false });
 
             }
         } catch (error) {
             console.log(error);
-            this.setState({ isRefreshing: false });
+            this.setState({isRefreshing: false });
 
         }
     };
+
+
 
     nextPage = () => {
         const { currentPage } = this.state;
@@ -249,7 +283,7 @@ export class Indent extends Component {
 
                         <View style={styles.search}>
                             <TextInput
-                                placeholder='Search Work Order No.'
+                                placeholder='Search Contract Number'
                                 placeholderTextColor='#757575'
                                 maxLength={25}
                                 keyboardType='number-pad'
@@ -292,7 +326,13 @@ export class Indent extends Component {
                                                     <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
                                                 </TouchableOpacity>
                                             );
-                                        } 
+                                        } else if (cellIndex === 1) {
+                                            return (
+                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePressContract(cellData)}>
+                                                    <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
+                                                </TouchableOpacity>
+                                            );
+                                        }
                                         else {
                                             return <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>;
                                         }

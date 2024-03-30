@@ -10,12 +10,15 @@ export class Reverses_Table extends Component {
         this.state = {
             tableHead: ['Id', 'Contract name', 'Product', 'Received By', 'Date'],
             rowData: [],
-            reverseId: ''
+            reverseId: '',
+            contractId: ''
         };
     }
     componentDidMount() {
         this.handleReverse();
     };
+
+
 
     handleReverse = async () => {
         try {
@@ -23,7 +26,8 @@ export class Reverses_Table extends Component {
             // console.log("reverse_table",response);
             const { success, message, reverseDetails } = response;
             if (success) {
-                this.setState({ rowData: reverseDetails });
+                const modifiedReverseDetails = reverseDetails.map(({ contract_id, ...rest }) => rest) // changes by manish
+                this.setState({ rowData: modifiedReverseDetails }); // changes by manish 
 
             } else {
                 console.log(message);
@@ -34,6 +38,7 @@ export class Reverses_Table extends Component {
         }
     }
 
+    //  changes by the manish
     handlePress = (cellData) => {
         this.setState({ reverseId: cellData }, () => {
             this._handleReversePdf();
@@ -60,7 +65,33 @@ export class Reverses_Table extends Component {
             console.log(error);
             console.log('====================================');
         }
+    };
+
+    // pdf api by manish
+    handlePressContract = (cellData) => {
+        this.setState({ contractId: cellData }, () => {
+            this._handleContractPdf();
+        });
     }
+    _handleContractPdf = async () => {
+        try {
+            const { contractId } = this.state;
+            const params = { contract_id: contractId };
+            console.log('papapapapapap', params);
+            const response = await makeRequest(BASE_URL + '/mobile/contractpdf', params);
+            const { success, message, pdfLink } = response;
+            console.log('pdfpdfpdf', response);
+            if (success) {
+                this.setState({ cellData: pdfLink });
+                Linking.openURL(pdfLink)
+            } else {
+                console.log(message);
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
 
 
     render() {
@@ -76,6 +107,12 @@ export class Reverses_Table extends Component {
                                 if (cellIndex === 0) {
                                     return (
                                         <TouchableOpacity key={cellIndex} onPress={() => this.handlePress(cellData)}>
+                                            <Text style={styles.Highlight}>{cellData}</Text>
+                                        </TouchableOpacity>
+                                    );
+                                } else if (cellIndex === 1) {
+                                    return (
+                                        <TouchableOpacity key={cellIndex} onPress={() => this.handlePressContract(cellData)}>
                                             <Text style={styles.Highlight}>{cellData}</Text>
                                         </TouchableOpacity>
                                     );

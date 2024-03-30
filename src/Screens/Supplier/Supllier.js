@@ -395,18 +395,7 @@ export class Supllier extends Component {
                             {slicedData.map((rowData, index) => (
                                 <Row
                                     key={index}
-                                    data={Object.values(rowData).map((cellData, cellIndex) => {
-                                        if (cellIndex === 1) {
-                                            return (
-                                                <TouchableOpacity key={cellIndex}>
-                                                    <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
-                                                </TouchableOpacity>
-                                            );
-                                        }
-                                        else {
-                                            return <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>;
-                                        }
-                                    })}
+                                    data={Object.values(rowData)}
                                     textStyle={styles.rowText}
                                     style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
                                     flexArr={[2, 3, 2, 2, 2]}

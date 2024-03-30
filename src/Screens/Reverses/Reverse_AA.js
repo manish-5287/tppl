@@ -21,7 +21,8 @@ export default class Reverse_AA extends Component {
             isRefreshing: false,
             isLoading: false,
             errorMessages: '',
-            reverseId:''
+            reverseId: '',
+            contractId: ''
 
         };
     };
@@ -29,6 +30,8 @@ export default class Reverse_AA extends Component {
     componentDidMount() {
         this.handleReverse();
     };
+
+    // changes by manish 
 
     handlePress = (cellData) => {
         this.setState({ reverseId: cellData }, () => {
@@ -58,7 +61,6 @@ export default class Reverse_AA extends Component {
         }
     };
 
-     
     handleReverse = async () => {
         try {
             this.setState({ showProcessingLoader: true, isRefreshing: true })
@@ -66,7 +68,8 @@ export default class Reverse_AA extends Component {
             const { success, message, reverseDetails } = response;
             // console.log("reverse",response);
             if (success) {
-                this.setState({ rowData: reverseDetails, showProcessingLoader: false, isRefreshing: false });
+                const modifiedReverseDetails = reverseDetails.map(({ contract_id, ...rest }) => rest) // changes by manish
+                this.setState({ rowData: modifiedReverseDetails, showProcessingLoader: false, isRefreshing: false }); // changes by manish 
 
             } else {
                 console.log(message);
@@ -75,6 +78,33 @@ export default class Reverse_AA extends Component {
         } catch (error) {
             console.log(error);
             this.setState({ showProcessingLoader: false, isRefreshing: false });
+        }
+    };
+
+    // pdf api by manish
+    
+    handlePressContract = (cellData) => {
+        this.setState({ contractId: cellData }, () => {
+            this._handleContractPdf();
+        });
+    };
+
+    _handleContractPdf = async () => {
+        try {
+            const { contractId } = this.state;
+            const params = { contract_id: contractId };
+            console.log('papapapapapap', params);
+            const response = await makeRequest(BASE_URL + '/mobile/contractpdf', params);
+            const { success, message, pdfLink } = response;
+            console.log('pdfpdfpdf', response);
+            if (success) {
+                this.setState({ cellData: pdfLink });
+                Linking.openURL(pdfLink)
+            } else {
+                console.log(message);
+            }
+        } catch (error) {
+            console.log(error);
         }
     };
 
@@ -93,16 +123,16 @@ export default class Reverse_AA extends Component {
     handleSearch = async (searchName) => {
         try {
             if (searchName.length < 1) {
-                this.setState({ contractName: [],  currentPage: 0 }); // Clear the search results
+                this.setState({ contractName: [], currentPage: 0 }); // Clear the search results
                 return;
-              }
+            }
             const params = { workorderno: searchName };
             // console.log('searc', params);
             const response = await makeRequest(BASE_URL + '/mobile/searchcontractname', params);
             const { success, message, contractName } = response;
             // console.log(response);
             if (success) {
-                this.setState({ contractName: contractName,  currentPage: 0 });
+                this.setState({ contractName: contractName, currentPage: 0 });
             } else {
                 this.setState({ contractName: [], errorMessages: message })
             }
@@ -154,7 +184,7 @@ export default class Reverse_AA extends Component {
                     // updating list after the delay
                     this.handleReverse();
                     // resetting isRefreshing after the update
-                    this.setState({ isRefreshing: false, searchName: '' ,  currentPage: 0});
+                    this.setState({ isRefreshing: false, searchName: '', currentPage: 0 });
                 }, 2000);
             });
         } catch (error) {
@@ -232,7 +262,7 @@ export default class Reverse_AA extends Component {
 
                 <View style={styles.container}>
                     <ScrollView
-                      contentContainerStyle={{flexGrow:1}}
+                        contentContainerStyle={{ flexGrow: 1 }}
                         showsVerticalScrollIndicator={false}
                         refreshControl={
                             <RefreshControl
@@ -244,7 +274,7 @@ export default class Reverse_AA extends Component {
                     >
                         <View style={styles.search}>
                             <TextInput
-                                placeholder='Search Work Order No.'
+                                placeholder='Search Contract Number'
                                 placeholderTextColor='#197486'
                                 maxLength={25}
                                 keyboardType='number-pad'
@@ -281,11 +311,17 @@ export default class Reverse_AA extends Component {
                                     data={Object.values(rowData).map((cellData, cellIndex) => {
                                         if (cellIndex === 0) {
                                             return (
-                                                <TouchableOpacity key={cellIndex} onPress={()=>this.handlePress(cellData)}>
+                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePress(cellData)}>
                                                     <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
                                                 </TouchableOpacity>
                                             );
-                                        } 
+                                        } else if (cellIndex === 1) {
+                                            return (
+                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePressContract(cellData)}>
+                                                    <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
+                                                </TouchableOpacity>
+                                            );
+                                        }
                                         else {
                                             return <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>;
                                         }

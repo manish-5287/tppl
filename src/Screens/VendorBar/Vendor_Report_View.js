@@ -14,7 +14,7 @@ export class Vendor_Report_View extends Component {
             tableHead: ['Date', 'GRN No.', 'PO No.', 'Bill No.', 'Vendor', 'Amount'],
             rowData: [],
             currentPage: 0,
-            rowsPerPage: 11,
+            rowsPerPage: 10,
             isPopoverVisible: false,
             popoverContent: "",
             searchName: '',
@@ -57,81 +57,7 @@ export class Vendor_Report_View extends Component {
         }
     }
 
-    renderRowData = (rowData, rowIndex) => {
-        if (typeof rowData === 'object' && rowData !== null) {
-            return (
-                <Row
-                    key={rowIndex}
-                    data={Object.values(rowData)}
-                    textStyle={styles.rowText}
-                    style={[rowIndex % 2 === 0 ? styles.rowEven : styles.rowOdd]}
-                    flexArr={[2, 0, 0, 0, 3, 3]}
-                />
-            );
-        } else if (Array.isArray(rowData)) {
-            let maxLines = 2;
-            rowData.forEach(cellData => {
-                const lines = Math.ceil(cellData.length / 20);
-                if (lines > maxLines) {
-                    maxLines = lines;
-                }
-            });
-        }
 
-        const rowHeight = maxLines * 25; // Assuming font size of 25
-
-        return (
-            <Row
-                key={rowIndex}
-                data={rowData.map((cellData, columnIndex) => {
-                    if (columnIndex === 0) {
-                        return (
-                            <TouchableOpacity key={columnIndex} onPress={() => this.handleCellPress(cellData)}>
-                                <Text style={[styles.rowText1, { lineHeight: 15 }]}>{cellData}</Text>
-                            </TouchableOpacity>
-                        );
-                    } else if (columnIndex === 1) {
-                        return (
-                            <TouchableOpacity key={columnIndex} onPress={() => this.handleCellPress1(cellData)}>
-                                <Text style={[styles.rowText1, { lineHeight: 15 }]}>{cellData}</Text>
-                            </TouchableOpacity>
-                        );
-                    } else {
-                        return <Text key={columnIndex} style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>;
-                    }
-                })}
-                textStyle={styles.rowText}
-                style={[rowIndex % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
-                flexArr={[2, 0, 0, 0, 3, 3]}
-            />
-        );
-    };
-
-
-    handleCellPress = (cellData) => {
-        // Set the content of the popover based on the pressed cell data
-        this.setState({
-            isPopoverVisible: true,
-            popoverContent: cellData
-        });
-    };
-
-    handleCellPress1 = (cellData) => {
-        // Set the content of the popover based on the pressed cell data
-        this.setState({
-            isPopoverVisible: true,
-            popoverContent: cellData
-        });
-    };
-
-
-    closePopover = () => {
-        // Close the popover
-        this.setState({
-            isPopoverVisible: false,
-            popoverContent: ""
-        });
-    };
 
     nextPage = () => {
         const { currentPage } = this.state;
@@ -145,29 +71,6 @@ export class Vendor_Report_View extends Component {
         }
     };
 
-    renderPopoverContent = () => {
-        // Render the content of the popover
-        return (
-            <View style={styles.popoverContent}>
-                <Text>{this.state.popoverContent}</Text>
-                <TouchableOpacity style={{ marginTop: wp(10) }} onPress={this.closePopover}>
-                    <Text>Close</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    };
-
-    renderPopoverContent1 = () => {
-        // Render the content of the popover
-        return (
-            <View style={styles.popoverContent}>
-                <Text>{this.state.popoverContent}</Text>
-                <TouchableOpacity style={{ marginTop: wp(10) }} onPress={this.closePopover}>
-                    <Text>Close</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    };
 
 
     _handleListRefresh = async () => {
@@ -227,7 +130,7 @@ export class Vendor_Report_View extends Component {
     handleSearch = async (searchName) => {
         try {
             if (searchName.length < 1) {
-                this.setState({ contractName: [],  currentPage: 0 }); // Clear the search results
+                this.setState({ contractName: [], currentPage: 0 }); // Clear the search results
                 return;
             }
             const params = {
@@ -238,7 +141,7 @@ export class Vendor_Report_View extends Component {
             const response = await makeRequest(BASE_URL + '/mobile/searchvendorname', params);
             const { success, message, vendorName } = response;
             if (success) {
-                this.setState({ contractName: vendorName, showFlatList: true ,  currentPage: 0});
+                this.setState({ contractName: vendorName, showFlatList: true, currentPage: 0 });
             } else {
                 this.setState({ contractName: [], errorMessage: message, showFlatList: true })
             }
@@ -301,14 +204,27 @@ export class Vendor_Report_View extends Component {
     };
 
     render() {
-        const { tableHead, rowData, currentPage, rowsPerPage } = this.state;
+        const { tableHead, rowData, currentPage, rowsPerPage, } = this.state;
         const startIndex = currentPage * rowsPerPage;
         const endIndex = Math.min(startIndex + rowsPerPage, rowData.length); // Calculate end index while considering the last page
         const slicedData = rowData.slice(startIndex, endIndex);
+
         if (this.state.isLoading) {
             return <CustomLoader />;
         }
-        const { showProcessingLoader } = this.state
+        const { showProcessingLoader } = this.state;
+
+        // Calculate the maximum number of lines for each cell in a row
+        let maxLines = 2;
+        rowData.forEach(cellData => {
+            const lines = Math.ceil(cellData.length / 20); // Assuming each line has 20 characters
+            if (lines > maxLines) {
+                maxLines = lines;
+            }
+        });
+
+        // Calculate row height based on the maximum number of lines and font size
+        const rowHeight = maxLines * 25; // Assuming font size of 25
 
         return (
             <>
@@ -355,8 +271,8 @@ export class Vendor_Report_View extends Component {
 
                 <View style={styles.container}>
                     <ScrollView
-                    contentContainerStyle={{flexGrow:1}}
-                       style={{marginBottom:wp(16)}}
+                        contentContainerStyle={{ flexGrow: 1 }}
+                        style={{ marginBottom: wp(16) }}
                         showsVerticalScrollIndicator={false}
                         refreshControl={
                             <RefreshControl
@@ -444,11 +360,17 @@ export class Vendor_Report_View extends Component {
 
                         </View>
 
-
-
                         <Table style={{ marginTop: wp(3) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
                             <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[2, 0, 0, 0, 3, 3]} />
-                            {slicedData.map((rowData, index) => this.renderRowData(rowData, index))}
+                            {slicedData.map((rowData, index) => (
+                                <Row
+                                    key={index}
+                                    data={Object.values(rowData)}
+                                    textStyle={styles.rowText}
+                                    style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
+                                    flexArr={[2, 0, 0, 0, 3, 3]}
+                                />
+                            ))}
                         </Table>
 
 
@@ -462,33 +384,6 @@ export class Vendor_Report_View extends Component {
                                 <Text style={styles.paginationText}>Next</Text>
                             </TouchableOpacity>
                         </View>
-
-
-                        {/* Popover */}
-                        <Modal
-                            animationType='fade'
-                            transparent={true}
-                            visible={this.state.isPopoverVisible}
-                            onRequestClose={this.closePopover}
-
-                        >
-                            <View style={styles.popoverContainer}>
-                                {this.renderPopoverContent()}
-                            </View>
-                        </Modal>
-
-                        {/* Popover */}
-                        <Modal
-                            animationType='fade'
-                            transparent={true}
-                            visible={this.state.isPopoverVisible}
-                            onRequestClose={this.closePopover}
-
-                        >
-                            <View style={styles.popoverContainer}>
-                                {this.renderPopoverContent1()}
-                            </View>
-                        </Modal>
                     </ScrollView>
                 </View>
                 {showProcessingLoader && <ProcessingLoader />}
@@ -501,8 +396,6 @@ export class Vendor_Report_View extends Component {
 const styles = StyleSheet.create({
     container: {
         alignSelf: 'center',
-        marginTop: wp(2),
-
     },
     head: {
         backgroundColor: '#00838F',

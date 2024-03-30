@@ -10,9 +10,9 @@ export class Indents_Table extends Component {
         this.state = {
             tableHead: ['Id', 'Contract name', 'Product', 'Issue By', 'Date'],
             rowData: [],
-            indentId:'',
-            contractId:''
-         
+            indentId: '',
+            contractId: ''
+
         };
     }
 
@@ -20,13 +20,13 @@ export class Indents_Table extends Component {
     componentDidMount() {
         this.handleIndentOrder(); // changes by manish
     };
-    
+
 
 
     // changes by manish 
 
     handlePressIndentId = (cellData) => {
-        this.setState({ contractID: cellData }, () => {
+        this.setState({ indentId: cellData }, () => {
             this.handleIndentPdf();
         });
 
@@ -50,8 +50,8 @@ export class Indents_Table extends Component {
         }
     }
 
-      // pdf api by manish
-      handlePressContract = (cellData) => {
+    // pdf api by manish
+    handlePressContract = (cellData) => {
         this.setState({ contractId: cellData }, () => {
             this._handleContractPdf();
         });
@@ -68,7 +68,7 @@ export class Indents_Table extends Component {
                 this.setState({ cellData: pdfLink });
                 Linking.openURL(pdfLink)
             } else {
-            console.log(message);
+                console.log(message);
             }
         } catch (error) {
             console.log(error);
@@ -82,7 +82,7 @@ export class Indents_Table extends Component {
             const { success, message, indentDetails } = response;
             if (success) {
 
-                const modificationGrnDetails = indentDetails.map(({contract_id,...rest})=>rest) // changes by manish
+                const modificationGrnDetails = indentDetails.map(({ contract_id, ...rest }) => rest) // changes by manish
                 this.setState({ rowData: modificationGrnDetails });  // chnages by manish 
 
             } else {
@@ -93,7 +93,7 @@ export class Indents_Table extends Component {
             console.log(error);
         }
     }
-  
+
     render() {
         const { tableHead, rowData } = this.state;
         return (
@@ -110,13 +110,13 @@ export class Indents_Table extends Component {
                                             <Text style={styles.Highlight}>{cellData}</Text>
                                         </TouchableOpacity>
                                     );
-                                }  else if (cellIndex === 1) {
+                                } else if (cellIndex === 1) {
                                     return (
                                         <TouchableOpacity key={cellIndex} onPress={() => this.handlePressContract(cellData)}>
                                             <Text style={styles.Highlight}>{cellData}</Text>
                                         </TouchableOpacity>
                                     );
-                                } 
+                                }
                                 else {
                                     return <Text style={styles.rowText}>{cellData}</Text>;
                                 }

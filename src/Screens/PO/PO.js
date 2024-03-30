@@ -1,4 +1,4 @@
-import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, RefreshControl, ScrollView, FlatList } from 'react-native'
+import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, RefreshControl, ScrollView, FlatList, Linking } from 'react-native'
 import React, { Component } from 'react'
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import { Table, Row } from 'react-native-table-component';
@@ -19,7 +19,10 @@ export class PO extends Component {
             searchPO: '',
             showProcessingLoader: false,
             isRefreshing: false,
-            isLoading: false
+            isLoading: false,
+            purchaseorderId: '',
+            poPrimary: '',
+            isRevised: ''
         };
     };
 
@@ -32,14 +35,16 @@ export class PO extends Component {
         this.props.navigation.removeListener('focus', this._handleListRefreshing); // Remove listener on component unmount
     }
 
+  
     handlePO = async () => {
         try {
-            this.setState({ isRefreshing: true })
+            this.setState({  isRefreshing: true })
             const response = await makeRequest(BASE_URL + '/mobile/purchaseorder')
             const { success, message, poDetails } = response;
             // console.log("po",response); 
             if (success) {
-                this.setState({ rowData: poDetails, isRefreshing: false });
+                const modifiedPurchaseDetails = poDetails.map(({ purchaseorder_id, po_primary, is_revised, ...rest }) => rest) // change by manish
+                this.setState({ rowData: modifiedPurchaseDetails,  isRefreshing: false });
             } else {
                 console.log(message);
                 this.setState({ isRefreshing: false });
@@ -48,7 +53,43 @@ export class PO extends Component {
             console.log(error);
             this.setState({ isRefreshing: false });
         }
+    };
+
+       // pdf api by manish
+       handlePurchase = (cellData) => {
+        this.setState({
+            purchaseorderId: cellData,
+            poPrimary: cellData,
+            isRevised: cellData
+        }, () => {
+            this.handlePurchaseId();
+        });
     }
+    handlePurchaseId = async () => {
+        try {
+            const { purchaseorderId, poPrimary, isRevised } = this.state;
+            const params = {
+                purchaseorder_id: purchaseorderId,
+                po_primary: poPrimary,
+                is_revised: isRevised
+            };
+            console.log('papapapapapap', params);
+            const response = await makeRequest(BASE_URL + '/mobile/purchaseorderpdf', params);
+            const { success, message, pdfLink } = response;
+            console.log('pdfpdfpdf', response);
+            if (success) {
+                this.setState({ cellData: pdfLink });
+                Linking.openURL(pdfLink)
+            } else {
+                console.log('====================================');
+                console.log(message);
+                console.log('====================================');
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
 
     handlePOSearch = async (searchPO) => {
         try {
@@ -191,7 +232,7 @@ export class PO extends Component {
                 <View style={styles.search}>
                     <TextInput
 
-                        placeholder='Search Purchase order ID'
+                        placeholder='Search Purchase ID'
                         placeholderTextColor='#039BE5'
                         maxLength={25}
                         keyboardType='number-pad'
@@ -225,7 +266,7 @@ export class PO extends Component {
                                 data={Object.values(rowData).map((cellData, cellIndex) => {
                                     if (cellIndex === 0) {
                                         return (
-                                            <TouchableOpacity key={cellIndex}>
+                                            <TouchableOpacity key={cellIndex} onPress={()=>this.handlePurchase(cellData)}>
                                                 <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
                                             </TouchableOpacity>
                                         );

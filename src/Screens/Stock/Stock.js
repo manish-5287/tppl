@@ -1,10 +1,11 @@
 import React, { Component } from 'react';
-import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, RefreshControl } from 'react-native';
+import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, RefreshControl, FlatList } from 'react-native';
 import { Table, Row } from 'react-native-table-component';
-import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import CustomLoader from '../../Component/loader/Loader';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
 import { BASE_URL, makeRequest } from '../../api/Api_info';
+import DateTimePicker from 'react-native-modal-datetime-picker';
 
 
 
@@ -12,13 +13,24 @@ export class Stock extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            tableHead: ['Date', 'Opening', 'Received', 'Issued', 'Reverse','Return'],
+            tableHead: ['Date', 'Opening', 'Received', 'Issued', 'Reverse', 'Return', 'Close'],
             rowData: [],
             currentPage: 0,
-            rowsPerPage: 10,
-            isPopoverVisible: false,
+            rowsPerPage: 8,
             showProcessingLoader: false,
+            searchName: '',
+            contractName: [],
             isRefreshing: false,
+            isDateTimePickerVisible: false,
+            showFlatList: false, // Add this state variable
+            selectedDateFrom: '',
+            selectedDateTo: '',
+            pickerType: '',
+            vendorid: '',
+            nameInput: '',
+            isLoading: false,
+            errorMessage: '',
+            searchDataAvailable: true
 
         };
     }
@@ -35,11 +47,11 @@ export class Stock extends Component {
     handleStock = async () => {
         try {
             this.setState({ isRefreshing: true })
-            const response = await  makeRequest(BASE_URL + '/mobile/stock')
-            const { success, message, stockDetails } = response;
-            console.log("stock stock stock ",response);
+            const response = await makeRequest(BASE_URL + '/mobile/stock')
+            const { success, message, stockDetails, item_name } = response;
+            console.log("stock stock stock ", response);
             if (success) {
-                this.setState({ rowData: stockDetails, isRefreshing: false });
+                this.setState({ rowData: stockDetails, nameInput: item_name, isRefreshing: false });
 
             } else {
                 console.log(message);
@@ -64,7 +76,6 @@ export class Stock extends Component {
     };
 
 
-
     _handleListRefresh = async () => {
         try {
             // pull-to-refresh
@@ -72,10 +83,16 @@ export class Stock extends Component {
                 // setTimeout with a delay of 1000 milliseconds (1 second)
                 setTimeout(() => {
                     // updating list after the delay
-                   this.handleStock();
+                    this.handleStock();
                     // resetting isRefreshing after the update
-                    this.setState({ isRefreshing: false });
-                }, 100);
+                    this.setState({
+                        isRefreshing: false,
+                        selectedDateFrom: '',
+                        selectedDateTo: '',
+                        searchName: '',
+                        currentPage: 0
+                    });
+                }, 2000);
             });
         } catch (error) {
             console.log(error.message);
@@ -86,18 +103,119 @@ export class Stock extends Component {
         this.props.navigation.navigate('home');
     };
 
+    // date time picker 
+
+    _showDateTimePicker = (type) => this.setState({ isDateTimePickerVisible: true, pickerType: type });
+
+    _hideDateTimePicker = () => this.setState({ isDateTimePickerVisible: false });
+
+    _handleDatePicked = date => {
+        const day = date.getDate();
+        const month = date.getMonth() + 1; // Adding 1 to month because it's zero-based
+        const year = date.getFullYear();
+
+        const formattedDate = `${day}-${month}-${year}`;
+
+        if (this.state.pickerType === 'from') {
+            this.setState({ selectedDateFrom: formattedDate });
+        } else if (this.state.pickerType === 'to') {
+            this.setState({ selectedDateTo: formattedDate });
+        }
+        this._hideDateTimePicker();
+    };
+
+    handleShowSearch = async () => {
+        try {
+            const { selectedDateFrom, selectedDateTo, itemid } = this.state;
+            const params = {
+                item_id: itemid,
+                datefrom: selectedDateFrom,
+                dateto: selectedDateTo
+            };
+            console.log("111112121212", params);
+            const response = await makeRequest(BASE_URL + '/mobile/searchstock', params);
+            const { success, message, stockDetails } = response;
+            if (success) {
+                this.setState({ rowData: stockDetails, searchDataAvailable: stockDetails.length > 0 });
+
+            } else {
+                console.log(message);
+                this.setState({ searchDataAvailable: false });
+            }
+        } catch (error) {
+            console.log(error);
+            this.setState({ searchDataAvailable: false });
+
+        }
+    };
+
+    handleSearch = async () => {
+        try {
+            const { searchName } = this.state;
+            if (searchName.length < 1) {
+                this.setState({ contractName: [] }); // Clear the search results
+                return;
+            }
+            const params = {
+                item_name: searchName
+            };
+            console.log('33333333333', params);
+          
+            const response = await makeRequest(BASE_URL + '/mobile/searchitemname', params);
+            const { success, message, itemName } = response;
+            if (success) {
+                this.setState({ contractName: itemName, showFlatList: true });
+            } else {
+                this.setState({ contractName: [], errorMessage: message, showFlatList: true })
+            }
+        } catch (error) {
+            console.log(error);
+            this.setState({ contractName: [], showFlatList: false })
+        }
+    };
+
+    handleProductPress = (item) => {
+        const { item_name, item_id } = item;
+        console.log('6377033994', item_id);
+        // Update searchName state with the selected item's name
+        this.setState({ searchName: item_name, itemid: item_id });
+        // Stop refreshing and clear search term and results
+        this.setState({ contractName: [], showFlatList: false });
+    };
+
+    componentDidFocus = () => {
+        this.setState({ searchName: '', contractName: [] }); // Clear the search term and results when screen is focused
+    };
+
+    renderProductItem = ({ item }) => {
+        if (!item) {
+            return (
+                <View style={{ alignItems: 'center', paddingVertical: wp(2) }}>
+                    <Text>No Data </Text>
+                </View>
+            );
+        }
+
+        return (
+            <TouchableOpacity onPress={() => this.handleProductPress(item)}>
+                <View style={{ borderBottomWidth: 1, borderBottomColor: '#ccc' }}>
+                    <Text style={{ color: 'black', fontWeight: '500', fontSize: wp(3), marginBottom: wp(2) }}>{item.item_name}</Text>
+                </View>
+            </TouchableOpacity>
+        );
+    };
+
+
 
     render() {
-        const { tableHead, rowData, currentPage, rowsPerPage } = this.state;
+        const { tableHead, rowData, currentPage, rowsPerPage, isLoading, showProcessingLoader } = this.state;
         const startIndex = currentPage * rowsPerPage;
         const endIndex = Math.min(startIndex + rowsPerPage, rowData.length); // Calculate end index while considering the last page
         const slicedData = rowData.slice(startIndex, endIndex);
-        if (this.state.isLoading) {
+
+        if (isLoading) {
             return <CustomLoader />;
         }
-        const { showProcessingLoader } = this.state;
-
-
         // Calculate the maximum number of lines for each cell in a row
         let maxLines = 2;
         rowData.forEach(cellData => {
@@ -160,32 +278,96 @@ export class Stock extends Component {
                                 refreshing={this.state.isRefreshing}
                                 onRefresh={this._handleListRefresh}
                             />
-                        }
-                    >
+                        }>
+
+                        {/* Search bar and results */}
                         <View style={styles.search}>
-                            <TextInput placeholder='Search Stock' placeholderTextColor='#9575CD' maxLength={25} style={styles.search_text} />
+                            <TextInput
+                                placeholder={this.state.nameInput}
+                                placeholderTextColor='#9575CD'
+                                maxLength={25}
+                                keyboardType='name-phone-pad'
+                                value={this.state.searchName}
+                                onChangeText={(searchName) => {
+                                    this.setState({ searchName });
+                                    this.handleSearch(searchName);
+                                }}
+                                style={styles.search_text}
+                            />
+                        </View>
+                        {this.state.showFlatList && this.state.searchName.length > 0 ? (
+                            <View style={styles.searchResultsContainer}>
+                                {this.state.contractName.length > 0 ? (
+                                    <FlatList
+                                        data={this.state.contractName}
+                                        renderItem={this.renderProductItem}
+                                        // keyExtractor={(item) => item.id.toString()}
+                                        style={styles.searchResultsList}
+                                    />
+                                ) : (
+                                    <View style={styles.noResultsContainer}>
+                                        <Text style={styles.noResultsText}>No Data Found</Text>
+                                    </View>
+                                )} 
+                            </View>
+                        ) : null}
+
+                        {/* Date Time picker View */}
+                        <View style={styles.DateTimepicker_Box}>
+
+                            <DateTimePicker
+                                mode='date'
+                                isVisible={this.state.isDateTimePickerVisible}
+                                onConfirm={this._handleDatePicked}
+                                onCancel={this._hideDateTimePicker}
+                            />
+
+                            <View style={styles.Date_From}>
+                                <TouchableOpacity onPress={() => this._showDateTimePicker('from')}>
+                                    <Text style={styles.Date_text}>
+                                        {this.state.selectedDateFrom ? this.state.selectedDateFrom : 'Select Date from'}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            <View style={styles.Date_to}>
+                                <TouchableOpacity onPress={() => this._showDateTimePicker('to')}>
+                                    <Text style={styles.Date_text}>
+                                        {this.state.selectedDateTo ? this.state.selectedDateTo : 'Select Date to'}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+
+
+                            <TouchableOpacity
+                                onPress={this.handleShowSearch}
+                                style={{
+                                    width: wp(20),
+                                    height: wp(9),
+                                    borderRadius: wp(2),
+                                    backgroundColor: '#9575CD',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                }}>
+                                <Text style={{
+                                    fontSize: wp(3.7),
+                                    fontWeight: '500',
+                                    color: 'white',
+                                }}>Search</Text>
+                            </TouchableOpacity>
+
+
                         </View>
 
                         <Table style={{ marginTop: wp(3) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
-                            <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[2, 2, 2, 2, 2, 2]} />
+                            <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[3, 2, 2, 2, 2, 2, 2]} />
                             {slicedData.map((rowData, index) => (
                                 <Row
                                     key={index}
-                                    data={Object.values(rowData).map((cellData, cellIndex) => {
-                                        if (cellIndex === 0) {
-                                            return (
-                                                <TouchableOpacity key={cellIndex} >
-                                                    <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
-                                                </TouchableOpacity>
-                                            );
-                                        }
-                                        else {
-                                            return <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>;
-                                        }
-                                    })}
+                                    data={Object.values(rowData)}
                                     textStyle={styles.rowText}
                                     style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
-                                    flexArr={[2, 2, 2, 2, 2, 2]}
+                                    flexArr={[3, 2, 2, 2, 2, 2, 2]}
                                 />
                             ))}
                         </Table>
@@ -213,7 +395,6 @@ export class Stock extends Component {
 const styles = StyleSheet.create({
     container: {
         alignSelf: 'center',
-        marginTop: wp(2),
     },
     head: {
         backgroundColor: '#9575CD',
@@ -282,7 +463,8 @@ const styles = StyleSheet.create({
         color: '#9575CD',
         fontSize: wp(3.5),
         marginLeft: wp(2),
-        fontWeight: "500"
+        fontWeight: "500",
+        textTransform: 'uppercase'
     },
     popoverContainer: {
         flex: 1,
@@ -293,6 +475,71 @@ const styles = StyleSheet.create({
         height: wp(160)
 
     },
+
+    searchResultsContainer: {
+        position: 'absolute',
+        top: hp(8), // Adjust the top position as needed
+        left: wp(2), // Adjust the left position as needed
+        right: wp(2), // Adjust the right position as needed
+        backgroundColor: '#fff',
+        borderRadius: wp(2),
+        elevation: 3,
+        zIndex: 999, // Ensure the search results view is displayed above other content
+    },
+    searchResultsList: {
+        maxHeight: hp(30), // Adjust the max height as needed
+        borderRadius: wp(2),
+        padding: wp(2),
+    },
+
+    noResultsContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginVertical: wp(2),
+    },
+    noResultsText: {
+        fontSize: wp(3),
+        fontWeight: 'bold',
+    },
+
+
+    // Date time picker style //
+    DateTimepicker_Box: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginTop: wp(3),
+        alignContent: "center"
+    },
+    Date_From: {
+        width: wp(35),
+        height: wp(9),
+        borderColor: '#9575CD',
+        borderWidth: wp(0.3),
+        borderRadius: wp(2),
+        backgroundColor: '#EDE7F6',
+        justifyContent: 'center'
+    },
+    Date_text: {
+        color: '#9575CD',
+        fontSize: wp(3),
+        fontWeight: "500",
+        marginLeft: wp(2)
+
+    },
+
+    Date_to: {
+        width: wp(35),
+        height: wp(9),
+        borderColor: '#9575CD',
+        borderWidth: wp(0.3),
+        borderRadius: wp(2),
+        backgroundColor: '#EDE7F6',
+        justifyContent: 'center'
+
+    },
+
 
 });
 

@@ -26,7 +26,7 @@ export default class Po_Table extends Component {
             // console.log('po_table',response);
             const { success, message, poDetails } = response;
             if (success) {
-                const modifiedPurchaseDetails = poDetails.map(({ purchaseorder_id, po_primary, is_revised, ...rest }) => rest) // change by manish
+                const modifiedPurchaseDetails = poDetails.map(({ po_primary, is_revised, ...rest }) => rest) // change by manish
                 this.setState({ rowData: modifiedPurchaseDetails }); // changes  by mansih 
             } else {
                 console.log(message);
@@ -36,19 +36,21 @@ export default class Po_Table extends Component {
         }
     };
 
-    // pdf api by manish
     handlePurchase = (cellData) => {
-        this.setState({
-            purchaseorderId: cellData,
-            poPrimary: cellData,
-            isRevised: cellData
-        }, () => {
-            this.handlePurchaseId();
-        });
-    }
-    handlePurchaseId = async () => {
+        this.setState(
+            {
+                purchaseorderId: cellData,
+                poPrimary: cellData1,
+                isRevised: cellData2,
+            },
+            () => {
+                this.handlePurchaseId(cellData); 
+            }
+        );
+    };
+
+    handlePurchaseId = async (purchaseorderId, poPrimary, isRevised) => {
         try {
-            const { purchaseorderId, poPrimary, isRevised } = this.state;
             const params = {
                 purchaseorder_id: purchaseorderId,
                 po_primary: poPrimary,
@@ -60,7 +62,7 @@ export default class Po_Table extends Component {
             console.log('pdfpdfpdf', response);
             if (success) {
                 this.setState({ cellData: pdfLink });
-                Linking.openURL(pdfLink)
+                Linking.openURL(pdfLink);
             } else {
                 console.log('====================================');
                 console.log(message);
@@ -85,7 +87,7 @@ export default class Po_Table extends Component {
                             data={Object.values(rowData).map((cellData, cellIndex) => {
                                 if (cellIndex === 0) {
                                     return (
-                                        <TouchableOpacity key={cellIndex} onPress={() => this.handlePurchase(cellData)}>
+                                        <TouchableOpacity key={cellIndex} onPress={() => this.handlePurchase(cellData, rowData.poPrimary, rowData.isRevised)}>
                                             <Text style={styles.Highlight}>{cellData}</Text>
                                         </TouchableOpacity>
                                     );

@@ -1,4 +1,4 @@
-import { Text, View, StyleSheet, TextInput, Image, ScrollView, TouchableOpacity, Alert, FlatList, RefreshControl } from 'react-native'
+import { Text, View, StyleSheet, TextInput, Image, ScrollView, TouchableOpacity, Alert, FlatList, RefreshControl, Linking } from 'react-native'
 import React, { Component } from 'react'
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { Table, Row } from 'react-native-table-component';
@@ -21,7 +21,8 @@ export default class Indent_A extends Component {
             isRefreshing: false,
             isLoading: false,
             errorMessage: '',
-            indentId: ''
+            indentId: '',
+            contractId: ''
 
 
         };
@@ -30,13 +31,13 @@ export default class Indent_A extends Component {
     componentDidMount() {
         this.handleIndent();
     };
-
+    // changes by manish 
     handlePress = (cellData) => {
         this.setState({ indentId: cellData }, () => {
             this.handleIndentPdf();
         });
 
-    }
+    };
 
     handleIndentPdf = async () => {
         try {
@@ -54,17 +55,45 @@ export default class Indent_A extends Component {
         } catch (error) {
 
         }
-    }
+    };
+
+    // pdf api by manish
+    handlePressContract = (cellData) => {
+        this.setState({ contractId: cellData }, () => {
+            this._handleContractPdf();
+        });
+    };
+
+    _handleContractPdf = async () => {
+        try {
+            const { contractId } = this.state;
+            const params = { contract_id: contractId };
+            console.log('papapapapapap', params);
+            const response = await makeRequest(BASE_URL + '/mobile/contractpdf', params);
+            const { success, message, pdfLink } = response;
+            console.log('pdfpdfpdf', response);
+            if (success) {
+                this.setState({ cellData: pdfLink });
+                Linking.openURL(pdfLink);
+            } else {
+                console.log(message);
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
 
     handleIndent = async () => {
         try {
-            this.setState({ showProcessingLoader: true, isRefreshing: true })
-            const response = await makeRequest(BASE_URL + '/mobile/indent')
+            this.setState({ showProcessingLoader: true, isRefreshing: true });
+            const response = await makeRequest(BASE_URL + '/mobile/indent');
             const { success, message, indentDetails } = response;
-            // console.log("Indent",response);
 
             if (success) {
-                this.setState({ rowData: indentDetails, showProcessingLoader: false, isRefreshing: false });
+                const modificationIndentDetails = indentDetails.map(({ contract_id, ...rest }) => rest)
+
+                this.setState({ rowData: modificationIndentDetails, showProcessingLoader: false, isRefreshing: false });
 
             } else {
                 console.log(message);
@@ -77,6 +106,8 @@ export default class Indent_A extends Component {
 
         }
     };
+
+
 
     nextPage = () => {
         const { currentPage } = this.state;
@@ -245,7 +276,7 @@ export default class Indent_A extends Component {
 
                         <View style={styles.search}>
                             <TextInput
-                                placeholder='Search Work Order No.'
+                                placeholder='Search Contract Number'
                                 placeholderTextColor='#757575'
                                 maxLength={25}
                                 keyboardType='number-pad'
@@ -284,6 +315,12 @@ export default class Indent_A extends Component {
                                         if (cellIndex === 0) {
                                             return (
                                                 <TouchableOpacity key={cellIndex} onPress={() => this.handlePress(cellData)}>
+                                                    <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
+                                                </TouchableOpacity>
+                                            );
+                                        } else if (cellIndex === 1) {
+                                            return (
+                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePressContract(cellData)}>
                                                     <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
                                                 </TouchableOpacity>
                                             );

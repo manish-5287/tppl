@@ -21,7 +21,8 @@ export class Reverses extends Component {
             isRefreshing: false,
             isLoading: false,
             errorMessages: '',
-            reverseId: ''
+            reverseId: '',
+            contractId: ''
 
         };
     };
@@ -34,24 +35,7 @@ export class Reverses extends Component {
     componentWillUnmount() {
         this.props.navigation.removeListener('focus', this._handleListRefresh); // Remove listener on component unmount
     }
-    handleReverse = async () => {
-        try {
-            this.setState({ isRefreshing: true })
-            const response = await makeRequest(BASE_URL + '/mobile/reverse')
-            const { success, message, reverseDetails } = response;
-            // console.log("reverse",response);
-            if (success) {
-                this.setState({ rowData: reverseDetails, isRefreshing: false });
 
-            } else {
-                console.log(message);
-                this.setState({ isRefreshing: false });
-            }
-        } catch (error) {
-            console.log(error);
-            this.setState({ isRefreshing: false });
-        }
-    };
 
     nextPage = () => {
         const { currentPage } = this.state;
@@ -65,7 +49,7 @@ export class Reverses extends Component {
         }
     };
 
-
+    // chnages by manish 
     handlePress = (cellData) => {
         this.setState({ reverseId: cellData }, () => {
             this._handleReversePdf();
@@ -91,6 +75,53 @@ export class Reverses extends Component {
             console.log('====================================');
             console.log(error);
             console.log('====================================');
+        }
+    };
+
+    handleReverse = async () => {
+        try {
+            this.setState({ isRefreshing: true })
+            const response = await makeRequest(BASE_URL + '/mobile/reverse')
+            const { success, message, reverseDetails } = response;
+            // console.log("reverse",response);
+            if (success) {
+                const modifiedReverseDetails = reverseDetails.map(({ contract_id, ...rest }) => rest) // changes by manish
+                this.setState({ rowData: modifiedReverseDetails, isRefreshing: false }); // changes by manish 
+
+            } else {
+                console.log(message);
+                this.setState({ isRefreshing: false });
+            }
+        } catch (error) {
+            console.log(error);
+            this.setState({ isRefreshing: false });
+        }
+    };
+
+    // pdf api by manish
+
+    handlePressContract = (cellData) => {
+        this.setState({ contractId: cellData }, () => {
+            this._handleContractPdf();
+        });
+    };
+
+    _handleContractPdf = async () => {
+        try {
+            const { contractId } = this.state;
+            const params = { contract_id: contractId };
+            console.log('papapapapapap', params);
+            const response = await makeRequest(BASE_URL + '/mobile/contractpdf', params);
+            const { success, message, pdfLink } = response;
+            console.log('pdfpdfpdf', response);
+            if (success) {
+                this.setState({ cellData: pdfLink });
+                Linking.openURL(pdfLink)
+            } else {
+                console.log(message);
+            }
+        } catch (error) {
+            console.log(error);
         }
     };
 
@@ -247,7 +278,7 @@ export class Reverses extends Component {
                     >
                         <View style={styles.search}>
                             <TextInput
-                                placeholder='Search Work Order No.'
+                                placeholder='Search Contract Number'
                                 placeholderTextColor='#197486'
                                 maxLength={25}
                                 keyboardType='number-pad'
@@ -283,6 +314,12 @@ export class Reverses extends Component {
                                     key={index}
                                     data={Object.values(rowData).map((cellData, cellIndex) => {
                                         if (cellIndex === 0) {
+                                            return (
+                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePress(cellData)}>
+                                                    <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
+                                                </TouchableOpacity>
+                                            );
+                                        } else if (cellIndex === 1) {
                                             return (
                                                 <TouchableOpacity key={cellIndex} onPress={() => this.handlePress(cellData)}>
                                                     <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>

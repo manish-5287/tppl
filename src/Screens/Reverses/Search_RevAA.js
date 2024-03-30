@@ -67,54 +67,8 @@ export default class Search_RevAA extends Component {
             />
         );
     };
-    handleCellPress = (cellData) => {
-        // Set the content of the popover based on the pressed cell data
-        this.setState({
-            isPopoverVisible: true,
-            popoverContent: cellData
-        });
-    };
-
-    handleCellPress1 = (cellData) => {
-        // Set the content of the popover based on the pressed cell data
-        this.setState({
-            isPopoverVisible: true,
-            popoverContent: cellData
-        });
-    };
-
-
-    closePopover = () => {
-        // Close the popover
-        this.setState({
-            isPopoverVisible: false,
-            popoverContent: ""
-        });
-    };
-
-    renderPopoverContent = () => {
-        // Render the content of the popover
-        return (
-            <View style={styles.popoverContent}>
-                <Text>{this.state.popoverContent}</Text>
-                <TouchableOpacity style={{ marginTop: wp(10) }} onPress={this.closePopover}>
-                    <Text>Close</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    };
-
-    renderPopoverContent1 = () => {
-        // Render the content of the popover
-        return (
-            <View style={styles.popoverContent}>
-                <Text>{this.state.popoverContent}</Text>
-                <TouchableOpacity style={{ marginTop: wp(10) }} onPress={this.closePopover}>
-                    <Text>Close</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    };
+ 
+ 
 
     componentDidMount() {
         this.handleReverseSearch();
@@ -149,7 +103,9 @@ export default class Search_RevAA extends Component {
             // console.log("handleContractSearch", response);
             const { success, message, searchReverse } = response;
             if (success) {
-                this.setState({ rowData: searchReverse, showProcessingLoader: false, isRefreshing: false });
+                const modifiedReverseDetails = searchReverse.map(({ contract_id, ...rest }) => rest) // changes by manish
+                this.setState({ rowData: modifiedReverseDetails, showProcessingLoader: false, isRefreshing: false }); // changes by manish 
+
             } else {
                 console.log(message);
                 this.setState({ showProcessingLoader: false, isRefreshing: false });
@@ -219,31 +175,7 @@ export default class Search_RevAA extends Component {
                         {rowData.map((rowData, index) => this.renderRowData(rowData, index))}
                     </Table>
 
-                    {/* Popover */}
-                    <Modal
-                        animationType='fade'
-                        transparent={true}
-                        visible={this.state.isPopoverVisible}
-                        onRequestClose={this.closePopover}
-
-                    >
-                        <View style={styles.popoverContainer}>
-                            {this.renderPopoverContent()}
-                        </View>
-                    </Modal>
-
-                    {/* Popover */}
-                    <Modal
-                        animationType='fade'
-                        transparent={true}
-                        visible={this.state.isPopoverVisible}
-                        onRequestClose={this.closePopover}
-
-                    >
-                        <View style={styles.popoverContainer}>
-                            {this.renderPopoverContent1()}
-                        </View>
-                    </Modal>
+            
                 </View>
                 {showProcessingLoader && <ProcessingLoader />}
 

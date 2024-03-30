@@ -64,33 +64,6 @@ export default class Search_Production extends Component {
         );
     };
 
-    handleCellPress = (cellData) => {
-        // Set the content of the popover based on the pressed cell data
-        this.setState({
-            isPopoverVisible: true,
-            popoverContent: cellData
-        });
-    };
-
-    closePopover = () => {
-        // Close the popover
-        this.setState({
-            isPopoverVisible: false,
-            popoverContent: ""
-        });
-    };
-    renderPopoverContent = () => {
-        // Render the content of the popover
-        return (
-            <View style={styles.popoverContent}>
-                <Text>{this.state.popoverContent}</Text>
-                <TouchableOpacity style={{ marginTop: wp(10) }} onPress={this.closePopover}>
-                    <Text>Close</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    };
-
     componentDidMount() {
         this.handleProductSearch();
         this._handleListRefresh();
@@ -124,11 +97,12 @@ export default class Search_Production extends Component {
             const { success, message, searchProduction } = response;
             // console.log("handleContractSearch_response", response);
             if (success) {
-                this.setState({ rowData: searchProduction,showProcessingLoader: false, isRefreshing: false });
+                const modifiedProductionDetails = searchProduction.map(({ contract_id, ...rest }) => rest) // changes by manish
+                this.setState({ rowData: modifiedProductionDetails, showProcessingLoader: false, isRefreshing: false }); // chnages by manish
 
             } else {
                 console.log(message);
-            this.setState({ showProcessingLoader: false, isRefreshing: false });
+                this.setState({ showProcessingLoader: false, isRefreshing: false });
 
             }
         } catch (error) {
@@ -194,19 +168,7 @@ export default class Search_Production extends Component {
                         <Row data={tableHead} style={styles.head} textStyle={styles.headText} flexArr={[0, 2, 3, 3, 1, 1]} />
                         {rowData.map((rowData, index) => this.renderRowData(rowData, index))}
                     </Table>
-
-                    {/* Popover */}
-                    <Modal
-                        animationType='fade'
-                        transparent={true}
-                        visible={this.state.isPopoverVisible}
-                        onRequestClose={this.closePopover}
-
-                    >
-                        <View style={styles.popoverContainer}>
-                            {this.renderPopoverContent()}
-                        </View>
-                    </Modal>
+ 
                 </View>
                 {showProcessingLoader && <ProcessingLoader />}
 

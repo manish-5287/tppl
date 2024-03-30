@@ -1,4 +1,4 @@
-import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, Modal, Alert, FlatList, Keyboard, TouchableWithoutFeedback, RefreshControl } from 'react-native'
+import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, Modal, Alert, FlatList, Keyboard, TouchableWithoutFeedback, RefreshControl, Linking } from 'react-native'
 import React, { Component } from 'react'
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { Table, Row } from 'react-native-table-component';
@@ -22,7 +22,9 @@ export class Production extends Component {
             showProcessingLoader: false,
             isRefreshing: false,
             isLoading: false,
-            errorMessage: ''
+            errorMessage: '',
+            contractId: '',
+            productionId: ''
         };
     };
 
@@ -38,7 +40,8 @@ export class Production extends Component {
             const { success, message, productionDetails } = response;
             // console.log("production",response);
             if (success) {
-                this.setState({ rowData: productionDetails, showProcessingLoader: false, isRefreshing: false });
+                const modifiedProductionDetails = productionDetails.map(({ contract_id, ...rest }) => rest) // changes by manish
+                this.setState({ rowData: modifiedProductionDetails, showProcessingLoader: false, isRefreshing: false }); // chnages by manish
 
             } else {
                 console.log(message);
@@ -47,6 +50,63 @@ export class Production extends Component {
         } catch (error) {
             console.log(error);
             this.setState({ showProcessingLoader: false, isRefreshing: false });
+        }
+    };
+
+
+    // pdf api by manish
+
+    handlePressProductID = (cellData) => {
+        this.setState({ productionId: cellData }, () => {
+            this._handlePressProductpdf();
+        });
+    }
+
+    _handlePressProductpdf = async () => {
+        try {
+            const { productionId } = this.state;
+            const params = { production_id: productionId };
+            console.log('papapapapapap', params);
+            const response = await makeRequest(BASE_URL + '/mobile/productionorderpdf', params);
+            const { success, message, pdfLink } = response;
+            console.log('pdfpdfpdf', response);
+            if (success) {
+                this.setState({ cellData: pdfLink });
+                Linking.openURL(pdfLink)
+            } else {
+                console.log('====================================');
+                console.log(message);
+                console.log('====================================');
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    };
+s
+
+    // pdf api by manish
+    handlePressContract = (cellData) => {
+        this.setState({ contractId: cellData }, () => {
+            this._handleContractPdf();
+        });
+    };
+
+    _handleContractPdf = async () => {
+        try {
+            const { contractId } = this.state;
+            const params = { contract_id: contractId };
+            console.log('papapapapapap', params);
+            const response = await makeRequest(BASE_URL + '/mobile/contractpdf', params);
+            const { success, message, pdfLink } = response;
+            console.log('pdfpdfpdf', response);
+            if (success) {
+                this.setState({ cellData: pdfLink });
+                Linking.openURL(pdfLink)
+            } else {
+               console.log(message);
+            }
+        } catch (error) {
+            console.log(error);
         }
     };
 
@@ -63,29 +123,6 @@ export class Production extends Component {
         }
     };
 
-    renderPopoverContent = () => {
-        // Render the content of the popover
-        return (
-            <View style={styles.popoverContent}>
-                <Text>{this.state.popoverContent}</Text>
-                <TouchableOpacity style={{ marginTop: wp(10) }} onPress={this.closePopover}>
-                    <Text>Close</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    };
-
-    renderPopoverContent1 = () => {
-        // Render the content of the popover
-        return (
-            <View style={styles.popoverContent}>
-                <Text>{this.state.popoverContent}</Text>
-                <TouchableOpacity style={{ marginTop: wp(10) }} onPress={this.closePopover}>
-                    <Text>Close</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    };
 
     handleSearch = async (searchName) => {
         try {
@@ -115,11 +152,8 @@ export class Production extends Component {
         const { contract_id } = item;
         // Navigate to the ProductDetailScreen with the selected item
         this.props.navigation.navigate('Search_Product', { contract_id });
-
         // Stop refreshing and clear search term and results
         this.setState({ searchName: '', contractName: [] });
-
-
     };
 
     componentDidFocus = () => {
@@ -234,7 +268,7 @@ export class Production extends Component {
 
                     <View style={styles.search}>
                         <TextInput
-                            placeholder='Search Work Order No.'
+                            placeholder='Search Contract Number'
                             placeholderTextColor='#40856f'
                             maxLength={25}
                             keyboardType='number-pad'
@@ -273,8 +307,7 @@ export class Production extends Component {
                                 onRefresh={this._handleListRefresh}
                                 colors={['#40856f']}
                             />
-                        }
-                    >
+                        }>
 
 
                         <Table style={{ marginTop: wp(2) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
@@ -285,15 +318,15 @@ export class Production extends Component {
                                     data={Object.values(rowData).map((cellData, cellIndex) => {
                                         if (cellIndex === 0) {
                                             return (
-                                                <TouchableOpacity key={cellIndex}>
+                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePressProductID(cellData)}>
                                                     <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
                                                 </TouchableOpacity>
                                             );
                                         } else if ((cellIndex === 2)) {
                                             return (
-                                                <TouchableOpacity key={cellIndex}>
-                                                <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
-                                            </TouchableOpacity>
+                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePressContract(cellData)}>
+                                                    <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
+                                                </TouchableOpacity>
                                             );
                                         }
                                         else {

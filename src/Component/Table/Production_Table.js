@@ -42,11 +42,11 @@ export default class Production_Table extends Component {
     
     handlePressProductID = (cellData) => {
         this.setState({ productionId: cellData }, () => {
-            this._handlePressProductID();
+            this._handlePressProductpdf();
         });
     }
 
-    _handlePressProductID = async () => {
+    _handlePressProductpdf = async () => {
         try {
             const { productionId } = this.state;
             const params = { production_id: productionId };
@@ -87,7 +87,7 @@ export default class Production_Table extends Component {
                 this.setState({ cellData: pdfLink });
                 Linking.openURL(pdfLink)
             } else {
-                Alert.alert(message)
+                console.log(message);
             }
         } catch (error) {
             console.log(error);

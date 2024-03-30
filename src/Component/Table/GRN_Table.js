@@ -52,7 +52,7 @@ export class GRN_Table extends Component {
                 this.setState({ cellData: pdfLink });
                 Linking.openURL(pdfLink)
             } else {
-                Alert.alert(message)
+               console.log(message);
             }
         } catch (error) {
             console.log(error);

@@ -52,7 +52,10 @@ export default class Search_Contract extends Component {
             const { success, message, contractDetails } = response;
             // console.log("ContractSearch", response);
             if (success) {
-                this.setState({ rowData: contractDetails, showProcessingLoader: false, isRefreshing: false });
+                // Exclude contract_id from contractDetails
+                const modifiedContractDetails = contractDetails.map(({ contract_id, ...rest }) => rest); // change by manish
+
+                this.setState({ rowData: modifiedContractDetails, showProcessingLoader: false, isRefreshing: false }); // change by manish
 
             } else {
                 console.log(message);
