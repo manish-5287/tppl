@@ -53,7 +53,9 @@ export default class Search_Contract extends Component {
             // console.log("ContractSearch", response);
             if (success) {
                 // Exclude contract_id from contractDetails
-                const modifiedContractDetails = contractDetails.map(({ contract_id, ...rest }) => rest); // change by manish
+                const modifiedContractDetails = contractDetails.map(({ title, supplier, cost, date }) => ({
+                    title, supplier, cost, date
+                })); // change by manish
 
                 this.setState({ rowData: modifiedContractDetails, showProcessingLoader: false, isRefreshing: false }); // change by manish
 

@@ -99,18 +99,20 @@ export class Indent extends Component {
             const { success, message, indentDetails } = response;
 
             if (success) {
-                const modificationIndentDetails = indentDetails.map(({ contract_id, ...rest }) => rest)
+                const modificationIndentDetails = indentDetails.map(({ indent_id, contact_name, product, issued_name, date }) => ({
+                    indent_id, contact_name, product, issued_name, date
+                }))
 
-                this.setState({ rowData: modificationIndentDetails,isRefreshing: false });
+                this.setState({ rowData: modificationIndentDetails, isRefreshing: false });
 
             } else {
                 console.log(message);
-                this.setState({isRefreshing: false });
+                this.setState({ isRefreshing: false });
 
             }
         } catch (error) {
             console.log(error);
-            this.setState({isRefreshing: false });
+            this.setState({ isRefreshing: false });
 
         }
     };

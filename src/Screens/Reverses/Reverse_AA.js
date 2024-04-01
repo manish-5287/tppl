@@ -68,7 +68,9 @@ export default class Reverse_AA extends Component {
             const { success, message, reverseDetails } = response;
             // console.log("reverse",response);
             if (success) {
-                const modifiedReverseDetails = reverseDetails.map(({ contract_id, ...rest }) => rest) // changes by manish
+                const modifiedReverseDetails = reverseDetails.map(({ reverse_id, contact_name, product, received_name, date }) => ({
+                    reverse_id, contact_name, product, received_name, date
+                })) // changes by manish
                 this.setState({ rowData: modifiedReverseDetails, showProcessingLoader: false, isRefreshing: false }); // changes by manish 
 
             } else {
@@ -82,7 +84,7 @@ export default class Reverse_AA extends Component {
     };
 
     // pdf api by manish
-    
+
     handlePressContract = (cellData) => {
         this.setState({ contractId: cellData }, () => {
             this._handleContractPdf();

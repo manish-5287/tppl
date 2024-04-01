@@ -54,7 +54,11 @@ export class Supllier extends Component {
             // console.log("SUpplier",response);
             const { success, message, vendorDetails, name } = response;
             if (success) {
-                this.setState({ rowData: vendorDetails, nameInput: name, isRefreshing: false });
+
+                const modifiedSupplierData = vendorDetails.map(({ date, description, cr_amt, de_amt, balance }) => ({
+                    date, description, cr_amt, de_amt, balance
+                }))
+                this.setState({ rowData: modifiedSupplierData, nameInput: name, isRefreshing: false });
 
             } else {
                 console.log(message);
@@ -121,8 +125,12 @@ export class Supllier extends Component {
             const response = await makeRequest(BASE_URL + '/mobile/searchvendor', params);
             const { success, message, vendorDetails } = response;
             if (success) {
-                this.setState({ rowData: vendorDetails, searchDataAvailable: vendorDetails.length > 0 });
-                
+
+                const modifiedSupplierData = vendorDetails.map(({ date, description, cr_amt, de_amt, balance }) => ({
+                    date, description, cr_amt, de_amt, balance
+                }))
+                this.setState({ rowData: modifiedSupplierData, searchDataAvailable: vendorDetails.length > 0 });
+
             } else {
                 console.log(message);
                 this.setState({ searchDataAvailable: false });
@@ -130,7 +138,7 @@ export class Supllier extends Component {
         } catch (error) {
             console.log(error);
             this.setState({ searchDataAvailable: false });
-     
+
         }
     };
 
@@ -291,7 +299,7 @@ export class Supllier extends Component {
                 <View style={styles.container}>
                     <ScrollView
                         contentContainerStyle={{ flexGrow: 1 }}
-                        style={{marginBottom:wp(16)}}
+                        style={{ marginBottom: wp(16) }}
                         showsVerticalScrollIndicator={false}
                         refreshControl={
                             <RefreshControl
@@ -328,7 +336,7 @@ export class Supllier extends Component {
                                     <View style={styles.noResultsContainer}>
                                         <Text style={styles.noResultsText}>No Data Found</Text>
                                     </View>
-                                )} 
+                                )}
                             </View>
                         ) : null}
 

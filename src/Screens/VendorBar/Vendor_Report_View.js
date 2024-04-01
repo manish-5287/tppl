@@ -44,7 +44,10 @@ export class Vendor_Report_View extends Component {
             // console.log("VendorReport",response);
             const { success, message, vendorTrack } = response;
             if (success) {
-                this.setState({ rowData: vendorTrack, showProcessingLoader: false, isRefreshing: false });
+                const modifiedVendorReport = vendorTrack.map(({ date, grn_no, po_no, bill_no, vendor, amount }) => ({
+                    date, grn_no, po_no, bill_no, vendor, amount
+                }))
+                this.setState({ rowData: modifiedVendorReport, showProcessingLoader: false, isRefreshing: false });
             } else {
                 console.log(message);
                 this.setState({ showProcessingLoader: false, isRefreshing: false });
@@ -115,7 +118,10 @@ export class Vendor_Report_View extends Component {
             const response = await makeRequest(BASE_URL + '/mobile/searchvendorsreport', params)
             const { success, message, vendorsData } = response
             if (success) {
-                this.setState({ rowData: vendorsData })
+                const modifiedVendorReport = vendorsData.map(({ date, grn_no, po_no, bill_no, vendor, amount }) => ({
+                    date, grn_no, po_no, bill_no, vendor, amount
+                }))
+                this.setState({ rowData: modifiedVendorReport })
 
             } else {
                 console.log(message);

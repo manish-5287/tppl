@@ -82,7 +82,9 @@ export class Indents_Table extends Component {
             const { success, message, indentDetails } = response;
             if (success) {
 
-                const modificationGrnDetails = indentDetails.map(({ contract_id, ...rest }) => rest) // changes by manish
+                const modificationGrnDetails = indentDetails.map(({ indent_id, contact_name, product, issued_name, date }) => ({
+                    indent_id, contact_name, product, issued_name, date
+                })) // changes by manish
                 this.setState({ rowData: modificationGrnDetails });  // chnages by manish 
 
             } else {

@@ -26,7 +26,9 @@ export default class Production_Table extends Component {
             // console.log("production_table",response);
             const { success, message, productionDetails } = response;
             if (success) {
-                const modifiedProductionDetails = productionDetails.map(({ contract_id, ...rest }) => rest) // changes by manish
+                const modifiedProductionDetails = productionDetails.map(({ po_id, date, contact_name, product, plannedqty, preparedqty }) => ({
+                    po_id, date, contact_name, product, plannedqty, preparedqty
+                })) // changes by manish
                 this.setState({ rowData: modifiedProductionDetails }); // chnages by manish
 
             } else {
@@ -39,7 +41,7 @@ export default class Production_Table extends Component {
     }
 
     // pdf api by manish
-    
+
     handlePressProductID = (cellData) => {
         this.setState({ productionId: cellData }, () => {
             this._handlePressProductpdf();

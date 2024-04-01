@@ -50,7 +50,10 @@ export class Vendor extends Component {
             // console.log("SUpplier",response);
             const { success, message, vendorDetails, name } = response;
             if (success) {
-                this.setState({ rowData: vendorDetails, showProcessingLoader: false, nameInput: name, isRefreshing: false });
+                const modifiedSupplierData = vendorDetails.map(({ date, description, cr_amt, de_amt, balance }) => ({
+                    date, description, cr_amt, de_amt, balance
+                }))
+                this.setState({ rowData:modifiedSupplierData, showProcessingLoader: false, nameInput: name, isRefreshing: false });
 
             } else {
                 console.log(message);
@@ -106,8 +109,6 @@ export class Vendor extends Component {
     };
 
 
-
-
     handleShowSearch = async () => {
         try {
 
@@ -121,7 +122,10 @@ export class Vendor extends Component {
             const response = await makeRequest(BASE_URL + '/mobile/searchvendor', params)
             const { success, message, vendorDetails } = response
             if (success) {
-                this.setState({ rowData: vendorDetails })
+                const modifiedSupplierData = vendorDetails.map(({ date, description, cr_amt, de_amt, balance }) => ({
+                    date, description, cr_amt, de_amt, balance
+                }))
+                this.setState({ rowData: modifiedSupplierData })
             } else {
                 console.log(message);
             }

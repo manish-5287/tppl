@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity, Alert, Linking } from 'react-
 import { Table, Row } from 'react-native-table-component';
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import { BASE_URL, makeRequest } from '../../api/Api_info';
- 
+
 
 export class GRN_Table extends Component {
     constructor(props) {
@@ -26,7 +26,10 @@ export class GRN_Table extends Component {
             const response = await makeRequest(BASE_URL + '/mobile/dashboard');
             const { success, grnDetails } = response;
             if (success) {
-                this.setState({ rowData: grnDetails });
+                const modifiedGrnData = grnDetails.map(({ grnno, poid, date, billDate, supplier, amount }) => ({
+                    grnno, poid, date, billDate, supplier, amount
+                }))
+                this.setState({ rowData: modifiedGrnData });
             } else {
                 console.log('Failed to fetch data');
             }
@@ -52,7 +55,7 @@ export class GRN_Table extends Component {
                 this.setState({ cellData: pdfLink });
                 Linking.openURL(pdfLink)
             } else {
-               console.log(message);
+                console.log(message);
             }
         } catch (error) {
             console.log(error);
@@ -76,7 +79,7 @@ export class GRN_Table extends Component {
                                             <Text style={styles.Highlight}>{cellData}</Text>
                                         </TouchableOpacity>
                                     );
-                                }  
+                                }
                                 else {
                                     return <Text style={styles.rowText}>{cellData}</Text>;
                                 }

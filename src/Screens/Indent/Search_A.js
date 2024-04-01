@@ -68,7 +68,7 @@ export class Search_A extends Component {
             />
         );
     };
- 
+
 
 
     componentDidMount() {
@@ -105,13 +105,15 @@ export class Search_A extends Component {
             // console.log("IndentSearch", response);
             const { success, message, searchIndent } = response;
             if (success) {
-                const modificationIndentDetails = searchIndent.map(({ contract_id, ...rest }) => rest)
+                const modificationIndentDetails = searchIndent.map(({ indent_id, contact_name, product, issued_name, date }) => ({
+                    indent_id, contact_name, product, issued_name, date
+                }))
 
                 this.setState({ rowData: modificationIndentDetails, showProcessingLoader: false, isRefreshing: false });
 
             } else {
                 console.log(message);
-            this.setState({ showProcessingLoader: false, isRefreshing: false });
+                this.setState({ showProcessingLoader: false, isRefreshing: false });
 
             }
         } catch (error) {
@@ -181,7 +183,7 @@ export class Search_A extends Component {
                         {rowData.map((rowData, index) => this.renderRowData(rowData, index))}
                     </Table>
 
-                   
+
                 </View>
                 {showProcessingLoader && <ProcessingLoader />}
 

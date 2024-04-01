@@ -51,7 +51,10 @@ export class Stock extends Component {
             const { success, message, stockDetails, item_name } = response;
             console.log("stock stock stock ", response);
             if (success) {
-                this.setState({ rowData: stockDetails, nameInput: item_name, isRefreshing: false });
+                const modfiedStock = stockDetails.map(({ date, opening_stock, received_stock, issued_stock, reverse_stock, return_stock, closing_stock }) => ({
+                    date, opening_stock, received_stock, issued_stock, reverse_stock, return_stock, closing_stock
+                }))
+                this.setState({ rowData: modfiedStock, nameInput: item_name, isRefreshing: false });
 
             } else {
                 console.log(message);
@@ -136,7 +139,10 @@ export class Stock extends Component {
             const response = await makeRequest(BASE_URL + '/mobile/searchstock', params);
             const { success, message, stockDetails } = response;
             if (success) {
-                this.setState({ rowData: stockDetails, searchDataAvailable: stockDetails.length > 0 });
+                const modfiedStock = stockDetails.map(({ date, opening_stock, received_stock, issued_stock, reverse_stock, return_stock, closing_stock }) => ({
+                    date, opening_stock, received_stock, issued_stock, reverse_stock, return_stock, closing_stock
+                }))
+                this.setState({ rowData: modfiedStock, searchDataAvailable: stockDetails.length > 0 });
 
             } else {
                 console.log(message);
@@ -160,7 +166,7 @@ export class Stock extends Component {
                 item_name: searchName
             };
             console.log('33333333333', params);
-          
+
             const response = await makeRequest(BASE_URL + '/mobile/searchitemname', params);
             const { success, message, itemName } = response;
             if (success) {
@@ -308,7 +314,7 @@ export class Stock extends Component {
                                     <View style={styles.noResultsContainer}>
                                         <Text style={styles.noResultsText}>No Data Found</Text>
                                     </View>
-                                )} 
+                                )}
                             </View>
                         ) : null}
 

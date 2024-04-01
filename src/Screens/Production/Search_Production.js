@@ -97,7 +97,9 @@ export default class Search_Production extends Component {
             const { success, message, searchProduction } = response;
             // console.log("handleContractSearch_response", response);
             if (success) {
-                const modifiedProductionDetails = searchProduction.map(({ contract_id, ...rest }) => rest) // changes by manish
+                const modifiedProductionDetails = searchProduction.map(({ po_id, date, contact_name, product, plannedqty, preparedqty }) => ({
+                    po_id, date, contact_name, product, plannedqty, preparedqty
+                })) // changes by manish
                 this.setState({ rowData: modifiedProductionDetails, showProcessingLoader: false, isRefreshing: false }); // chnages by manish
 
             } else {
@@ -168,7 +170,7 @@ export default class Search_Production extends Component {
                         <Row data={tableHead} style={styles.head} textStyle={styles.headText} flexArr={[0, 2, 3, 3, 1, 1]} />
                         {rowData.map((rowData, index) => this.renderRowData(rowData, index))}
                     </Table>
- 
+
                 </View>
                 {showProcessingLoader && <ProcessingLoader />}
 

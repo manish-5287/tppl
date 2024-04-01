@@ -68,7 +68,10 @@ export default class GRN extends Component {
             const { success, message, grnDetails } = response;
             // console.log("grn",response);
             if (success) {
-                this.setState({ rowData: grnDetails, isRefreshing: false });
+                const modifiedGrnData = grnDetails.map(({ grnno, poid, date, billDate, supplier, amount }) => ({
+                    grnno, poid, date, billDate, supplier, amount
+                }))
+                this.setState({ rowData: modifiedGrnData, isRefreshing: false });
 
             } else {
                 console.log(message);
@@ -219,7 +222,7 @@ export default class GRN extends Component {
 
                 <View style={styles.search}>
                     <TextInput
-                        placeholder='Search Grn Id'
+                        placeholder='Search Grn Po Id'
                         placeholderTextColor='#8D6E63'
                         maxLength={25}
                         keyboardType='number-pad'
@@ -256,7 +259,7 @@ export default class GRN extends Component {
                                                     <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
                                                 </TouchableOpacity>
                                             );
-                                        }  
+                                        }
 
                                         else {
                                             return <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>;

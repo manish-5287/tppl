@@ -24,34 +24,34 @@ export default class Contract extends Component {
             isRefreshing: false,
             isLoading: false,
             errorMessage: '',
-            contractId: ''
-
+            contractid: '',
         };
 
     };
 
     componentDidMount() {
         this.handleContract();
-
     };
-
     // pdf api by manish
-    handlePressContract = (cellData) => {
-        this.setState({ contractId: cellData }, () => {
+
+    handlePressContract = (rowData) => {
+        console.log("rowDatarowDatarowData", rowData)
+        this.setState({ contractId:rowData }, () => {
             this._handleContractPdf();
         });
-    }
+    };
+
+
     _handleContractPdf = async () => {
         try {
-            const { contractId } = this.state;
-            const params = { contract_id: contractId };
-            console.log('papapapapapap', params);
+            const { contractid } = this.state;
+            const params = { contract_id: contractid };
             const response = await makeRequest(BASE_URL + '/mobile/contractpdf', params);
             const { success, message, pdfLink } = response;
-            console.log('pdfpdfpdf', response);
+            console.log('PDF response:', response);
             if (success) {
                 this.setState({ cellData: pdfLink });
-                Linking.openURL(pdfLink)
+                Linking.openURL(pdfLink);
             } else {
                 console.log(message);
             }
@@ -60,17 +60,26 @@ export default class Contract extends Component {
         }
     };
 
+
     handleContract = async () => {
         try {
             this.setState({ showProcessingLoader: true, isRefreshing: true });
             const response = await makeRequest(BASE_URL + '/mobile/contract');
             const { success, message, contractDetails } = response;
+            console.log('xxxxxxxxxx', response)
 
             if (success) {
-                // Exclude contract_id from contractDetails
-                const modifiedContractDetails = contractDetails.map(({ contract_id, ...rest }) => rest); // change by manish
+                // Extract specific fields from contractDetails and set in rowData
+                const modifiedContractDetails = contractDetails.map(({title, supplier, cost, date }) => ({
+                    title,
+                    supplier,
+                    cost,
+                    date,
+                }));
 
-                this.setState({ rowData: modifiedContractDetails, showProcessingLoader: false, isRefreshing: false }); // change by manish
+                // console.log("khkjgjg", contractDetails.map(item => item.contract_id));
+
+                this.setState({ contractid: contractDetails.map(item => item.contract_id), rowData: modifiedContractDetails, showProcessingLoader: false, isRefreshing: false });
             } else {
                 console.log(message);
                 this.setState({ showProcessingLoader: false, isRefreshing: false });
@@ -79,7 +88,7 @@ export default class Contract extends Component {
             console.log(error);
             this.setState({ showProcessingLoader: false, isRefreshing: false });
         }
-    }
+    };
 
 
     nextPage = () => {
@@ -302,6 +311,7 @@ export default class Contract extends Component {
                                     style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
                                     flexArr={[3, 3, 2, 2]}
                                 />
+
                             ))}
                         </Table>
 

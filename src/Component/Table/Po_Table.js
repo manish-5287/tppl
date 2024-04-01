@@ -26,7 +26,9 @@ export default class Po_Table extends Component {
             // console.log('po_table',response);
             const { success, message, poDetails } = response;
             if (success) {
-                const modifiedPurchaseDetails = poDetails.map(({ po_primary, is_revised, ...rest }) => rest) // change by manish
+                const modifiedPurchaseDetails = poDetails.map(({ poid, date, supplier, qty, amount, delivery }) => ({
+                    poid, date, supplier, qty, amount, delivery
+                })) // change by manish
                 this.setState({ rowData: modifiedPurchaseDetails }); // changes  by mansih 
             } else {
                 console.log(message);
@@ -44,7 +46,7 @@ export default class Po_Table extends Component {
                 isRevised: cellData2,
             },
             () => {
-                this.handlePurchaseId(cellData); 
+                this.handlePurchaseId(cellData);
             }
         );
     };

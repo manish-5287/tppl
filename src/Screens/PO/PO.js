@@ -35,16 +35,18 @@ export class PO extends Component {
         this.props.navigation.removeListener('focus', this._handleListRefreshing); // Remove listener on component unmount
     }
 
-  
+
     handlePO = async () => {
         try {
-            this.setState({  isRefreshing: true })
+            this.setState({ isRefreshing: true })
             const response = await makeRequest(BASE_URL + '/mobile/purchaseorder')
             const { success, message, poDetails } = response;
             // console.log("po",response); 
             if (success) {
-                const modifiedPurchaseDetails = poDetails.map(({ purchaseorder_id, po_primary, is_revised, ...rest }) => rest) // change by manish
-                this.setState({ rowData: modifiedPurchaseDetails,  isRefreshing: false });
+                const modifiedPurchaseDetails = poDetails.map(({ poid, date, supplier, qty, amount, delivery }) => ({
+                    poid, date, supplier, qty, amount, delivery
+                })) // change by manish
+                this.setState({ rowData: modifiedPurchaseDetails, isRefreshing: false });
             } else {
                 console.log(message);
                 this.setState({ isRefreshing: false });
@@ -55,8 +57,8 @@ export class PO extends Component {
         }
     };
 
-       // pdf api by manish
-       handlePurchase = (cellData) => {
+    // pdf api by manish
+    handlePurchase = (cellData) => {
         this.setState({
             purchaseorderId: cellData,
             poPrimary: cellData,
@@ -266,7 +268,7 @@ export class PO extends Component {
                                 data={Object.values(rowData).map((cellData, cellIndex) => {
                                     if (cellIndex === 0) {
                                         return (
-                                            <TouchableOpacity key={cellIndex} onPress={()=>this.handlePurchase(cellData)}>
+                                            <TouchableOpacity key={cellIndex} onPress={() => this.handlePurchase(cellData)}>
                                                 <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
                                             </TouchableOpacity>
                                         );

@@ -24,7 +24,7 @@ export class Production extends Component {
             isLoading: false,
             errorMessage: '',
             contractId: '',
-            productionId: ''
+            productionId: '',
         };
     };
 
@@ -40,7 +40,9 @@ export class Production extends Component {
             const { success, message, productionDetails } = response;
             // console.log("production",response);
             if (success) {
-                const modifiedProductionDetails = productionDetails.map(({ contract_id, ...rest }) => rest) // changes by manish
+                const modifiedProductionDetails = productionDetails.map(({ po_id, date, contact_name, product, plannedqty, preparedqty }) => ({
+                    po_id, date, contact_name, product, plannedqty, preparedqty
+                })) // changes by manish
                 this.setState({ rowData: modifiedProductionDetails, showProcessingLoader: false, isRefreshing: false }); // chnages by manish
 
             } else {
@@ -82,12 +84,13 @@ export class Production extends Component {
             console.log(error);
         }
     };
-s
+    s
 
     // pdf api by manish
-    handlePressContract = (cellData) => {
-        this.setState({ contractId: cellData }, () => {
-            this._handleContractPdf();
+    handlePressContract = (rowData) => {
+         const { contract_id } = rowData; // Assuming rowData contains contract_id
+        this.setState({ contractId: contract_id }, () => {
+            this._handleContractPdf(rowData);
         });
     };
 
@@ -103,7 +106,7 @@ s
                 this.setState({ cellData: pdfLink });
                 Linking.openURL(pdfLink)
             } else {
-               console.log(message);
+                console.log(message);
             }
         } catch (error) {
             console.log(error);
@@ -324,7 +327,7 @@ s
                                             );
                                         } else if ((cellIndex === 2)) {
                                             return (
-                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePressContract(cellData)}>
+                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePressContract(rowData)}>
                                                     <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
                                                 </TouchableOpacity>
                                             );

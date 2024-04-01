@@ -46,7 +46,10 @@ export class VendorReport extends Component {
             // console.log("VendorReport",response);
             const { success, message, vendorTrack } = response;
             if (success) {
-                this.setState({ rowData: vendorTrack, showProcessingLoader: false, isRefreshing: false });
+                const modifiedVendorReport = vendorTrack.map(({ date, grn_no, po_no, bill_no, vendor, amount }) => ({
+                    date, grn_no, po_no, bill_no, vendor, amount
+                }))
+                this.setState({ rowData: modifiedVendorReport, showProcessingLoader: false, isRefreshing: false });
             } else {
                 console.log(message);
                 this.setState({ showProcessingLoader: false, isRefreshing: false });
@@ -116,7 +119,10 @@ export class VendorReport extends Component {
             const response = await makeRequest(BASE_URL + '/mobile/searchvendorsreport', params)
             const { success, message, vendorsData } = response
             if (success) {
-                this.setState({ rowData: vendorsData })
+                const modifiedVendorReport = vendorsData.map(({ date, grn_no, po_no, bill_no, vendor, amount }) => ({
+                    date, grn_no, po_no, bill_no, vendor, amount
+                }))
+                this.setState({ rowData: modifiedVendorReport })
                 showToast(message);
             } else {
                 showToast(message);
@@ -219,17 +225,17 @@ export class VendorReport extends Component {
         }
         const { showProcessingLoader } = this.state;
 
-                // Calculate the maximum number of lines for each cell in a row
-                let maxLines = 2;
-                rowData.forEach(cellData => {
-                    const lines = Math.ceil(cellData.length / 20); // Assuming each line has 20 characters
-                    if (lines > maxLines) {
-                        maxLines = lines;
-                    }
-                });
-        
-                // Calculate row height based on the maximum number of lines and font size
-                const rowHeight = maxLines * 25; // Assuming font size of 25
+        // Calculate the maximum number of lines for each cell in a row
+        let maxLines = 2;
+        rowData.forEach(cellData => {
+            const lines = Math.ceil(cellData.length / 20); // Assuming each line has 20 characters
+            if (lines > maxLines) {
+                maxLines = lines;
+            }
+        });
+
+        // Calculate row height based on the maximum number of lines and font size
+        const rowHeight = maxLines * 25; // Assuming font size of 25
 
         return (
             <>

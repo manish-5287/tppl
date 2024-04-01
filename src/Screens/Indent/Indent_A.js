@@ -91,7 +91,9 @@ export default class Indent_A extends Component {
             const { success, message, indentDetails } = response;
 
             if (success) {
-                const modificationIndentDetails = indentDetails.map(({ contract_id, ...rest }) => rest)
+                const modificationIndentDetails = indentDetails.map(({ indent_id, contact_name, product, issued_name, date }) => ({
+                    indent_id, contact_name, product, issued_name, date
+                }))
 
                 this.setState({ rowData: modificationIndentDetails, showProcessingLoader: false, isRefreshing: false });
 

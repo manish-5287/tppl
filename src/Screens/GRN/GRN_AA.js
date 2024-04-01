@@ -49,7 +49,7 @@ export default class GRN_AA extends Component {
                 this.setState({ cellData: pdfLink });
                 Linking.openURL(pdfLink)
             } else {
-             console.log(message);
+                console.log(message);
             }
         } catch (error) {
             console.log(error);
@@ -64,7 +64,11 @@ export default class GRN_AA extends Component {
             const { success, message, grnDetails } = response;
             // console.log("grn",response);
             if (success) {
-                this.setState({ rowData: grnDetails, showProcessingLoader: false, isRefreshing: false });
+
+                const modifiedGrnData = grnDetails.map(({ grnno, poid, date, billDate, supplier, amount }) => ({
+                    grnno, poid, date, billDate, supplier, amount
+                }))
+                this.setState({ rowData: modifiedGrnData, showProcessingLoader: false, isRefreshing: false });
 
             } else {
                 console.log(message);
@@ -223,7 +227,7 @@ export default class GRN_AA extends Component {
                     >
                         <View style={styles.search}>
                             <TextInput
-                                placeholder='Search Grn Id'
+                                placeholder='Search Grn Po Id'
                                 placeholderTextColor='#8D6E63'
                                 maxLength={25}
                                 keyboardType='number-pad'

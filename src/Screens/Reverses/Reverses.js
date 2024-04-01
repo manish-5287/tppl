@@ -85,7 +85,9 @@ export class Reverses extends Component {
             const { success, message, reverseDetails } = response;
             // console.log("reverse",response);
             if (success) {
-                const modifiedReverseDetails = reverseDetails.map(({ contract_id, ...rest }) => rest) // changes by manish
+                const modifiedReverseDetails = reverseDetails.map(({ reverse_id, contact_name, product, received_name, date }) => ({
+                    reverse_id, contact_name, product, received_name, date
+                })) // changes by manish
                 this.setState({ rowData: modifiedReverseDetails, isRefreshing: false }); // changes by manish 
 
             } else {

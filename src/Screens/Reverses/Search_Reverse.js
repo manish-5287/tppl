@@ -67,9 +67,9 @@ export class Search_Reverse extends Component {
             />
         );
     };
- 
 
- 
+
+
     componentDidMount() {
         this.handleReverseSearch();
         this._handleListRefresh();
@@ -103,7 +103,9 @@ export class Search_Reverse extends Component {
             // console.log("handleContractSearch", response);
             const { success, message, searchReverse } = response;
             if (success) {
-                const modifiedReverseDetails = searchReverse.map(({ contract_id, ...rest }) => rest) // changes by manish
+                const modifiedReverseDetails = searchReverse.map(({ reverse_id, contact_name, product, received_name, date }) => ({
+                    reverse_id, contact_name, product, received_name, date
+                })) // changes by manish
                 this.setState({ rowData: modifiedReverseDetails, showProcessingLoader: false, isRefreshing: false }); // changes by manish 
 
             } else {
@@ -175,7 +177,7 @@ export class Search_Reverse extends Component {
                         {rowData.map((rowData, index) => this.renderRowData(rowData, index))}
                     </Table>
 
-                
+
                 </View>
                 {showProcessingLoader && <ProcessingLoader />}
 

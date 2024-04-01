@@ -36,7 +36,9 @@ export class PO_AAA extends Component {
             const { success, message, poDetails } = response;
             // console.log("po",response); 
             if (success) {
-                const modifiedPurchaseDetails = poDetails.map(({ purchaseorder_id, po_primary, is_revised, ...rest }) => rest) // change by manish
+                const modifiedPurchaseDetails = poDetails.map(({ poid, date, supplier, qty, amount, delivery  }) =>({
+                    poid, date, supplier, qty, amount, delivery 
+                })) // change by manish
                 this.setState({ rowData: modifiedPurchaseDetails, showProcessingLoader: false, isRefreshing: false }); // changes by manish 
             } else {
                 console.log(message);
