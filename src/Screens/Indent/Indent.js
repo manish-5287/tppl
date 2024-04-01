@@ -67,29 +67,34 @@ export class Indent extends Component {
 
 
     // pdf api by manish
-    handlePressContract = (cellData) => {
-        this.setState({ contractId: cellData }, () => {
-            this._handleContractPdf();
-        });
+    handlePressContract = (contractId) => {
+        this.setState({ contractId }, this._handleContractPdf);
     };
+
     _handleContractPdf = async () => {
         try {
             const { contractId } = this.state;
+            if (!contractId) {
+                console.log('No contract ID available to fetch PDF');
+                return;
+            }
+
             const params = { contract_id: contractId };
-            console.log('papapapapapap', params);
             const response = await makeRequest(BASE_URL + '/mobile/contractpdf', params);
             const { success, message, pdfLink } = response;
-            console.log('pdfpdfpdf', response);
+            console.log('PDF response:', response);
             if (success) {
-                this.setState({ cellData: pdfLink });
-                Linking.openURL(pdfLink)
+                console.log('PDF Link:', pdfLink);
+                // Handle PDF link as needed, e.g., opening it
+                Linking.openURL(pdfLink);
             } else {
-                console.log(message);
+                console.log('Error fetching PDF:', message);
             }
         } catch (error) {
-            console.log(error);
+            console.log('Error fetching PDF:', error);
         }
     };
+
 
 
     handleIndent = async () => {
@@ -99,8 +104,8 @@ export class Indent extends Component {
             const { success, message, indentDetails } = response;
 
             if (success) {
-                const modificationIndentDetails = indentDetails.map(({ indent_id, contact_name, product, issued_name, date }) => ({
-                    indent_id, contact_name, product, issued_name, date
+                const modificationIndentDetails = indentDetails.map(({ indent_id, contact_name, product, issued_name, date ,contract_id}) => ({
+                    indent_id, contact_name, product, issued_name, date,contract_id
                 }))
 
                 this.setState({ rowData: modificationIndentDetails, isRefreshing: false });
@@ -330,7 +335,7 @@ export class Indent extends Component {
                                             );
                                         } else if (cellIndex === 1) {
                                             return (
-                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePressContract(cellData)}>
+                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePressContract(rowData.contract_id)}>
                                                     <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
                                                 </TouchableOpacity>
                                             );

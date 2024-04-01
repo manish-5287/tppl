@@ -68,8 +68,8 @@ export default class Reverse_AA extends Component {
             const { success, message, reverseDetails } = response;
             // console.log("reverse",response);
             if (success) {
-                const modifiedReverseDetails = reverseDetails.map(({ reverse_id, contact_name, product, received_name, date }) => ({
-                    reverse_id, contact_name, product, received_name, date
+                const modifiedReverseDetails = reverseDetails.map(({ reverse_id, contact_name, product, received_name, date,contract_id }) => ({
+                    reverse_id, contact_name, product, received_name, date,contract_id
                 })) // changes by manish
                 this.setState({ rowData: modifiedReverseDetails, showProcessingLoader: false, isRefreshing: false }); // changes by manish 
 
@@ -85,28 +85,31 @@ export default class Reverse_AA extends Component {
 
     // pdf api by manish
 
-    handlePressContract = (cellData) => {
-        this.setState({ contractId: cellData }, () => {
-            this._handleContractPdf();
-        });
+    handlePressContract = (contractId) => {
+        this.setState({ contractId }, this._handleContractPdf);
     };
 
     _handleContractPdf = async () => {
         try {
             const { contractId } = this.state;
+            if (!contractId) {
+                console.log('No contract ID available to fetch PDF');
+                return;
+            }
+
             const params = { contract_id: contractId };
-            console.log('papapapapapap', params);
             const response = await makeRequest(BASE_URL + '/mobile/contractpdf', params);
             const { success, message, pdfLink } = response;
-            console.log('pdfpdfpdf', response);
+            console.log('PDF response:', response);
             if (success) {
-                this.setState({ cellData: pdfLink });
-                Linking.openURL(pdfLink)
+                console.log('PDF Link:', pdfLink);
+                // Handle PDF link as needed, e.g., opening it
+                Linking.openURL(pdfLink);
             } else {
-                console.log(message);
+                console.log('Error fetching PDF:', message);
             }
         } catch (error) {
-            console.log(error);
+            console.log('Error fetching PDF:', error);
         }
     };
 
@@ -319,7 +322,7 @@ export default class Reverse_AA extends Component {
                                             );
                                         } else if (cellIndex === 1) {
                                             return (
-                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePressContract(cellData)}>
+                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePressContract(rowData.contract_id)}>
                                                     <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
                                                 </TouchableOpacity>
                                             );

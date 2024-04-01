@@ -26,8 +26,8 @@ export default class Production_Table extends Component {
             // console.log("production_table",response);
             const { success, message, productionDetails } = response;
             if (success) {
-                const modifiedProductionDetails = productionDetails.map(({ po_id, date, contact_name, product, plannedqty, preparedqty }) => ({
-                    po_id, date, contact_name, product, plannedqty, preparedqty
+                const modifiedProductionDetails = productionDetails.map(({ po_id, date, contact_name, product, plannedqty, preparedqty,contract_id }) => ({
+                    po_id, date, contact_name, product, plannedqty, preparedqty,contract_id
                 })) // changes by manish
                 this.setState({ rowData: modifiedProductionDetails }); // chnages by manish
 
@@ -71,28 +71,31 @@ export default class Production_Table extends Component {
 
 
     // pdf api by manish
-    handlePressContract = (cellData) => {
-        this.setState({ contractId: cellData }, () => {
-            this._handleContractPdf();
-        });
+    handlePressContract = (contractId) => {
+        this.setState({ contractId }, this._handleContractPdf);
     };
 
     _handleContractPdf = async () => {
         try {
             const { contractId } = this.state;
+            if (!contractId) {
+                console.log('No contract ID available to fetch PDF');
+                return;
+            }
+
             const params = { contract_id: contractId };
-            console.log('papapapapapap', params);
             const response = await makeRequest(BASE_URL + '/mobile/contractpdf', params);
             const { success, message, pdfLink } = response;
-            console.log('pdfpdfpdf', response);
+            console.log('PDF response:', response);
             if (success) {
-                this.setState({ cellData: pdfLink });
-                Linking.openURL(pdfLink)
+                console.log('PDF Link:', pdfLink);
+                // Handle PDF link as needed, e.g., opening it
+                Linking.openURL(pdfLink);
             } else {
-                console.log(message);
+                console.log('Error fetching PDF:', message);
             }
         } catch (error) {
-            console.log(error);
+            console.log('Error fetching PDF:', error);
         }
     };
 
@@ -116,7 +119,7 @@ export default class Production_Table extends Component {
                                     );
                                 } else if ((cellIndex === 2)) {
                                     return (
-                                        <TouchableOpacity key={cellIndex} onPress={() => this.handlePressContract(cellData)}>
+                                        <TouchableOpacity key={cellIndex} onPress={() => this.handlePressContract(rowData.contract_id)}>
                                             <Text style={styles.Highlight}>{cellData}</Text>
                                         </TouchableOpacity>
                                     );

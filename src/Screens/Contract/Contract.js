@@ -6,8 +6,6 @@ import { BASE_URL, makeRequest } from '../../api/Api_info';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
 import CustomLoader from '../../Component/loader/Loader';
 
-
-
 export default class Contract extends Component {
     constructor(props) {
         super(props);
@@ -26,39 +24,40 @@ export default class Contract extends Component {
             errorMessage: '',
             contractid: '',
         };
-
     };
 
     componentDidMount() {
         this.handleContract();
     };
-    // pdf api by manish
 
-    handlePressContract = (rowData) => {
-        console.log("rowDatarowDatarowData", rowData)
-        this.setState({ contractId:rowData }, () => {
-            this._handleContractPdf();
-        });
+    handlePressContract = (contractId) => {
+        this.setState({ contractId }, this._handleContractPdf);
     };
-
 
     _handleContractPdf = async () => {
         try {
-            const { contractid } = this.state;
-            const params = { contract_id: contractid };
+            const { contractId } = this.state;
+            if (!contractId) {
+                console.log('No contract ID available to fetch PDF');
+                return;
+            }
+
+            const params = { contract_id: contractId };
             const response = await makeRequest(BASE_URL + '/mobile/contractpdf', params);
             const { success, message, pdfLink } = response;
             console.log('PDF response:', response);
             if (success) {
-                this.setState({ cellData: pdfLink });
+                console.log('PDF Link:', pdfLink);
+                // Handle PDF link as needed, e.g., opening it
                 Linking.openURL(pdfLink);
             } else {
-                console.log(message);
+                console.log('Error fetching PDF:', message);
             }
         } catch (error) {
-            console.log(error);
+            console.log('Error fetching PDF:', error);
         }
     };
+
 
 
     handleContract = async () => {
@@ -66,20 +65,21 @@ export default class Contract extends Component {
             this.setState({ showProcessingLoader: true, isRefreshing: true });
             const response = await makeRequest(BASE_URL + '/mobile/contract');
             const { success, message, contractDetails } = response;
-            console.log('xxxxxxxxxx', response)
+            console.log('ttttytytytytyt', response);
 
             if (success) {
                 // Extract specific fields from contractDetails and set in rowData
-                const modifiedContractDetails = contractDetails.map(({title, supplier, cost, date }) => ({
+                const modifiedContractDetails = contractDetails.map(({ title, supplier, cost, date, contract_id }) => ({
                     title,
                     supplier,
                     cost,
                     date,
+                    contract_id
                 }));
 
                 // console.log("khkjgjg", contractDetails.map(item => item.contract_id));
 
-                this.setState({ contractid: contractDetails.map(item => item.contract_id), rowData: modifiedContractDetails, showProcessingLoader: false, isRefreshing: false });
+                this.setState({ rowData: modifiedContractDetails, showProcessingLoader: false, isRefreshing: false });
             } else {
                 console.log(message);
                 this.setState({ showProcessingLoader: false, isRefreshing: false });
@@ -183,7 +183,8 @@ export default class Contract extends Component {
     }
 
     render() {
-        const { tableHead, rowData, currentPage, rowsPerPage } = this.state;
+        const { tableHead, rowData, currentPage, rowsPerPage, } = this.state;
+        console.log('wwwwwwwwwwww', rowData.contract_id);
         const startIndex = currentPage * rowsPerPage;
         const endIndex = Math.min(startIndex + rowsPerPage, rowData.length); // Calculate end index while considering the last page
         const slicedData = rowData.slice(startIndex, endIndex);
@@ -298,12 +299,11 @@ export default class Contract extends Component {
                                     data={Object.values(rowData).map((cellData, cellIndex) => {
                                         if (cellIndex === 0) {
                                             return (
-                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePressContract(cellData)}>
+                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePressContract(rowData.contract_id)}>
                                                     <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
                                                 </TouchableOpacity>
                                             );
-                                        }
-                                        else {
+                                        } else {
                                             return <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>;
                                         }
                                     })}
@@ -311,7 +311,6 @@ export default class Contract extends Component {
                                     style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
                                     flexArr={[3, 3, 2, 2]}
                                 />
-
                             ))}
                         </Table>
 
