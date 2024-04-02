@@ -43,8 +43,8 @@ export class PO extends Component {
             const { success, message, poDetails } = response;
             // console.log("po",response); 
             if (success) {
-                const modifiedPurchaseDetails = poDetails.map(({ poid, date, supplier, qty, amount, delivery }) => ({
-                    poid, date, supplier, qty, amount, delivery
+                const modifiedPurchaseDetails = poDetails.map(({ po_primary, is_revised, poid, date, supplier, qty, amount, delivery }) => ({
+                    po_primary, is_revised, poid, date, supplier, qty, amount, delivery
                 })) // change by manish
                 this.setState({ rowData: modifiedPurchaseDetails, isRefreshing: false });
             } else {
@@ -58,15 +58,11 @@ export class PO extends Component {
     };
 
     // pdf api by manish
-    handlePurchase = (cellData) => {
-        this.setState({
-            purchaseorderId: cellData,
-            poPrimary: cellData,
-            isRevised: cellData
-        }, () => {
-            this.handlePurchaseId();
-        });
-    }
+    handlePressProductID = (purchaseorderId, poPrimary, isRevised) => {
+        this.setState({ purchaseorderId, poPrimary, isRevised }, this.handlePurchaseId);
+        console.log('aqaqaqw12123123', purchaseorderId, poPrimary, isRevised);
+
+    };
     handlePurchaseId = async () => {
         try {
             const { purchaseorderId, poPrimary, isRevised } = this.state;
@@ -119,6 +115,7 @@ export class PO extends Component {
                     this.setState({ rowData: purchaseDetails, currentPage: 0 });
                 } else {
                     console.log(message);
+                    this.setState({ rowData: [] });
                 }
             }
         } catch (error) {
@@ -233,7 +230,6 @@ export class PO extends Component {
 
                 <View style={styles.search}>
                     <TextInput
-
                         placeholder='Search Purchase ID'
                         placeholderTextColor='#039BE5'
                         maxLength={25}
@@ -241,9 +237,14 @@ export class PO extends Component {
                         value={this.state.searchPO}
                         onChangeText={(searchPO) => {
                             this.setState({ searchPO });
-                            this.handlePOSearch(searchPO);
                         }}
                         style={styles.search_text} />
+
+                    <TouchableOpacity onPress={() => this.handlePOSearch(this.state.searchPO)}>
+                        <Image source={require('../../Assets/Image/search.png')}
+                            style={{ width: wp(5), height: wp(5), marginRight: wp(3) }}
+                        />
+                    </TouchableOpacity>
                 </View>
                 <ScrollView
                     contentContainerStyle={{ flexGrow: 1 }}
@@ -260,29 +261,37 @@ export class PO extends Component {
 
 
 
-                    <Table style={{ marginTop: wp(2) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
-                        <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[0, 2, 3, 2, 2, 2]} />
-                        {slicedData.map((rowData, index) => (
-                            <Row
-                                key={index}
-                                data={Object.values(rowData).map((cellData, cellIndex) => {
-                                    if (cellIndex === 0) {
-                                        return (
-                                            <TouchableOpacity key={cellIndex} onPress={() => this.handlePurchase(cellData)}>
-                                                <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
-                                            </TouchableOpacity>
-                                        );
-                                    }
-                                    else {
-                                        return <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>;
-                                    }
-                                })}
-                                textStyle={styles.rowText}
-                                style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
-                                flexArr={[0, 2, 3, 2, 2, 2]}
-                            />
-                        ))}
-                    </Table>
+                    {rowData.length ? (
+                        <Table style={{ marginTop: wp(2) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
+                            <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[0, 2, 3, 2, 2, 2]} />
+                            {slicedData.map((rowData, index) => (
+                                <Row
+                                    key={index}
+                                    data={[
+                                        <TouchableOpacity key='poid' onPress={() => this.handlePressProductID(rowData.poid, rowData.po_primary, rowData.is_revised)}>
+                                            <Text style={[styles.Highlight, { lineHeight: 15 }]}>{rowData.poid}</Text>
+                                        </TouchableOpacity>,
+                                        <Text style={[styles.rowText, { lineHeight: 15 }]}>{rowData.date}</Text>,
+                                        <Text style={[styles.rowText, { lineHeight: 15 }]}>{rowData.supplier}</Text>,
+                                        <Text style={[styles.rowText, { lineHeight: 15 }]}>{rowData.qty}</Text>,
+                                        <Text style={[styles.rowText, { lineHeight: 15 }]}>{rowData.amount}</Text>,
+                                        <Text style={[styles.rowText, { lineHeight: 15 }]}>{rowData.delivery}</Text>,
+                                    ]}
+                                    textStyle={styles.rowText}
+                                    style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
+                                    flexArr={[0, 2, 3, 2, 2, 2]}
+                                />
+                            ))}
+                        </Table>
+                    ) : (
+                        <Text style={{
+                            color: '#039BE5',
+                            fontWeight: '500',
+                            fontSize: wp(3.2),
+                            textAlign: 'center',
+                            marginTop: wp(10)
+                        }}>No Data Found</Text>
+                    )}
 
 
                     <View style={styles.pagination}>
@@ -372,15 +381,18 @@ const styles = StyleSheet.create({
         borderRadius: wp(2),
         marginTop: wp(3),
         backgroundColor: '#E1F5FE',
-        justifyContent: 'center',
-        alignSelf: 'center'
+        justifyContent: 'space-between',
+        alignSelf: 'center',
+        flexDirection: 'row',
+        alignItems: 'center',
 
     },
     search_text: {
         color: '#039BE5',
         fontSize: wp(3.5),
         marginLeft: wp(2),
-        fontWeight: "500"
+        fontWeight: "500",
+        width: wp(40)
     },
     popoverContainer: {
         flex: 1,

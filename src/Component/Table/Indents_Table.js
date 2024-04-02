@@ -23,34 +23,40 @@ export class Indents_Table extends Component {
 
 
 
-    // changes by manish 
+    // pdf api by manish
+    handlePressProductID = (indentId) => {
 
-    handlePressIndentId = (cellData) => {
-        this.setState({ indentId: cellData }, () => {
-            this.handleIndentPdf();
-        });
-
-    };
-
-    handleIndentPdf = async () => {
-        try {
-            const { indentId } = this.state;
-            const params = { indent_id: indentId };
-            const response = await makeRequest(BASE_URL + '/mobile/indentpdf', params);
-            const { success, message, pdfLink } = response
-            if (success) {
-                this.setState({ cellData: pdfLink });
-                Linking.openURL(pdfLink);
-
-            } else {
-                console.log(message)
-            }
-        } catch (error) {
-
-        }
+        this.setState({ indentId }, this._handlePressProductpdf); // Pass a reference to _handlePressProductpdf
     }
 
+    _handlePressProductpdf = async () => {
+        try {
+            const { indentId } = this.state;
+            if (!indentId) {
+                console.log('No contract ID available to fetch PDF');
+                return;
+            }
+            const params = { indent_id: indentId };
+            console.log('papapapapapap', params);
+            const response = await makeRequest(BASE_URL + '/mobile/indentpdf', params);
+            const { success, message, pdfLink } = response;
+            console.log('pdfpdfpdf', response);
+            if (success) {
+                console.log('PDF Link:', pdfLink);
+                Linking.openURL(pdfLink)
+            } else {
+                console.log('====================================');
+                console.log(message);
+                console.log('====================================');
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+
     // pdf api by manish
+
     handlePressContract = (contractId) => {
         this.setState({ contractId }, this._handleContractPdf);
     };
@@ -86,8 +92,8 @@ export class Indents_Table extends Component {
             const { success, message, indentDetails } = response;
             if (success) {
 
-                const modificationGrnDetails = indentDetails.map(({ indent_id, contact_name, product, issued_name, date,contract_id }) => ({
-                    indent_id, contact_name, product, issued_name, date,contract_id
+                const modificationGrnDetails = indentDetails.map(({ indent_id, contact_name, product, issued_name, date, contract_id }) => ({
+                    indent_id, contact_name, product, issued_name, date, contract_id
                 })) // changes by manish
                 this.setState({ rowData: modificationGrnDetails });  // chnages by manish 
 
@@ -109,24 +115,21 @@ export class Indents_Table extends Component {
                     {rowData.map((rowData, index) => (
                         <Row
                             key={index}
-                            data={Object.values(rowData).map((cellData, cellIndex) => {
-                                if (cellIndex === 0) {
-                                    return (
-                                        <TouchableOpacity key={cellIndex} onPress={() => this.handlePressIndentId(cellData)}>
-                                            <Text style={styles.Highlight}>{cellData}</Text>
-                                        </TouchableOpacity>
-                                    );
-                                } else if (cellIndex === 1) {
-                                    return (
-                                        <TouchableOpacity key={cellIndex} onPress={() => this.handlePressContract(rowData.contract_id)}>
-                                            <Text style={styles.Highlight}>{cellData}</Text>
-                                        </TouchableOpacity>
-                                    );
-                                }
-                                else {
-                                    return <Text style={styles.rowText}>{cellData}</Text>;
-                                }
-                            })}
+                            data={[
+                                <TouchableOpacity key='indent_id' onPress={() => this.handlePressProductID(rowData.indent_id)}>
+                                    <Text style={styles.Highlight}>{rowData.indent_id}</Text>
+                                </TouchableOpacity>,
+
+                                <TouchableOpacity key='contract_name' onPress={() => this.handlePressContract(rowData.contract_id)}>
+                                    <Text style={styles.Highlight}>{rowData.contact_name}</Text>
+                                </TouchableOpacity>,
+
+                                <Text style={styles.rowText}>{rowData.product}</Text>,
+                                <Text style={styles.rowText}>{rowData.issued_name}</Text>,
+                                <Text style={styles.rowText}>{rowData.date}</Text>,
+
+
+                            ]}
                             textStyle={styles.rowText}
                             style={index % 2 === 0 ? styles.rowEven : styles.rowOdd}
                             flexArr={[0, 3, 3, 2, 2]}

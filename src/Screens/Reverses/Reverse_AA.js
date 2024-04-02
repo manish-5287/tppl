@@ -31,35 +31,6 @@ export default class Reverse_AA extends Component {
         this.handleReverse();
     };
 
-    // changes by manish 
-
-    handlePress = (cellData) => {
-        this.setState({ reverseId: cellData }, () => {
-            this._handleReversePdf();
-        })
-    };
-
-    _handleReversePdf = async () => {
-        try {
-            const { reverseId } = this.state;
-            const params = { reverse_id: reverseId };
-            const response = await makeRequest(BASE_URL + '/mobile/reversepdf', params);
-            const { success, message, pdfLink } = response;
-            if (success) {
-                this.setState({ cellData: pdfLink });
-                Linking.openURL(pdfLink);
-
-            } else {
-                console.log('====================================');
-                console.log(message);
-                console.log('====================================');
-            }
-        } catch (error) {
-            console.log('====================================');
-            console.log(error);
-            console.log('====================================');
-        }
-    };
 
     handleReverse = async () => {
         try {
@@ -68,8 +39,8 @@ export default class Reverse_AA extends Component {
             const { success, message, reverseDetails } = response;
             // console.log("reverse",response);
             if (success) {
-                const modifiedReverseDetails = reverseDetails.map(({ reverse_id, contact_name, product, received_name, date,contract_id }) => ({
-                    reverse_id, contact_name, product, received_name, date,contract_id
+                const modifiedReverseDetails = reverseDetails.map(({ reverse_id, contact_name, product, received_name, date, contract_id }) => ({
+                    reverse_id, contact_name, product, received_name, date, contract_id
                 })) // changes by manish
                 this.setState({ rowData: modifiedReverseDetails, showProcessingLoader: false, isRefreshing: false }); // changes by manish 
 
@@ -82,6 +53,38 @@ export default class Reverse_AA extends Component {
             this.setState({ showProcessingLoader: false, isRefreshing: false });
         }
     };
+
+    // pdf api by manish
+    handlePressProductID = (reverseId) => {
+
+        this.setState({ reverseId }, this._handlePressProductpdf); // Pass a reference to _handlePressProductpdf
+    }
+
+    _handlePressProductpdf = async () => {
+        try {
+            const { reverseId } = this.state;
+            if (!reverseId) {
+                console.log('No contract ID available to fetch PDF');
+                return;
+            }
+            const params = { reverse_id: reverseId };
+            console.log('papapapapapap', params);
+            const response = await makeRequest(BASE_URL + '/mobile/reversepdf', params);
+            const { success, message, pdfLink } = response;
+            console.log('pdfpdfpdf', response);
+            if (success) {
+                console.log('PDF Link:', pdfLink);
+                Linking.openURL(pdfLink)
+            } else {
+                console.log('====================================');
+                console.log(message);
+                console.log('====================================');
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
 
     // pdf api by manish
 
@@ -112,6 +115,7 @@ export default class Reverse_AA extends Component {
             console.log('Error fetching PDF:', error);
         }
     };
+
 
     nextPage = () => {
         const { currentPage } = this.state;
@@ -313,24 +317,19 @@ export default class Reverse_AA extends Component {
                             {slicedData.map((rowData, index) => (
                                 <Row
                                     key={index}
-                                    data={Object.values(rowData).map((cellData, cellIndex) => {
-                                        if (cellIndex === 0) {
-                                            return (
-                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePress(cellData)}>
-                                                    <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
-                                                </TouchableOpacity>
-                                            );
-                                        } else if (cellIndex === 1) {
-                                            return (
-                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePressContract(rowData.contract_id)}>
-                                                    <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
-                                                </TouchableOpacity>
-                                            );
-                                        }
-                                        else {
-                                            return <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>;
-                                        }
-                                    })}
+                                    data={[
+                                        <TouchableOpacity key="reverse_id" onPress={() => this.handlePressProductID(rowData.reverse_id)}>
+                                            <Text style={[styles.Highlight, { lineHeight: 15 }]}>{rowData.reverse_id}</Text>
+                                        </TouchableOpacity>,
+                                        <TouchableOpacity key={'contract_name'} onPress={() => this.handlePressContract(rowData.contract_id)}>
+                                            <Text style={[styles.Highlight, { lineHeight: 15 }]}>{rowData.contact_name}</Text>
+                                        </TouchableOpacity>,
+
+                                        <Text style={[styles.rowText, { lineHeight: 15 }]}>{rowData.product}</Text>,
+                                        <Text style={[styles.rowText, { lineHeight: 15 }]}>{rowData.received_name}</Text>,
+                                        <Text style={[styles.rowText, { lineHeight: 15 }]}>{rowData.date}</Text>
+
+                                    ]}
                                     textStyle={styles.rowText}
                                     style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
                                     flexArr={[0, 3, 3, 2, 2]}

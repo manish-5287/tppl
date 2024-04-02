@@ -1,4 +1,4 @@
-import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, Modal, Alert, FlatList, RefreshControl } from 'react-native'
+import { Text, View, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, FlatList, RefreshControl } from 'react-native'
 import React, { Component } from 'react'
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { Table, Row } from 'react-native-table-component';
@@ -6,8 +6,6 @@ import { BASE_URL, makeRequest } from '../../api/Api_info';
 import CustomLoader from '../../Component/loader/Loader';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
 import DateTimePicker from 'react-native-modal-datetime-picker';
-import showToast from '../../Component/tost/ShowToast';
-
 
 export class Supllier extends Component {
     constructor(props) {
@@ -16,7 +14,7 @@ export class Supllier extends Component {
             tableHead: ['Date', 'Description', 'Credit', 'Debit', 'Balance'],
             rowData: [],
             currentPage: 0,
-            rowsPerPage: 10,
+            rowsPerPage: 8,
             showProcessingLoader: false,
             searchName: '',
             contractName: [],
@@ -70,7 +68,7 @@ export class Supllier extends Component {
             this.setState({ isRefreshing: false });
 
         }
-    }
+    };
 
     _handleListRefresh = async () => {
         try {
@@ -113,6 +111,7 @@ export class Supllier extends Component {
         }
     };
 
+
     handleShowSearch = async () => {
         try {
             const { selectedDateFrom, selectedDateTo, vendorid } = this.state;
@@ -129,20 +128,18 @@ export class Supllier extends Component {
                 const modifiedSupplierData = vendorDetails.map(({ date, description, cr_amt, de_amt, balance }) => ({
                     date, description, cr_amt, de_amt, balance
                 }))
-                this.setState({ rowData: modifiedSupplierData, searchDataAvailable: vendorDetails.length > 0 });
+                this.setState({ rowData: modifiedSupplierData });
 
             } else {
                 console.log(message);
-                this.setState({ searchDataAvailable: false });
+                this.setState({ rowData: [], errorMessage: message });
             }
         } catch (error) {
             console.log(error);
-            this.setState({ searchDataAvailable: false });
+
 
         }
     };
-
-
 
 
     handleSearch = async () => {
@@ -171,7 +168,6 @@ export class Supllier extends Component {
 
     handleProductPress = (item) => {
         const { name, vendor_id } = item;
-        console.log(vendor_id);
         // Update searchName state with the selected item's name
         this.setState({ searchName: name, vendorid: vendor_id });
         // Stop refreshing and clear search term and results
@@ -385,7 +381,6 @@ export class Supllier extends Component {
                                 }}>Search</Text>
                             </TouchableOpacity>
 
-
                         </View>
 
                         {/* Vendor button */}
@@ -398,18 +393,28 @@ export class Supllier extends Component {
 
                         {/* Table  */}
 
-                        <Table style={{ marginTop: wp(2) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
-                            <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[2, 3, 2, 2, 2]} />
-                            {slicedData.map((rowData, index) => (
-                                <Row
-                                    key={index}
-                                    data={Object.values(rowData)}
-                                    textStyle={styles.rowText}
-                                    style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
-                                    flexArr={[2, 3, 2, 2, 2]}
-                                />
-                            ))}
-                        </Table>
+                        {rowData.length ? (
+                            <Table style={{ marginTop: wp(2) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
+                                <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[2, 3, 2, 2, 2]} />
+                                {slicedData.map((rowData, index) => (
+                                    <Row
+                                        key={index}
+                                        data={Object.values(rowData)}
+                                        textStyle={styles.rowText}
+                                        style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
+                                        flexArr={[2, 3, 2, 2, 2]}
+                                    />
+                                ))}
+                            </Table>
+                        ) : (
+                            <Text style={{
+                                color: '#00838F',
+                                fontWeight: '500',
+                                fontSize: wp(3.2),
+                                textAlign: 'center',
+                                marginTop: wp(10)
+                            }}>No Data Found</Text>
+                        )}
 
                         <View style={styles.pagination}>
                             <TouchableOpacity onPress={this.prevPage} disabled={currentPage === 0}>

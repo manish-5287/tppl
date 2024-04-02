@@ -165,8 +165,6 @@ export class Stock extends Component {
             const params = {
                 item_name: searchName
             };
-            console.log('33333333333', params);
-
             const response = await makeRequest(BASE_URL + '/mobile/searchitemname', params);
             const { success, message, itemName } = response;
             if (success) {
@@ -365,18 +363,29 @@ export class Stock extends Component {
 
                         </View>
 
-                        <Table style={{ marginTop: wp(3) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
-                            <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[3, 2, 2, 2, 2, 2, 2]} />
-                            {slicedData.map((rowData, index) => (
-                                <Row
-                                    key={index}
-                                    data={Object.values(rowData)}
-                                    textStyle={styles.rowText}
-                                    style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
-                                    flexArr={[3, 2, 2, 2, 2, 2, 2]}
-                                />
-                            ))}
-                        </Table>
+                        {slicedData.length ? (
+                            <Table style={{ marginTop: wp(3) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
+                                <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[3, 2, 2, 2, 2, 2, 2]} />
+                                {slicedData.map((rowData, index) => (
+                                    <Row
+                                        key={index}
+                                        data={Object.values(rowData)}
+                                        textStyle={styles.rowText}
+                                        style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
+                                        flexArr={[3, 2, 2, 2, 2, 2, 2]}
+                                    />
+                                ))}
+                            </Table>
+                        ) : (
+                            <Text style={{
+                                color: '#9575CD',
+                                fontWeight: '500',
+                                fontSize: wp(3.2),
+                                textAlign: 'center',
+                                marginTop: wp(10)
+                            }}>No Data Found</Text>
+                        )}
+
 
                         <View style={styles.pagination}>
                             <TouchableOpacity onPress={this.prevPage} disabled={currentPage === 0}>

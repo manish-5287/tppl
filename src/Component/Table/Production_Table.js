@@ -26,8 +26,8 @@ export default class Production_Table extends Component {
             // console.log("production_table",response);
             const { success, message, productionDetails } = response;
             if (success) {
-                const modifiedProductionDetails = productionDetails.map(({ po_id, date, contact_name, product, plannedqty, preparedqty,contract_id }) => ({
-                    po_id, date, contact_name, product, plannedqty, preparedqty,contract_id
+                const modifiedProductionDetails = productionDetails.map(({ po_id, date, contact_name, product, plannedqty, preparedqty, contract_id }) => ({
+                    po_id, date, contact_name, product, plannedqty, preparedqty, contract_id
                 })) // changes by manish
                 this.setState({ rowData: modifiedProductionDetails }); // chnages by manish
 
@@ -39,25 +39,26 @@ export default class Production_Table extends Component {
             console.log(error);
         }
     }
-
     // pdf api by manish
+    handlePressProductID = (productionId) => {
 
-    handlePressProductID = (cellData) => {
-        this.setState({ productionId: cellData }, () => {
-            this._handlePressProductpdf();
-        });
+        this.setState({ productionId }, this._handlePressProductpdf); // Pass a reference to _handlePressProductpdf
     }
 
     _handlePressProductpdf = async () => {
         try {
             const { productionId } = this.state;
+            if (!productionId) {
+                console.log('No contract ID available to fetch PDF');
+                return;
+            }
             const params = { production_id: productionId };
             console.log('papapapapapap', params);
             const response = await makeRequest(BASE_URL + '/mobile/productionorderpdf', params);
             const { success, message, pdfLink } = response;
             console.log('pdfpdfpdf', response);
             if (success) {
-                this.setState({ cellData: pdfLink });
+                console.log('PDF Link:', pdfLink);
                 Linking.openURL(pdfLink)
             } else {
                 console.log('====================================');
@@ -71,6 +72,7 @@ export default class Production_Table extends Component {
 
 
     // pdf api by manish
+
     handlePressContract = (contractId) => {
         this.setState({ contractId }, this._handleContractPdf);
     };
@@ -100,7 +102,6 @@ export default class Production_Table extends Component {
     };
 
 
-
     render() {
         const { tableHead, rowData } = this.state;
         return (
@@ -110,24 +111,21 @@ export default class Production_Table extends Component {
                     {rowData.map((rowData, index) => (
                         <Row
                             key={index}
-                            data={Object.values(rowData).map((cellData, cellIndex) => {
-                                if (cellIndex === 0) {
-                                    return (
-                                        <TouchableOpacity key={cellIndex} onPress={() => this.handlePressProductID(cellData)} >
-                                            <Text style={styles.Highlight}>{cellData}</Text>
-                                        </TouchableOpacity>
-                                    );
-                                } else if ((cellIndex === 2)) {
-                                    return (
-                                        <TouchableOpacity key={cellIndex} onPress={() => this.handlePressContract(rowData.contract_id)}>
-                                            <Text style={styles.Highlight}>{cellData}</Text>
-                                        </TouchableOpacity>
-                                    );
-                                }
-                                else {
-                                    return <Text style={styles.rowText}>{cellData}</Text>;
-                                }
-                            })}
+                            data={[
+                                <TouchableOpacity key={'po_id'} onPress={() => this.handlePressProductID(rowData.po_id)}>
+                                    <Text style={styles.Highlight}>{rowData.po_id}</Text>
+                                </TouchableOpacity>,
+
+                                <Text style={styles.rowText}>{rowData.date}</Text>,
+
+                                <TouchableOpacity key={'contract_name'} onPress={() => this.handlePressContract(rowData.contract_id)}>
+                                    <Text style={styles.Highlight}>{rowData.contact_name}</Text>
+                                </TouchableOpacity>,
+                                <Text style={styles.rowText}>{rowData.product}</Text>,
+                                <Text style={styles.rowText}>{rowData.plannedqty}</Text>,
+                                <Text style={styles.rowText}>{rowData.preparedqty}</Text>,
+
+                            ]}
                             textStyle={styles.rowText}
                             style={index % 2 === 0 ? styles.rowEven : styles.rowOdd}
                             flexArr={[0, 2, 3, 3, 1, 1]}

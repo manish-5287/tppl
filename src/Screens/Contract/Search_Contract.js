@@ -15,15 +15,15 @@ export default class Search_Contract extends Component {
             rowData: [],
             showProcessingLoader: false,
             isRefreshing: false,
-            isLoading: false
+            isLoading: true, // Initially set isLoading to true
         };
     };
 
     componentDidMount() {
         this.handleContractSearch();
         this._handleListRefresh();
-
     };
+
     _handleListRefresh = () => {
         try {
             // pull-to-refresh
@@ -38,7 +38,6 @@ export default class Search_Contract extends Component {
             });
         } catch (error) {
             console.log(error);
-
         }
     };
 
@@ -46,29 +45,28 @@ export default class Search_Contract extends Component {
         try {
             const { contract_id } = this.props.route.params;
             const params = { contract_id };
-            // console.log("ContractSearch", contract_id);
+
             this.setState({ showProcessingLoader: true, isRefreshing: true });
+
+            // Assume makeRequest is a function that makes the API request
             const response = await makeRequest(BASE_URL + '/mobile/searchcontract', params)
             const { success, message, contractDetails } = response;
-            // console.log("ContractSearch", response);
+
             if (success) {
-                // Exclude contract_id from contractDetails
                 const modifiedContractDetails = contractDetails.map(({ title, supplier, cost, date }) => ({
                     title, supplier, cost, date
-                })); // change by manish
+                }));
 
-                this.setState({ rowData: modifiedContractDetails, showProcessingLoader: false, isRefreshing: false }); // change by manish
-
+                this.setState({ rowData: modifiedContractDetails, showProcessingLoader: false, isRefreshing: false, isLoading: false }); // Set isLoading to false
             } else {
                 console.log(message);
-                this.setState({ showProcessingLoader: false, isRefreshing: false });
+                this.setState({ showProcessingLoader: false, isRefreshing: false, isLoading: false }); // Set isLoading to false
             }
         } catch (error) {
             console.log(error);
-            this.setState({ showProcessingLoader: false, isRefreshing: false });
+            this.setState({ showProcessingLoader: false, isRefreshing: false, isLoading: false }); // Set isLoading to false
         }
     }
-
 
     renderRowData = (rowData, rowIndex) => {
         if (typeof rowData === 'object' && rowData !== null) {
@@ -169,11 +167,20 @@ export default class Search_Contract extends Component {
                 </View>
 
                 <View style={styles.container}>
-                    <Table borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
+                    <Table borderStyle={{ borderWidth: 1, borderColor: 'white' }}>
                         <Row data={tableHead} style={styles.head} textStyle={styles.headText} flexArr={[3, 3, 2, 2]} />
-                        {rowData.map((rowData, index) => this.renderRowData(rowData, index))}
+                        {rowData.length > 0 ? (
+                            rowData.map((rowData, index) => this.renderRowData(rowData, index))
+                        ) : (
+                            <Text style={{
+                                color: '#212529',
+                                fontWeight: '500',
+                                fontSize: wp(3.2),
+                                textAlign: 'center',
+                                marginTop: wp(10)
+                            }}>No Data Found</Text>
+                        )}
                     </Table>
-
                 </View>
                 {showProcessingLoader && <ProcessingLoader />}
             </>

@@ -26,8 +26,8 @@ export default class Po_Table extends Component {
             // console.log('po_table',response);
             const { success, message, poDetails } = response;
             if (success) {
-                const modifiedPurchaseDetails = poDetails.map(({ poid, date, supplier, qty, amount, delivery }) => ({
-                    poid, date, supplier, qty, amount, delivery
+                const modifiedPurchaseDetails = poDetails.map(({ po_primary, is_revised, poid, date, supplier, qty, amount, delivery }) => ({
+                    po_primary, is_revised, poid, date, supplier, qty, amount, delivery
                 })) // change by manish
                 this.setState({ rowData: modifiedPurchaseDetails }); // changes  by mansih 
             } else {
@@ -38,21 +38,15 @@ export default class Po_Table extends Component {
         }
     };
 
-    handlePurchase = (cellData) => {
-        this.setState(
-            {
-                purchaseorderId: cellData,
-                poPrimary: cellData1,
-                isRevised: cellData2,
-            },
-            () => {
-                this.handlePurchaseId(cellData);
-            }
-        );
+    handlePressProductID = (purchaseorderId, poPrimary, isRevised) => {
+        this.setState({ purchaseorderId, poPrimary, isRevised }, this.handlePurchaseId);
+        console.log('aqaqaqw12123123', purchaseorderId, poPrimary, isRevised);
+
     };
 
-    handlePurchaseId = async (purchaseorderId, poPrimary, isRevised) => {
+    handlePurchaseId = async () => {
         try {
+            const { purchaseorderId, poPrimary, isRevised } = this.state;
             const params = {
                 purchaseorder_id: purchaseorderId,
                 po_primary: poPrimary,
@@ -86,18 +80,17 @@ export default class Po_Table extends Component {
                     {rowData.map((rowData, index) => (
                         <Row
                             key={index}
-                            data={Object.values(rowData).map((cellData, cellIndex) => {
-                                if (cellIndex === 0) {
-                                    return (
-                                        <TouchableOpacity key={cellIndex} onPress={() => this.handlePurchase(cellData, rowData.poPrimary, rowData.isRevised)}>
-                                            <Text style={styles.Highlight}>{cellData}</Text>
-                                        </TouchableOpacity>
-                                    );
-                                }
-                                else {
-                                    return <Text style={styles.rowText}>{cellData}</Text>;
-                                }
-                            })}
+                            data={[
+                                <TouchableOpacity key='poid' onPress={() => this.handlePressProductID(rowData.poid, rowData.po_primary, rowData.is_revised)}>
+                                    <Text style={styles.Highlight}>{rowData.poid}</Text>
+                                </TouchableOpacity>,
+                                <Text style={styles.rowText}>{rowData.date}</Text>,
+                                <Text style={styles.rowText}>{rowData.supplier}</Text>,
+                                <Text Text style={styles.rowText} >{rowData.qty}</Text>,
+                                <Text style={styles.rowText}>{rowData.amount}</Text>,
+                                <Text style={styles.rowText}>{rowData.delivery}</Text>,
+
+                            ]}
                             textStyle={styles.rowText}
                             style={index % 2 === 0 ? styles.rowEven : styles.rowOdd}
                             flexArr={[0, 2, 3, 2, 2, 2]}
@@ -105,7 +98,7 @@ export default class Po_Table extends Component {
                     ))}
                 </Table>
 
-            </View>
+            </View >
         );
     }
 }

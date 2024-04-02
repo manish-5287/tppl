@@ -21,7 +21,7 @@ export class PO_AAA extends Component {
             isLoading: false,
             purchaseorderId: '',
             poPrimary: '',
-            isRevised: ''
+            isRevised: '',
         };
     };
 
@@ -31,13 +31,13 @@ export class PO_AAA extends Component {
 
     handlePO = async () => {
         try {
-            this.setState({ showProcessingLoader: true, isRefreshing: true })
+            this.setState({ showProcessingLoader: true, isRefreshing: true });
             const response = await makeRequest(BASE_URL + '/mobile/purchaseorder')
             const { success, message, poDetails } = response;
             // console.log("po",response); 
             if (success) {
-                const modifiedPurchaseDetails = poDetails.map(({ poid, date, supplier, qty, amount, delivery  }) =>({
-                    poid, date, supplier, qty, amount, delivery 
+                const modifiedPurchaseDetails = poDetails.map(({ po_primary, is_revised, poid, date, supplier, qty, amount, delivery }) => ({
+                    po_primary, is_revised, poid, date, supplier, qty, amount, delivery
                 })) // change by manish
                 this.setState({ rowData: modifiedPurchaseDetails, showProcessingLoader: false, isRefreshing: false }); // changes by manish 
             } else {
@@ -51,15 +51,12 @@ export class PO_AAA extends Component {
     };
 
     // pdf api by manish
-    handlePurchase = (cellData) => {
-        this.setState({
-            purchaseorderId: cellData,
-            poPrimary: cellData,
-            isRevised: cellData
-        }, () => {
-            this.handlePurchaseId();
-        });
-    }
+
+    handlePressProductID = (purchaseorderId, poPrimary, isRevised) => {
+        this.setState({ purchaseorderId, poPrimary, isRevised }, this.handlePurchaseId);
+        console.log('aqaqaqw12123123', purchaseorderId, poPrimary, isRevised);
+
+    };
     handlePurchaseId = async () => {
         try {
             const { purchaseorderId, poPrimary, isRevised } = this.state;
@@ -88,13 +85,13 @@ export class PO_AAA extends Component {
 
     handlePOSearch = async (searchPO) => {
         try {
+
             if (searchPO.length < 1) {
                 // Reset search results and fetch all data
                 this.setState({ rowData: [], currentPage: 0 });
                 this.handlePO();
                 return;
             }
-
             // Check if there are existing search results
             const { searchResults } = this.state;
             if (searchResults && searchResults.length > 0) {
@@ -102,6 +99,7 @@ export class PO_AAA extends Component {
                 const filteredResults = searchResults.filter(item =>
                     item.po_id.includes(searchPO)
                 );
+                dataFound = filteredResults.length > 0; // Update dataFound based on filtered results
                 this.setState({ rowData: filteredResults, currentPage: 0 });
             } else {
                 // Fetch new data based on search query
@@ -112,12 +110,13 @@ export class PO_AAA extends Component {
                     this.setState({ rowData: purchaseDetails, currentPage: 0 });
                 } else {
                     console.log(message);
+                    this.setState({ rowData: [] });
                 }
             }
         } catch (error) {
             console.log(error);
         }
-    }
+    };
 
 
     nextPage = () => {
@@ -154,13 +153,15 @@ export class PO_AAA extends Component {
     }
 
     render() {
-        const { tableHead, rowData, currentPage, rowsPerPage, } = this.state;
+        const { tableHead, rowData, currentPage, rowsPerPage, searchPO } = this.state;
         const startIndex = currentPage * rowsPerPage;
         const endIndex = Math.min(startIndex + rowsPerPage, rowData.length); // Calculate end index while considering the last page
         const slicedData = rowData.slice(startIndex, endIndex);
+
         if (this.state.isLoading) {
             return <CustomLoader />;
         }
+
         const { showProcessingLoader } = this.state;
 
         // Calculate the maximum number of lines for each cell in a row
@@ -174,6 +175,7 @@ export class PO_AAA extends Component {
 
         // Calculate row height based on the maximum number of lines and font size
         const rowHeight = maxLines * 25; // Assuming font size of 25
+
 
         return (
             <>
@@ -241,34 +243,49 @@ export class PO_AAA extends Component {
                             value={this.state.searchPO}
                             onChangeText={(searchPO) => {
                                 this.setState({ searchPO });
-                                this.handlePOSearch(searchPO);
                             }}
                             style={styles.search_text} />
+
+                        <TouchableOpacity onPress={() => this.handlePOSearch(this.state.searchPO)}>
+                            <Image source={require('../../Assets/Image/search.png')}
+                                style={{ width: wp(5), height: wp(5), marginRight: wp(3) }}
+                            />
+                        </TouchableOpacity>
                     </View>
 
-                    <Table style={{ marginTop: wp(2) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
-                        <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[0, 2, 3, 2, 2, 2]} />
-                        {slicedData.map((rowData, index) => (
-                            <Row
-                                key={index}
-                                data={Object.values(rowData).map((cellData, cellIndex) => {
-                                    if (cellIndex === 0) {
-                                        return (
-                                            <TouchableOpacity key={cellIndex} onPress={() => this.handlePurchase(cellData)}>
-                                                <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
-                                            </TouchableOpacity>
-                                        );
-                                    }
-                                    else {
-                                        return <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>;
-                                    }
-                                })}
-                                textStyle={styles.rowText}
-                                style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
-                                flexArr={[0, 2, 3, 2, 2, 2]}
-                            />
-                        ))}
-                    </Table>
+                    {rowData.length ? (
+                        <Table style={{ marginTop: wp(2) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
+                            <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[0, 2, 3, 2, 2, 2]} />
+                            {slicedData.map((rowData, index) => (
+                                <Row
+                                    key={index}
+                                    data={[
+                                        <TouchableOpacity key='poid' onPress={() => this.handlePressProductID(rowData.poid, rowData.po_primary, rowData.is_revised)}>
+                                            <Text style={[styles.Highlight, { lineHeight: 15 }]}>{rowData.poid}</Text>
+                                        </TouchableOpacity>,
+                                        <Text style={[styles.rowText, { lineHeight: 15 }]}>{rowData.date}</Text>,
+                                        <Text style={[styles.rowText, { lineHeight: 15 }]}>{rowData.supplier}</Text>,
+                                        <Text style={[styles.rowText, { lineHeight: 15 }]}>{rowData.qty}</Text>,
+                                        <Text style={[styles.rowText, { lineHeight: 15 }]}>{rowData.amount}</Text>,
+                                        <Text style={[styles.rowText, { lineHeight: 15 }]}>{rowData.delivery}</Text>,
+                                    ]}
+                                    textStyle={styles.rowText}
+                                    style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
+                                    flexArr={[0, 2, 3, 2, 2, 2]}
+                                />
+                            ))}
+                        </Table>
+                    ) : (
+                        <Text style={{
+                            color: '#039BE5',
+                            fontWeight: '500',
+                            fontSize: wp(3.2),
+                            textAlign: 'center',
+                            marginTop: wp(10)
+                        }}>No Data Found</Text>
+                    )}
+
+
 
 
                     <View style={styles.pagination}>
@@ -359,15 +376,18 @@ const styles = StyleSheet.create({
         borderRadius: wp(2),
         marginTop: wp(3),
         backgroundColor: '#E1F5FE',
-        justifyContent: 'center',
-        alignSelf: 'center'
+        justifyContent: 'space-between',
+        alignSelf: 'center',
+        flexDirection: 'row',
+        alignItems: 'center',
 
     },
     search_text: {
         color: '#039BE5',
         fontSize: wp(3.5),
         marginLeft: wp(2),
-        fontWeight: "500"
+        fontWeight: "500",
+        width: wp(80)
     },
     popoverContainer: {
         flex: 1,

@@ -182,7 +182,17 @@ export class Search_Indent extends Component {
                 <View style={styles.container}>
                     <Table borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
                         <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[0, 2, 3, 3, 2, 2]} />
-                        {rowData.map((rowData, index) => this.renderRowData(rowData, index))}
+                        {rowData.length > 0 ? (
+                            rowData.map((rowData, index) => this.renderRowData(rowData, index))
+                        ) : (
+                            <Text style={{
+                                color: '#757575',
+                                fontWeight: '500',
+                                fontSize: wp(3.2),
+                                textAlign: 'center',
+                                marginTop: wp(10)
+                            }}>No Data Found</Text>
+                        )}
                     </Table>
 
 

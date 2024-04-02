@@ -75,8 +75,6 @@ export class VendorReport extends Component {
         }
     };
 
-
-
     _handleListRefresh = async () => {
         try {
             // pull-to-refresh
@@ -108,7 +106,6 @@ export class VendorReport extends Component {
 
     _handleShowSearch = async () => {
         try {
-
             const { selectedDateFrom, selectedDateTo, vendorid } = this.state;
             const params = {
                 vendor_id: vendorid,
@@ -122,20 +119,15 @@ export class VendorReport extends Component {
                 const modifiedVendorReport = vendorsData.map(({ date, grn_no, po_no, bill_no, vendor, amount }) => ({
                     date, grn_no, po_no, bill_no, vendor, amount
                 }))
-                this.setState({ rowData: modifiedVendorReport })
-                showToast(message);
+                this.setState({ rowData: modifiedVendorReport });
             } else {
-                showToast(message);
-
-            }
+                this.setState({ rowData: [], errorMessage: message });
+             }
         } catch (error) {
             console.log(error);
-            showToast(message);
-
-
-
         }
     }
+
 
     // search vendor //
 
@@ -291,8 +283,8 @@ export class VendorReport extends Component {
                                 refreshing={this.state.isRefreshing}
                                 onRefresh={this._handleListRefresh}
                             />
-                        }
-                    >
+                        }>
+
                         <View style={styles.search}>
                             <TextInput
                                 placeholder="Search Vendor"
@@ -370,23 +362,32 @@ export class VendorReport extends Component {
                                 }}>Search</Text>
                             </TouchableOpacity>
 
-
                         </View>
 
 
+                        {rowData.length ? (
+                            <Table style={{ marginTop: wp(3) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
+                                <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[2, 0, 0, 0, 3, 3]} />
+                                {slicedData.map((rowData, index) => (
+                                    <Row
+                                        key={index}
+                                        data={Object.values(rowData)}
+                                        textStyle={styles.rowText}
+                                        style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
+                                        flexArr={[2, 0, 0, 0, 3, 3]}
+                                    />
+                                ))}
+                            </Table>
+                        ) : (
+                            <Text style={{
+                                color: '#00838F',
+                                fontWeight: '500',
+                                fontSize: wp(3.2),
+                                textAlign: 'center',
+                                marginTop: wp(10)
+                            }}>No Data Found</Text>
+                        )}
 
-                        <Table style={{ marginTop: wp(3) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
-                            <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[2, 0, 0, 0, 3, 3]} />
-                            {slicedData.map((rowData, index) => (
-                                <Row
-                                    key={index}
-                                    data={Object.values(rowData)}
-                                    textStyle={styles.rowText}
-                                    style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
-                                    flexArr={[2, 0, 0, 0, 3, 3]}
-                                />
-                            ))}
-                        </Table>
 
 
                         <View style={styles.pagination}>

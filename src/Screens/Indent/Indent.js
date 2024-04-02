@@ -38,35 +38,40 @@ export class Indent extends Component {
     };
 
 
-    // changes by manish 
+    // pdf api by manish
+    handlePressProductID = (indentId) => {
 
-    handlePress = (cellData) => {
-        this.setState({ indentId: cellData }, () => {
-            this.handleIndentPdf();
-        });
+        this.setState({ indentId }, this._handlePressProductpdf); // Pass a reference to _handlePressProductpdf
+    }
 
-    };
-
-    handleIndentPdf = async () => {
+    _handlePressProductpdf = async () => {
         try {
             const { indentId } = this.state;
+            if (!indentId) {
+                console.log('No contract ID available to fetch PDF');
+                return;
+            }
             const params = { indent_id: indentId };
+            console.log('papapapapapap', params);
             const response = await makeRequest(BASE_URL + '/mobile/indentpdf', params);
-            const { success, message, pdfLink } = response
+            const { success, message, pdfLink } = response;
+            console.log('pdfpdfpdf', response);
             if (success) {
-                this.setState({ cellData: pdfLink });
-                Linking.openURL(pdfLink);
-
+                console.log('PDF Link:', pdfLink);
+                Linking.openURL(pdfLink)
             } else {
-                console.log(message)
+                console.log('====================================');
+                console.log(message);
+                console.log('====================================');
             }
         } catch (error) {
-
+            console.log(error);
         }
     };
 
 
     // pdf api by manish
+
     handlePressContract = (contractId) => {
         this.setState({ contractId }, this._handleContractPdf);
     };
@@ -94,6 +99,8 @@ export class Indent extends Component {
             console.log('Error fetching PDF:', error);
         }
     };
+
+
 
 
 
@@ -326,24 +333,19 @@ export class Indent extends Component {
                             {slicedData.map((rowData, index) => (
                                 <Row
                                     key={index}
-                                    data={Object.values(rowData).map((cellData, cellIndex) => {
-                                        if (cellIndex === 0) {
-                                            return (
-                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePress(cellData)}>
-                                                    <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
-                                                </TouchableOpacity>
-                                            );
-                                        } else if (cellIndex === 1) {
-                                            return (
-                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePressContract(rowData.contract_id)}>
-                                                    <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
-                                                </TouchableOpacity>
-                                            );
-                                        }
-                                        else {
-                                            return <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>;
-                                        }
-                                    })}
+                                    data={[
+                                        <TouchableOpacity key="indent_id" onPress={() => this.handlePressProductID(rowData.indent_id)}>
+                                            <Text style={[styles.Highlight, { lineHeight: 15 }]}>{rowData.indent_id}</Text>
+                                        </TouchableOpacity>,
+                                        <TouchableOpacity key='contract_name' onPress={() => this.handlePressContract(rowData.contract_id)}>
+                                            <Text style={[styles.Highlight, { lineHeight: 15 }]}>{rowData.contact_name}</Text>
+                                        </TouchableOpacity>,
+
+                                        <Text style={[styles.rowText, { lineHeight: 15 }]}>{rowData.product}</Text>,
+                                        <Text style={[styles.rowText, { lineHeight: 15 }]}>{rowData.issued_name}</Text>,
+                                        <Text style={[styles.rowText, { lineHeight: 15 }]}>{rowData.date}</Text>
+
+                                    ]}
                                     textStyle={styles.rowText}
                                     style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
                                     flexArr={[0, 3, 3, 2, 2]}

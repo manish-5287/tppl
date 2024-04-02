@@ -107,6 +107,7 @@ export default class GRN_AA extends Component {
                 } else {
                     console.log(message); // Log the error message for debugging
                     // Optionally, you can show an alert or toast message to inform the user about the error
+                    this.setState({ rowData: [] });
                 }
             }
         } catch (error) {
@@ -234,35 +235,51 @@ export default class GRN_AA extends Component {
                                 value={this.state.searchGRN}
                                 onChangeText={(searchGRN) => {
                                     this.setState({ searchGRN });
-                                    this.handlesearchGrn(searchGRN);
+
                                 }}
                                 style={styles.search_text} />
-                        </View>
-
-                        <Table style={{ marginTop: wp(2) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
-                            <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[0, 0, 2, 2, 3, 2]} />
-                            {slicedData.map((rowData, index) => (
-                                <Row
-                                    key={index}
-                                    data={Object.values(rowData).map((cellData, cellIndex) => {
-                                        if (cellIndex === 0) {
-                                            return (
-                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePressGRN(cellData)}>
-                                                    <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
-                                                </TouchableOpacity>
-                                            );
-                                        }
-
-                                        else {
-                                            return <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>;
-                                        }
-                                    })}
-                                    textStyle={styles.rowText}
-                                    style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
-                                    flexArr={[0, 0, 2, 2, 3, 2]}
+                            <TouchableOpacity onPress={() => this.handlesearchGrn(this.state.searchGRN)}>
+                                <Image source={require('../../Assets/Image/searchgrn.png')}
+                                    style={{ width: wp(5), height: wp(5), marginRight: wp(3) }}
                                 />
-                            ))}
-                        </Table>
+                            </TouchableOpacity>
+                        </View>
+                        
+                        {rowData.length ? (
+                            <Table style={{ marginTop: wp(2) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
+                                <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[0, 0, 2, 2, 3, 2]} />
+                                {slicedData.map((rowData, index) => (
+                                    <Row
+                                        key={index}
+                                        data={Object.values(rowData).map((cellData, cellIndex) => {
+                                            if (cellIndex === 0) {
+                                                return (
+                                                    <TouchableOpacity key={cellIndex} onPress={() => this.handlePressGRN(cellData)}>
+                                                        <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
+                                                    </TouchableOpacity>
+                                                );
+                                            }
+
+                                            else {
+                                                return <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>;
+                                            }
+                                        })}
+                                        textStyle={styles.rowText}
+                                        style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
+                                        flexArr={[0, 0, 2, 2, 3, 2]}
+                                    />
+                                ))}
+                            </Table>
+                        ) : (
+                            <Text style={{
+                                color: '#8D6E63',
+                                fontWeight: '500',
+                                fontSize: wp(3.2),
+                                textAlign: 'center',
+                                marginTop: wp(10)
+                            }}>No Data Found</Text>
+                        )}
+
 
 
                         <View style={styles.pagination}>
@@ -353,15 +370,18 @@ const styles = StyleSheet.create({
         borderRadius: wp(2),
         marginTop: wp(3),
         backgroundColor: '#EFEBE9',
-        justifyContent: 'center',
-        alignSelf: 'center'
+        justifyContent: 'space-between',
+        alignSelf: 'center',
+        flexDirection: 'row',
+        alignItems: 'center',
 
     },
     search_text: {
         color: '#8D6E63',
         fontSize: wp(3.5),
         marginLeft: wp(2),
-        fontWeight: "500"
+        fontWeight: "500",
+        width: wp(80)
     },
     popoverContainer: {
         flex: 1,

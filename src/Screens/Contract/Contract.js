@@ -31,6 +31,9 @@ export default class Contract extends Component {
     };
 
     handlePressContract = (contractId) => {
+        console.log('====================================');
+        console.log('kbjghdfag', contractId);
+        console.log('====================================');
         this.setState({ contractId }, this._handleContractPdf);
     };
 
@@ -292,27 +295,28 @@ export default class Contract extends Component {
                         ) : null}
 
                         <Table style={{ marginTop: wp(2) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
-                            <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[3, 3, 2, 2]} />
+                            <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[1, 1, 1, 1]} />
                             {slicedData.map((rowData, index) => (
                                 <Row
                                     key={index}
-                                    data={Object.values(rowData).map((cellData, cellIndex) => {
-                                        if (cellIndex === 0) {
-                                            return (
-                                                <TouchableOpacity key={cellIndex} onPress={() => this.handlePressContract(rowData.contract_id)}>
-                                                    <Text style={[styles.Highlight, { lineHeight: 15 }]}>{cellData}</Text>
-                                                </TouchableOpacity>
-                                            );
-                                        } else {
-                                            return <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>;
-                                        }
-                                    })}
+                                    data={[
+                                        <TouchableOpacity key="title" onPress={() => this.handlePressContract(rowData.contract_id)}>
+                                            <Text style={[styles.Highlight, { lineHeight: 15 }]}>{rowData.title}</Text>
+                                        </TouchableOpacity>,
+                                        <Text style={[styles.rowText, { lineHeight: 15 }]}>{rowData.supplier}</Text>,
+                                        <Text style={[styles.rowText, { lineHeight: 15 }]}>{rowData.cost}</Text>,
+                                        <Text style={[styles.rowText, { lineHeight: 15 }]}>{rowData.date}</Text>
+                                    ]}
                                     textStyle={styles.rowText}
                                     style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
-                                    flexArr={[3, 3, 2, 2]}
+                                    flexArr={[1, 1, 1, 1]}
                                 />
                             ))}
                         </Table>
+
+
+
+
 
                         <View style={styles.pagination}>
                             <TouchableOpacity onPress={this.prevPage} disabled={currentPage === 0}>
@@ -334,7 +338,6 @@ export default class Contract extends Component {
     }
 
 }
-
 const styles = StyleSheet.create({
     container: {
         alignSelf: 'center',

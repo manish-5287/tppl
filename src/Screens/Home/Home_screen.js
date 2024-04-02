@@ -13,7 +13,7 @@ import CustomLoader from '../../Component/loader/Loader';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
 import UpdateBanner from '../../Component/UpdateBanner/UpdateBanner';
 import { getUniqueId } from 'react-native-device-info';
-import deviceInfoModule from 'react-native-device-info';
+import DeviceInfo from 'react-native-device-info';
 
 
 
@@ -76,7 +76,6 @@ export default class Dashboard extends Component {
   }
 
 
-
   handleAppStateChange = async nextAppState => {
     try {
       const { appState } = this.state;
@@ -97,7 +96,7 @@ export default class Dashboard extends Component {
       if (Platform.OS === 'ios') {
         IosbuildNumber = Number(DeviceInfo.getBuildNumber());
       } else {
-        buildNumber = Number(deviceInfoModule.getBuildNumber());
+        buildNumber = Number(DeviceInfo.getBuildNumber());
       }
       console.log('====================================');
       console.log('dada', IosbuildNumber);

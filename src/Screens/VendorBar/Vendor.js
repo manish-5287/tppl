@@ -44,7 +44,7 @@ export class Vendor extends Component {
 
     handleSUpplier = async () => {
         try {
-            this.setState({ showProcessingLoader: true, isRefreshing: true })
+            this.setState({ isRefreshing: true })
 
             const response = await makeRequest(BASE_URL + '/mobile/vendor')
             // console.log("SUpplier",response);
@@ -53,16 +53,16 @@ export class Vendor extends Component {
                 const modifiedSupplierData = vendorDetails.map(({ date, description, cr_amt, de_amt, balance }) => ({
                     date, description, cr_amt, de_amt, balance
                 }))
-                this.setState({ rowData:modifiedSupplierData, showProcessingLoader: false, nameInput: name, isRefreshing: false });
+                this.setState({ rowData: modifiedSupplierData, nameInput: name, isRefreshing: false });
 
             } else {
                 console.log(message);
-                this.setState({ showProcessingLoader: false, isRefreshing: false });
+                this.setState({ isRefreshing: false });
 
             }
         } catch (error) {
             console.log(error);
-            this.setState({ showProcessingLoader: false, isRefreshing: false });
+            this.setState({ isRefreshing: false });
 
         }
     }
@@ -111,28 +111,32 @@ export class Vendor extends Component {
 
     handleShowSearch = async () => {
         try {
-
             const { selectedDateFrom, selectedDateTo, vendorid } = this.state;
             const params = {
                 vendor_id: vendorid,
                 date_from: selectedDateFrom,
                 date_to: selectedDateTo
-            }
+            };
             console.log("showVendor", params);
-            const response = await makeRequest(BASE_URL + '/mobile/searchvendor', params)
-            const { success, message, vendorDetails } = response
+            const response = await makeRequest(BASE_URL + '/mobile/searchvendor', params);
+            const { success, message, vendorDetails } = response;
             if (success) {
+
                 const modifiedSupplierData = vendorDetails.map(({ date, description, cr_amt, de_amt, balance }) => ({
                     date, description, cr_amt, de_amt, balance
                 }))
-                this.setState({ rowData: modifiedSupplierData })
+                this.setState({ rowData: modifiedSupplierData });
+
             } else {
                 console.log(message);
+                this.setState({ rowData: [], errorMessage: message });
             }
         } catch (error) {
             console.log(error);
+
+
         }
-    }
+    };
 
     // search vendor //
 
@@ -140,7 +144,7 @@ export class Vendor extends Component {
         try {
             const { searchName } = this.state;
             if (searchName.length < 1) {
-                this.setState({ contractName: [],  currentPage: 0 }); // Clear the search results
+                this.setState({ contractName: [], currentPage: 0 }); // Clear the search results
                 return;
             }
             const params = {
@@ -150,13 +154,13 @@ export class Vendor extends Component {
             const response = await makeRequest(BASE_URL + '/mobile/searchvendorname', params);
             const { success, message, vendorName } = response;
             if (success) {
-                this.setState({ contractName: vendorName, showFlatList: true,  currentPage: 0 });
+                this.setState({ contractName: vendorName, showFlatList: true, currentPage: 0, searchDataAvailable: vendorName.length > 0 });
             } else {
-                this.setState({ contractName: [], errorMessage: message, showFlatList: true })
+                this.setState({ contractName: [], errorMessage: message, showFlatList: true, searchDataAvailable: false })
             }
         } catch (error) {
             console.log(error);
-            this.setState({ contractName: [], showFlatList: false })
+            this.setState({ contractName: [], showFlatList: false, searchDataAvailable: false })
         }
     };
 
@@ -222,7 +226,7 @@ export class Vendor extends Component {
     };
 
     render() {
-        const { tableHead, rowData, currentPage, rowsPerPage, isLoading, showProcessingLoader } = this.state;
+        const { tableHead, rowData, currentPage, rowsPerPage, isLoading, showProcessingLoader, searchDataAvailable } = this.state;
         const startIndex = currentPage * rowsPerPage;
         const endIndex = Math.min(startIndex + rowsPerPage, rowData.length); // Calculate end index while considering the last page
         const slicedData = rowData.slice(startIndex, endIndex);
@@ -288,7 +292,7 @@ export class Vendor extends Component {
                 <View style={styles.container}>
                     <ScrollView
                         contentContainerStyle={{ flexGrow: 1 }}
-                        style={{marginBottom:wp(16)}}
+                        style={{ marginBottom: wp(16) }}
                         showsVerticalScrollIndicator={false}
                         refreshControl={
                             <RefreshControl
@@ -384,30 +388,43 @@ export class Vendor extends Component {
 
 
                         {/* Table  */}
+                        {rowData.length ? (
+                            <Table style={{ marginTop: wp(2) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
+                                <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[2, 3, 2, 2, 2]} />
+                                {slicedData.map((rowData, index) => (
+                                    <Row
+                                        key={index}
+                                        data={Object.values(rowData).map((cellData, cellIndex) => {
+                                            if (cellIndex === 0) {
+                                                return (
+                                                    <TouchableOpacity key={cellIndex}>
+                                                        <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>
+                                                    </TouchableOpacity>
+                                                );
+                                            }
+                                            else {
+                                                return <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>;
+                                            }
+                                        })}
+                                        textStyle={styles.rowText}
+                                        style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
+                                        flexArr={[2, 3, 2, 2, 2]}
+                                    />
+                                ))}
+                            </Table>
+                        ) : (
+                            <Text style={{
+                                color: '#00838F',
+                                fontWeight: '500',
+                                fontSize: wp(3.2),
+                                textAlign: 'center',
+                                marginTop: wp(10)
+                            }}>No Data Found</Text>
+                        )}
 
-                        <Table style={{ marginTop: wp(2) }} borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
-                            <Row data={tableHead} style={styles.head} textStyle={styles.text} flexArr={[2, 3, 2, 2, 2]} />
-                            {slicedData.map((rowData, index) => (
-                                <Row
-                                    key={index}
-                                    data={Object.values(rowData).map((cellData, cellIndex) => {
-                                        if (cellIndex === 0) {
-                                            return (
-                                                <TouchableOpacity key={cellIndex}>
-                                                    <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>
-                                                </TouchableOpacity>
-                                            );
-                                        }
-                                        else {
-                                            return <Text style={[styles.rowText, { lineHeight: 15 }]}>{cellData}</Text>;
-                                        }
-                                    })}
-                                    textStyle={styles.rowText}
-                                    style={[index % 2 === 0 ? styles.rowEven : styles.rowOdd, { height: rowHeight }]}
-                                    flexArr={[2, 3, 2, 2, 2]}
-                                />
-                            ))}
-                        </Table>
+
+
+
 
                         <View style={styles.pagination}>
                             <TouchableOpacity onPress={this.prevPage} disabled={currentPage === 0}>
@@ -614,6 +631,6 @@ const styles = StyleSheet.create({
 
 
 });
- 
+
 export default Vendor
 

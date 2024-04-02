@@ -168,7 +168,17 @@ export default class Search_Production extends Component {
                 <View style={styles.container}>
                     <Table borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
                         <Row data={tableHead} style={styles.head} textStyle={styles.headText} flexArr={[0, 2, 3, 3, 1, 1]} />
-                        {rowData.map((rowData, index) => this.renderRowData(rowData, index))}
+                        {rowData.length > 0 ? (
+                            rowData.map((rowData, index) => this.renderRowData(rowData, index))
+                        ) : (
+                            <Text style={{
+                                color: '#40856f',
+                                fontWeight: '500',
+                                fontSize: wp(3.2),
+                                marginTop: wp(10),
+                                alignSelf:'center'
+                            }}>No Data Found</Text>
+                        )}
                     </Table>
 
                 </View>
