@@ -1,45 +1,49 @@
 import React from 'react';
 import {Platform} from 'react-native';
 import PushNotification from 'react-native-push-notification';
-// import {makeRequest, BASE_URL} from 'api/ApiInfo';
 import {getUniqueId} from 'react-native-device-info';
-// import {KEYS, storeData} from 'api/UserPreference';
-import {KEYS, getData, storeData} from '../api/User_Preference';
+import {KEYS, storeData} from '../api/User_Preference';
 import {BASE_URL, makeRequest} from '../api/Api_info';
+import messaging from '@react-native-firebase/messaging';
+
 class NotificationHandler {
-  onNotification(notification) {
-    // console.log('NotificationHandler:', notification);
+  async onRegister() {
+    try {
+      let fcmToken = '';
+      if (Platform.OS === 'android') {
+        fcmToken = await messaging().getToken();
+      } else if (Platform.OS === 'ios') {
+        fcmToken = await messaging().getAPNSToken();
+      }
 
-    if (typeof this._onNotification === 'function') {
-      this._onNotification(notification);
-    }
-  }
+      console.log('FCM Token:', fcmToken);
 
-  async onRegister(token) {
-    // const info = await getData(KEYS.USER_INFO);
-    // console.log('User Info:', info);
-    if (Platform.OS === token.os) {
       let uniqueId = getUniqueId();
-      console.log('====================================');
-      console.log('dada', uniqueId);
-      console.log('====================================');
+      console.log('Unique Device ID:', uniqueId);
+
       const params = {
-        token: token.token,
-        // userId: null,
+        token: fcmToken,
         uniqueDeviceId: uniqueId,
       };
+
       const response = await makeRequest(
         BASE_URL + '/mobile/uploadToken',
         params,
       );
-      console.log('afafafa', response);
+
+      console.log('Response:', response);
+
       if (response.success) {
-        //   const deviceId = response.userInfo.deviceId;
-        await storeData(KEYS.USER_INFO);
+        // await storeData(KEYS.USER_INFO);
       }
+    } catch (error) {
+      console.error('Error uploading token:', error);
     }
-    if (typeof this._onRegister === 'function') {
-      this._onRegister(token);
+  }
+
+  onNotification(notification) {
+    if (typeof this._onNotification === 'function') {
+      this._onNotification(notification);
     }
   }
 
@@ -51,12 +55,10 @@ class NotificationHandler {
     if (notification.action === 'Yes') {
       PushNotification.invokeApp(notification);
     }
-    
   }
 
-  // (optional) Called when the user fails to register for remote notifications. Typically occurs when APNS is having issues, or the device is a simulator. (iOS)
   onRegistrationError(err) {
-    console.log(err);
+    console.log('Registration error:', err);
   }
 
   attachRegister(handler) {
@@ -71,34 +73,16 @@ class NotificationHandler {
 const handler = new NotificationHandler();
 
 PushNotification.configure({
-  // (optional) Called when Token is generated (iOS and Android)
   onRegister: handler.onRegister.bind(handler),
-
-  // (required) Called when a remote or local notification is opened or received
   onNotification: handler.onNotification.bind(handler),
-
-  // (optional) Called when Action is pressed (Android)
   onAction: handler.onAction.bind(handler),
-
-  // (optional) Called when the user fails to register for remote notifications. Typically occurs when APNS is having issues, or the device is a simulator. (iOS)
   onRegistrationError: handler.onRegistrationError.bind(handler),
-
-  // IOS ONLY (optional): default: all - Permissions to register.
   permissions: {
     alert: true,
     badge: true,
     sound: true,
   },
-
-  // Should the initial notification be popped automatically
-  // default: true
   popInitialNotification: true,
-
-  /**
-   * (optional) default: true
-   * - Specified if permissions (ios) and token (android and ios) will requested or not,
-   * - if not, you must call PushNotificationsHandler.requestPermissions() later
-   */
   requestPermissions: true,
 });
 

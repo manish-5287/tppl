@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
-import { Image} from "react-native";
+import { Image } from "react-native";
 import SplashScreen from "./src/Screens/Splash/Splash_Screen";
 import Login from "./src/Screens/Login_Screen/Login";
 import PO from "./src/Screens/PO/PO";
@@ -22,8 +22,6 @@ import { Search_Reverse } from "./src/Screens/Reverses/Search_Reverse";
 import { Search_Indent } from "./src/Screens/Indent/Search_Indent";
 import { KEYS, getData } from "./src/api/User_Preference";
 import messaging from '@react-native-firebase/messaging';
-import { Vendor } from "./src/Screens/VendorBar/Vendor";
-import { Vendor_Report_View } from "./src/Screens/VendorBar/Vendor_Report_View";
 import Indent_A from "./src/Screens/Indent/Indent_A";
 import { Search_A } from "./src/Screens/Indent/Search_A";
 import Reverse_AA from "./src/Screens/Reverses/Reverse_AA";
@@ -31,10 +29,11 @@ import Search_RevAA from "./src/Screens/Reverses/Search_RevAA";
 import PO_AAA from "./src/Screens/PO/PO_AAA";
 import GRN_AA from "./src/Screens/GRN/GRN_AA";
 import handler from "./src/Firebase_Api/notificationHandler";
+import { Maintenance } from "./src/Screens/Maintenance/Maintenance";
 
 const handleBackgroundMessage = async remoteMessage => {
   console.log('Message handled in the background:', remoteMessage);
-  
+
   // You can add custom logic here for handling the background message
 };
 
@@ -100,8 +99,7 @@ export default function App() {
         <Stack.Screen name="Search_RevAA" component={Search_RevAA} />
         <Stack.Screen name="Search_Reverse" component={Search_Reverse} />
         <Stack.Screen name="report" component={VendorReport} />
-        <Stack.Screen name="vendor_bar" component={Vendor} />
-        <Stack.Screen name="Vendor_Report_View" component={Vendor_Report_View} />
+        <Stack.Screen name="Maintenance" component={Maintenance} />
         <Stack.Screen name="mytab" component={MyTab} />
       </Stack.Navigator>
     </NavigationContainer>

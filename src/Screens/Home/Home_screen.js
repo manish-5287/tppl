@@ -1,5 +1,15 @@
-import { ScrollView, StyleSheet, Text, View, TouchableOpacity, Image, RefreshControl, AppState } from 'react-native'
-import React, { Component } from 'react'
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  Image,
+  RefreshControl,
+  AppState,
+  SafeAreaView,
+} from 'react-native';
+import React, { Component } from 'react';
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import Header_comp from '../../Component/Header/Header_comp';
 import Po_Table from '../../Component/Table/Po_Table';
@@ -15,53 +25,49 @@ import UpdateBanner from '../../Component/UpdateBanner/UpdateBanner';
 import { getUniqueId } from 'react-native-device-info';
 import DeviceInfo from 'react-native-device-info';
 
-
-
 export default class Dashboard extends Component {
   constructor(props) {
-    super(props)
+    super(props);
     this.state = {
       contractData: {
         contractcount: 0,
         todaycontractcount: 0,
         weekcontractcount: 0,
-        monthcontractcount: 0
+        monthcontractcount: 0,
       },
 
       purchaseData: {
         purchasenordercount: 0,
         todaypurchasenordercount: 0,
         weekpurchasenordercount: 0,
-        monthpurchasenordercount: 0
+        monthpurchasenordercount: 0,
       },
       grnData: {
         totalgrncount: 0,
         todaylgrncount: 0,
         weeklgrncount: 0,
-        monthgrncount: 0
+        monthgrncount: 0,
       },
       supplierData: {
         suppliercount: 0,
         todaylsuppliercount: 0,
         weeklsuppliercount: 0,
-        monthsuppliercount: 0
+        monthsuppliercount: 0,
       },
 
       maintenanceData: {
         maintenancecount: 0,
         todaymaintenancecount: 0,
         weekmaintenancecount: 0,
-        monthmaintenancecount: 0
+        monthmaintenancecount: 0,
       },
       isRefreshing: false,
       showProcessingLoader: false,
       isLoading: false,
       appState: AppState.currentState,
       isUpdateVisible: false,
-    }
-
-
-  };
+    };
+  }
 
   componentDidMount = async () => {
     await this.checkAppVersion();
@@ -70,11 +76,9 @@ export default class Dashboard extends Component {
     AppState.addEventListener('change', this.handleAppStateChange);
   };
 
-
   componentWillUnmount() {
     this.props.navigation.removeListener('focus', this._handleListRefresh); // Remove listener on component unmount
   }
-
 
   handleAppStateChange = async nextAppState => {
     try {
@@ -111,27 +115,24 @@ export default class Dashboard extends Component {
         BASE_URL + '/mobile/versioncheck',
         params,
       );
-      const {success, app_url, message, app_url_ios} = response;
+      const { success, app_url, message, app_url_ios } = response;
       console.log('====================================');
       console.log('dada111', response);
       console.log('====================================');
 
       if (success === false) {
-        this.setState({isUpdateVisible: true});
+        this.setState({ isUpdateVisible: true });
         const storeUrl = Platform.OS === 'ios' ? app_url_ios : app_url;
-        this.setState({isStoreUrl: storeUrl});
+        this.setState({ isStoreUrl: storeUrl });
       }
     } catch (error) {
       console.error(error);
     }
   };
 
-
-
   handleCloseUpdateBanner = () => {
     this.setState({ isUpdateVisible: false });
   };
-
 
   handleSliderBox = async () => {
     try {
@@ -195,58 +196,61 @@ export default class Dashboard extends Component {
 
   handlePO = () => {
     try {
-
-      this.props.navigation.navigate('PO_AAA')
+      this.props.navigation.navigate('PO_AAA');
     } catch (error) {
       console.log(error);
     }
-  }
+  };
 
   handleProduction = () => {
     try {
-
-      this.props.navigation.navigate('Production')
+      this.props.navigation.navigate('Production');
     } catch (error) {
       console.log(error);
     }
-  }
+  };
   handleGRN = () => {
     try {
-      this.props.navigation.navigate('GRN_AA')
+      this.props.navigation.navigate('GRN_AA');
     } catch (error) {
       console.log(error);
     }
-  }
+  };
   handleContract = () => {
     try {
-
-      this.props.navigation.navigate('Contract')
+      this.props.navigation.navigate('Contract');
     } catch (error) {
       console.log(error);
     }
-  }
+  };
 
   handleIndent = () => {
     try {
-      this.props.navigation.navigate('Indent_A')
+      this.props.navigation.navigate('Indent_A');
     } catch (error) {
       console.log(error);
     }
-  }
+  };
 
   handleReverse = () => {
     try {
-
-      this.props.navigation.navigate('Reverse_AA')
+      this.props.navigation.navigate('Reverse_AA');
     } catch (error) {
       console.log(error);
     }
-  }
+  };
 
   handleSupplier = () => {
     try {
+      this.props.navigation.navigate('supplier');
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-      this.props.navigation.navigate('vendor_bar')
+  handleMaintenance = () => {
+    try {
+      this.props.navigation.navigate('Maintenance')
     } catch (error) {
       console.log(error);
     }
@@ -270,37 +274,37 @@ export default class Dashboard extends Component {
   };
 
   render() {
-    const { contractData, purchaseData, grnData, supplierData, maintenanceData } = this.state;
+    const { contractData, purchaseData, grnData, supplierData, maintenanceData } =
+      this.state;
     console.log('mansih', contractData);
     if (this.state.isLoading) {
       return <CustomLoader />;
     }
-    const { showProcessingLoader } = this.state
+    const { showProcessingLoader } = this.state;
     return (
-      <>
+      <SafeAreaView style={{ flex: 1 }}>
         <Header_comp navigation={this.props.navigation} />
         <ScrollView
           showsVerticalScrollIndicator={false}
-          style={{ padding: wp(2), flex: 1, backgroundColor: '#fefefc', marginBottom: wp(2) }}
+          style={{
+            padding: wp(2),
+            flex: 1,
+            backgroundColor: '#fefefc',
+            marginBottom: wp(2),
+          }}
           refreshControl={
             <RefreshControl
               colors={['#0068b1']}
               refreshing={this.state.isRefreshing}
               onRefresh={this._handleListRefresh}
             />
-          }
-
-        >
-
+          }>
           {/* Header slider */}
 
           <ScrollView
             horizontal={true}
             showsHorizontalScrollIndicator={false}
-            showsVerticalScrollIndicator={false}
-
-          >
-
+            showsVerticalScrollIndicator={false}>
             <TouchableOpacity onPress={this.handleContract}>
               <View style={Styles.slider_box1}>
                 <View style={Styles.box1}>
@@ -314,7 +318,6 @@ export default class Dashboard extends Component {
                     }}>
                     Contract ({contractData.contractcount})
                   </Text>
-
                 </View>
                 <View style={Styles.second_box}>
                   <Text
@@ -359,11 +362,10 @@ export default class Dashboard extends Component {
                       color: 'white',
                       fontSize: wp(3),
                       fontWeight: '500',
-                      marginLeft: wp(2)
+                      marginLeft: wp(2),
                     }}>
                     Purchase Order ({purchaseData.purchasenordercount})
                   </Text>
-
                 </View>
                 <View style={Styles.second_box}>
                   <Text
@@ -372,7 +374,7 @@ export default class Dashboard extends Component {
                       fontSize: wp(2.8),
                       fontWeight: '500',
                       marginLeft: wp(2),
-                      letterSpacing: wp(0.1)
+                      letterSpacing: wp(0.1),
                     }}>
                     Today - {purchaseData.todaypurchasenordercount}
                   </Text>
@@ -383,7 +385,7 @@ export default class Dashboard extends Component {
                       fontSize: wp(2.8),
                       fontWeight: '500',
                       marginLeft: wp(2),
-                      letterSpacing: wp(0.1)
+                      letterSpacing: wp(0.1),
                     }}>
                     This Week - {purchaseData.weekpurchasenordercount}
                   </Text>
@@ -394,13 +396,11 @@ export default class Dashboard extends Component {
                       fontSize: wp(2.8),
                       fontWeight: '500',
                       marginLeft: wp(2),
-                      letterSpacing: wp(0.1)
+                      letterSpacing: wp(0.1),
                     }}>
                     This Month - {purchaseData.monthpurchasenordercount}
                   </Text>
-
                 </View>
-
               </View>
             </TouchableOpacity>
 
@@ -413,11 +413,10 @@ export default class Dashboard extends Component {
                       color: 'white',
                       fontSize: wp(3),
                       fontWeight: '500',
-                      marginLeft: wp(2)
+                      marginLeft: wp(2),
                     }}>
                     GRN ({grnData.totalgrncount})
                   </Text>
-
                 </View>
                 <View style={Styles.second_box}>
                   <Text
@@ -426,7 +425,7 @@ export default class Dashboard extends Component {
                       fontSize: wp(2.8),
                       fontWeight: '500',
                       marginLeft: wp(2),
-                      letterSpacing: wp(0.1)
+                      letterSpacing: wp(0.1),
                     }}>
                     Today - {grnData.todaylgrncount}
                   </Text>
@@ -437,7 +436,7 @@ export default class Dashboard extends Component {
                       fontSize: wp(2.8),
                       fontWeight: '500',
                       marginLeft: wp(2),
-                      letterSpacing: wp(0.1)
+                      letterSpacing: wp(0.1),
                     }}>
                     This Week - {grnData.weeklgrncount}
                   </Text>
@@ -448,14 +447,11 @@ export default class Dashboard extends Component {
                       fontSize: wp(2.8),
                       fontWeight: '500',
                       marginLeft: wp(2),
-                      letterSpacing: wp(0.1)
+                      letterSpacing: wp(0.1),
                     }}>
                     This Month - {grnData.monthgrncount}
                   </Text>
-
                 </View>
-
-
               </View>
             </TouchableOpacity>
 
@@ -468,11 +464,10 @@ export default class Dashboard extends Component {
                       color: 'white',
                       fontSize: wp(3),
                       fontWeight: '500',
-                      marginLeft: wp(2)
+                      marginLeft: wp(2),
                     }}>
                     Vendors ({supplierData.suppliercount})
                   </Text>
-
                 </View>
                 <View style={Styles.second_box}>
                   <Text
@@ -481,7 +476,7 @@ export default class Dashboard extends Component {
                       fontSize: wp(2.8),
                       fontWeight: '500',
                       marginLeft: wp(2),
-                      letterSpacing: wp(0.1)
+                      letterSpacing: wp(0.1),
                     }}>
                     Today - {supplierData.todaylsuppliercount}
                   </Text>
@@ -492,7 +487,7 @@ export default class Dashboard extends Component {
                       fontSize: wp(2.8),
                       fontWeight: '500',
                       marginLeft: wp(2),
-                      letterSpacing: wp(0.1)
+                      letterSpacing: wp(0.1),
                     }}>
                     This Week - {supplierData.weeklsuppliercount}
                   </Text>
@@ -503,16 +498,16 @@ export default class Dashboard extends Component {
                       fontSize: wp(2.8),
                       fontWeight: '500',
                       marginLeft: wp(2),
-                      letterSpacing: wp(0.1)
+                      letterSpacing: wp(0.1),
                     }}>
                     This Month - {supplierData.monthsuppliercount}
                   </Text>
-
                 </View>
               </View>
             </TouchableOpacity>
 
             {/* box 5 */}
+            <TouchableOpacity onPress={this.handleMaintenance}>
             <View style={Styles.slider_box5}>
               <View style={Styles.box5}>
                 <Text
@@ -520,11 +515,10 @@ export default class Dashboard extends Component {
                     color: 'white',
                     fontSize: wp(3),
                     fontWeight: '500',
-                    marginLeft: wp(2)
+                    marginLeft: wp(2),
                   }}>
                   Maintenance ({maintenanceData.maintenancecount})
                 </Text>
-
               </View>
               <View style={Styles.second_box}>
                 <Text
@@ -533,7 +527,7 @@ export default class Dashboard extends Component {
                     fontSize: wp(2.8),
                     fontWeight: '500',
                     marginLeft: wp(2),
-                    letterSpacing: wp(0.1)
+                    letterSpacing: wp(0.1),
                   }}>
                   Today - {maintenanceData.todaymaintenancecount}
                 </Text>
@@ -544,7 +538,7 @@ export default class Dashboard extends Component {
                     fontSize: wp(2.8),
                     fontWeight: '500',
                     marginLeft: wp(2),
-                    letterSpacing: wp(0.1)
+                    letterSpacing: wp(0.1),
                   }}>
                   This Week - {maintenanceData.weekmaintenancecount}
                 </Text>
@@ -555,41 +549,67 @@ export default class Dashboard extends Component {
                     fontSize: wp(2.8),
                     fontWeight: '500',
                     marginLeft: wp(2),
-                    letterSpacing: wp(0.1)
+                    letterSpacing: wp(0.1),
                   }}>
                   This Month - {maintenanceData.monthmaintenancecount}
                 </Text>
-
               </View>
             </View>
+            </TouchableOpacity>
           </ScrollView>
-
 
           {/* Table */}
 
           <ScrollView showsVerticalScrollIndicator={false}>
-
             {/* Purchase Order */}
-            <View style={{ marginTop: wp(5), borderColor: '#039BE5', borderWidth: wp(0.1), borderRadius: wp(0.5), alignSelf: 'center', }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: wp(1), marginTop: wp(2) }}>
-                <Text style={{
-                  fontSize: wp(5),
-                  fontWeight: '500',
-                  color: '#039BE5',
-                  letterSpacing: wp(0.3),
-
-                }}>Purchase Order</Text>
+            <View
+              style={{
+                marginTop: wp(5),
+                borderColor: '#039BE5',
+                borderWidth: wp(0.1),
+                borderRadius: wp(0.5),
+                alignSelf: 'center',
+              }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingHorizontal: wp(1),
+                  marginTop: wp(2),
+                }}>
+                <Text
+                  style={{
+                    fontSize: wp(5),
+                    fontWeight: '500',
+                    color: '#039BE5',
+                    letterSpacing: wp(0.3),
+                  }}>
+                  Purchase Order
+                </Text>
                 <TouchableOpacity onPress={this.handlePO}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: wp(1), right: wp(2) }}>
-                    <Text style={{
-                      fontSize: wp(3),
-                      fontWeight: '500',
-                      color: '#039BE5',
-                      marginRight: wp(1),
-                      letterSpacing: wp(0.3)
-                    }}
-                    >View More</Text>
-                    <Image source={require('../../Assets/Image/production-arrow.png')} style={{ width: wp(2.5), height: wp(2.5) }} />
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginTop: wp(1),
+                      right: wp(2),
+                    }}>
+                    <Text
+                      style={{
+                        fontSize: wp(3),
+                        fontWeight: '500',
+                        color: '#039BE5',
+                        marginRight: wp(1),
+                        letterSpacing: wp(0.3),
+                      }}>
+                      View More
+                    </Text>
+                    <Image
+                      source={require('../../Assets/Image/production-arrow.png')}
+                      style={{ width: wp(2.5), height: wp(2.5) }}
+                    />
                   </View>
                 </TouchableOpacity>
               </View>
@@ -599,25 +619,54 @@ export default class Dashboard extends Component {
 
             {/* Production Orders */}
 
-            <View style={{ marginTop: wp(5), borderColor: "#40856f", borderWidth: wp(0.1), borderRadius: wp(0.5), alignSelf: 'center', }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: wp(1), marginTop: wp(2) }}>
-                <Text style={{
-                  fontSize: wp(5),
-                  fontWeight: '500',
-                  color: "#40856f",
-                  letterSpacing: wp(0.3),
-                }}>Production Order</Text>
+            <View
+              style={{
+                marginTop: wp(5),
+                borderColor: '#40856f',
+                borderWidth: wp(0.1),
+                borderRadius: wp(0.5),
+                alignSelf: 'center',
+              }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingHorizontal: wp(1),
+                  marginTop: wp(2),
+                }}>
+                <Text
+                  style={{
+                    fontSize: wp(5),
+                    fontWeight: '500',
+                    color: '#40856f',
+                    letterSpacing: wp(0.3),
+                  }}>
+                  Production Order
+                </Text>
                 <TouchableOpacity onPress={this.handleProduction}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: wp(1), right: wp(2) }}>
-                    <Text style={{
-                      fontSize: wp(3),
-                      fontWeight: '500',
-                      color: "#40856f",
-                      marginRight: wp(1),
-                      letterSpacing: wp(0.3)
-                    }}
-                    >View More</Text>
-                    <Image source={require('../../Assets/Image/right-arrow.png')} style={{ width: wp(2.5), height: wp(2.5) }} />
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginTop: wp(1),
+                      right: wp(2),
+                    }}>
+                    <Text
+                      style={{
+                        fontSize: wp(3),
+                        fontWeight: '500',
+                        color: '#40856f',
+                        marginRight: wp(1),
+                        letterSpacing: wp(0.3),
+                      }}>
+                      View More
+                    </Text>
+                    <Image
+                      source={require('../../Assets/Image/right-arrow.png')}
+                      style={{ width: wp(2.5), height: wp(2.5) }}
+                    />
                   </View>
                 </TouchableOpacity>
               </View>
@@ -627,25 +676,54 @@ export default class Dashboard extends Component {
 
             {/* GRN */}
 
-            <View style={{ marginTop: wp(5), borderColor: '#8D6E63', borderWidth: wp(0.1), borderRadius: wp(0.5), alignSelf: 'center', }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: wp(1), marginTop: wp(2) }}>
-                <Text style={{
-                  fontSize: wp(5),
-                  fontWeight: '500',
-                  color: '#8D6E63',
-                  letterSpacing: wp(0.3),
-                }}>GRN</Text>
+            <View
+              style={{
+                marginTop: wp(5),
+                borderColor: '#8D6E63',
+                borderWidth: wp(0.1),
+                borderRadius: wp(0.5),
+                alignSelf: 'center',
+              }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingHorizontal: wp(1),
+                  marginTop: wp(2),
+                }}>
+                <Text
+                  style={{
+                    fontSize: wp(5),
+                    fontWeight: '500',
+                    color: '#8D6E63',
+                    letterSpacing: wp(0.3),
+                  }}>
+                  GRN
+                </Text>
                 <TouchableOpacity onPress={this.handleGRN}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: wp(1), right: wp(2) }}>
-                    <Text style={{
-                      fontSize: wp(3),
-                      fontWeight: '500',
-                      color: '#8D6E63',
-                      marginRight: wp(1),
-                      letterSpacing: wp(0.3)
-                    }}
-                    >View More</Text>
-                    <Image source={require('../../Assets/Image/grn-arrow.png')} style={{ width: wp(2.5), height: wp(2.5) }} />
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginTop: wp(1),
+                      right: wp(2),
+                    }}>
+                    <Text
+                      style={{
+                        fontSize: wp(3),
+                        fontWeight: '500',
+                        color: '#8D6E63',
+                        marginRight: wp(1),
+                        letterSpacing: wp(0.3),
+                      }}>
+                      View More
+                    </Text>
+                    <Image
+                      source={require('../../Assets/Image/grn-arrow.png')}
+                      style={{ width: wp(2.5), height: wp(2.5) }}
+                    />
                   </View>
                 </TouchableOpacity>
               </View>
@@ -653,28 +731,56 @@ export default class Dashboard extends Component {
               <GRN_Table />
             </View>
 
-
             {/* indents */}
 
-            <View style={{ marginTop: wp(5), borderColor: '#757575', borderWidth: wp(0.1), borderRadius: wp(0.5), alignSelf: 'center', }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: wp(1), marginTop: wp(2) }}>
-                <Text style={{
-                  fontSize: wp(5),
-                  fontWeight: '500',
-                  color: '#757575',
-                  letterSpacing: wp(0.3),
-                }}>Indent </Text>
+            <View
+              style={{
+                marginTop: wp(5),
+                borderColor: '#757575',
+                borderWidth: wp(0.1),
+                borderRadius: wp(0.5),
+                alignSelf: 'center',
+              }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingHorizontal: wp(1),
+                  marginTop: wp(2),
+                }}>
+                <Text
+                  style={{
+                    fontSize: wp(5),
+                    fontWeight: '500',
+                    color: '#757575',
+                    letterSpacing: wp(0.3),
+                  }}>
+                  Indent{' '}
+                </Text>
                 <TouchableOpacity onPress={this.handleIndent}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: wp(1), right: wp(2) }}>
-                    <Text style={{
-                      fontSize: wp(3),
-                      fontWeight: '500',
-                      color: '#757575',
-                      marginRight: wp(1),
-                      letterSpacing: wp(0.3)
-                    }}
-                    >View More</Text>
-                    <Image source={require('../../Assets/Image/indent-arrow.png')} style={{ width: wp(2.5), height: wp(2.5) }} />
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginTop: wp(1),
+                      right: wp(2),
+                    }}>
+                    <Text
+                      style={{
+                        fontSize: wp(3),
+                        fontWeight: '500',
+                        color: '#757575',
+                        marginRight: wp(1),
+                        letterSpacing: wp(0.3),
+                      }}>
+                      View More
+                    </Text>
+                    <Image
+                      source={require('../../Assets/Image/indent-arrow.png')}
+                      style={{ width: wp(2.5), height: wp(2.5) }}
+                    />
                   </View>
                 </TouchableOpacity>
               </View>
@@ -684,35 +790,61 @@ export default class Dashboard extends Component {
 
             {/* Reverse */}
 
-            <View style={{ marginTop: wp(5), borderColor: '#197486', borderWidth: wp(0.1), borderRadius: wp(0.5), alignSelf: 'center', }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: wp(1), marginTop: wp(2) }}>
-                <Text style={{
-                  fontSize: wp(5),
-                  fontWeight: '500',
-                  color: '#197486',
-                  letterSpacing: wp(0.3),
-                }}>Reverse</Text>
+            <View
+              style={{
+                marginTop: wp(5),
+                borderColor: '#197486',
+                borderWidth: wp(0.1),
+                borderRadius: wp(0.5),
+                alignSelf: 'center',
+              }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingHorizontal: wp(1),
+                  marginTop: wp(2),
+                }}>
+                <Text
+                  style={{
+                    fontSize: wp(5),
+                    fontWeight: '500',
+                    color: '#197486',
+                    letterSpacing: wp(0.3),
+                  }}>
+                  Reverse
+                </Text>
                 <TouchableOpacity onPress={this.handleReverse}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: wp(1), right: wp(2) }}>
-                    <Text style={{
-                      fontSize: wp(3),
-                      fontWeight: '500',
-                      color: '#197486',
-                      marginRight: wp(1),
-                      letterSpacing: wp(0.3)
-                    }}
-                    >View More</Text>
-                    <Image source={require('../../Assets/Image/reverse-arrow.png')} style={{ width: wp(2.5), height: wp(2.5) }} />
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginTop: wp(1),
+                      right: wp(2),
+                    }}>
+                    <Text
+                      style={{
+                        fontSize: wp(3),
+                        fontWeight: '500',
+                        color: '#197486',
+                        marginRight: wp(1),
+                        letterSpacing: wp(0.3),
+                      }}>
+                      View More
+                    </Text>
+                    <Image
+                      source={require('../../Assets/Image/reverse-arrow.png')}
+                      style={{ width: wp(2.5), height: wp(2.5) }}
+                    />
                   </View>
                 </TouchableOpacity>
               </View>
 
               <Reverses_Table />
             </View>
-
           </ScrollView>
-
-
         </ScrollView>
 
         <UpdateBanner
@@ -721,18 +853,16 @@ export default class Dashboard extends Component {
           storeUrl={this.state.isStoreUrl}
         />
         {showProcessingLoader && <ProcessingLoader />}
-      </>
-    )
+      </SafeAreaView>
+    );
   }
 }
 
-
 const Styles = StyleSheet.create({
-
   // Header slider bar //
 
   slider_box1: {
-    backgroundColor: "#0288D1",
+    backgroundColor: '#9E9E9E',
     height: wp(25),
     width: wp(35),
     margin: wp(1.2),
@@ -740,7 +870,7 @@ const Styles = StyleSheet.create({
     overflow: 'hidden',
   },
   box1: {
-    backgroundColor: '#0288D1',
+    backgroundColor: '#9E9E9E',
     height: wp(8),
     width: wp(70),
     borderTopLeftRadius: wp(3),
@@ -751,7 +881,6 @@ const Styles = StyleSheet.create({
   },
 
   second_box: {
-
     backgroundColor: '355c6e',
     width: wp(70),
     flex: 1,
@@ -760,15 +889,15 @@ const Styles = StyleSheet.create({
 
   // 2 //.
   slider_box2: {
-    backgroundColor: '#7986CB',
+    backgroundColor: '#039BE5',
     height: wp(25),
     width: wp(35),
     margin: wp(1.2),
     borderRadius: wp(3),
-    overflow: 'hidden'
+    overflow: 'hidden',
   },
   box2: {
-    backgroundColor: '#7986CB',
+    backgroundColor: '#039BE5',
     height: wp(8),
     width: wp(70),
     borderTopLeftRadius: wp(3),
@@ -780,15 +909,15 @@ const Styles = StyleSheet.create({
 
   // 3//
   slider_box3: {
-    backgroundColor: "#f186c0",
+    backgroundColor: '#8D6E63',
     height: wp(25),
     width: wp(35),
     margin: wp(1.2),
     borderRadius: wp(3),
-    overflow: 'hidden'
+    overflow: 'hidden',
   },
   box3: {
-    backgroundColor: "#f186c0",
+    backgroundColor: '#8D6E63',
     height: wp(8),
     width: wp(70),
     borderTopLeftRadius: wp(3),
@@ -800,15 +929,15 @@ const Styles = StyleSheet.create({
 
   // 4 //
   slider_box4: {
-    backgroundColor: "#EF9A9A",
+    backgroundColor: '#00838F',
     height: wp(25),
     width: wp(35),
     margin: wp(1.2),
     borderRadius: wp(3),
-    overflow: 'hidden'
+    overflow: 'hidden',
   },
   box4: {
-    backgroundColor: "#EF9A9A",
+    backgroundColor: '#00838F',
     height: wp(8),
     width: wp(70),
     borderTopLeftRadius: wp(3),
@@ -820,15 +949,15 @@ const Styles = StyleSheet.create({
 
   // 5 //
   slider_box5: {
-    backgroundColor: "#FFB74D",
+    backgroundColor: '#EF9A9A',
     height: wp(25),
     width: wp(35),
     margin: wp(1.2),
     borderRadius: wp(3),
-    overflow: 'hidden'
+    overflow: 'hidden',
   },
   box5: {
-    backgroundColor: '#FFB74D',
+    backgroundColor: '#EF9A9A',
     height: wp(8),
     width: wp(70),
     borderTopLeftRadius: wp(3),
@@ -837,8 +966,4 @@ const Styles = StyleSheet.create({
     borderBottomWidth: wp(0.4),
     justifyContent: 'center',
   },
-
-
-
-})
-
+});
