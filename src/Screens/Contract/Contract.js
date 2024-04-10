@@ -454,7 +454,8 @@ const styles = StyleSheet.create({
 
   search: {
     width: wp(97),
-    height: wp(10), //ios
+    // height: wp(10), //ios
+    height: wp(12), //android
     borderColor: 'rgba(0,0,0,0.05)',
     borderWidth: wp(0.5),
     borderRadius: wp(1.5),

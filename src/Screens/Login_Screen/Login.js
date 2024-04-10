@@ -1,19 +1,21 @@
 import React, { Component } from 'react';
-import { Text, TextInput, Image, View, TouchableOpacity, Keyboard, Alert, SafeAreaView, TouchableWithoutFeedback, ImageBackground, KeyboardAvoidingView } from 'react-native';
+import { Text, TextInput, Image, View, TouchableOpacity, Keyboard, Alert, SafeAreaView, TouchableWithoutFeedback, ImageBackground, KeyboardAvoidingView, StyleSheet, ScrollView } from 'react-native';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { BASE_URL, makeRequest } from '../../api/Api_info';
 import CustomLoader from '../../Component/loader/Loader';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
-import { KEYS, getData, storeData } from '../../api/User_Preference';
+import { KEYS, storeData } from '../../api/User_Preference';
 import { getUniqueId } from 'react-native-device-info';
 
-export class Login extends Component {
+export default class Login extends Component {
   constructor(props) {
     super(props);
     this.state = {
       mobile: '',
       password: '',
       showProcessingLoader: false,
+      showPassword: false,
+      isLoading: false
     };
   }
 
@@ -70,42 +72,197 @@ export class Login extends Component {
     this.setState({ password: text });
   };
 
+  toggleShowPassword = () => {
+    this.setState(prevState => ({
+      showPassword: !prevState.showPassword,
+    }));
+  };
+
+  handleForget = () => {
+    try {
+      this.props.navigation.navigate('forget')
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+
   render() {
     const { showProcessingLoader } = this.state;
+    if (this.state.isLoading) {
+      return <CustomLoader />;
+    }
     return (
-      <ImageBackground source={require('../../Assets/Image/img1.jpg')} style={{ flex: 1 }}>
-        <SafeAreaView style={{ flex: 1 }}>
-        <KeyboardAvoidingView style={{ flex: 1}} behavior="padding" enabled>
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-            <View style={{ backgroundColor: 'white', position: 'absolute', alignSelf: 'center', height: hp(75), width: hp(45), alignItems: 'center', marginTop: wp(20), borderRadius: wp(5), overflow: 'hidden', shadowColor: '#039BE5', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 1, shadowRadius: 5, elevation: 8 }}>
-              <Image source={require('../../Assets/applogo.png')} style={{ width: wp(25), height: wp(25), resizeMode: 'contain', alignSelf: 'center' }} />
-              <Text style={{ color: '#0477a4', fontSize: wp(6.2), fontWeight: '800', textAlign: 'center' }}>Tirupati Plastomatics Pvt.Ltd</Text>
-              <Text style={{ color: '#0477a4', fontSize: wp(2.5), fontWeight: '500', textAlign: 'center' }}>(Integrated Mangement System(IMS) Certified Company)</Text>
-              <Text style={{ color: '#0477a4', fontSize: wp(5), fontWeight: '500', marginTop: wp(8), alignSelf: 'flex-start', marginLeft: wp(5), letterSpacing: wp(0.3), top: wp(4) }}>Login to Continue</Text>
 
-              <View style={{ overflow: 'hidden', marginTop: wp(8), borderColor: '#0477a4', borderRadius: wp(2), borderWidth: wp(0.2), width: hp(40), height: wp(11.2), flexDirection: 'row', alignItems: 'center' }}>
-                <Image source={require('../../Assets/Image/user.png')} style={{ width: wp(5), height: wp(5), marginLeft: wp(5) }} />
-                <TextInput placeholder='Enter mobile number' placeholderTextColor='#004561' keyboardType='number-pad' maxLength={10} value={this.state.mobile} onChangeText={this.handleMobileLogin} style={{ paddingLeft: wp(3), fontSize: wp(3.9), fontWeight: '400', color: '#004561', width: hp(40) }} />
-              </View>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
 
+        <SafeAreaView style={{ flex: 1, padding: wp(2) }}>
 
-              <View style={{ overflow: 'hidden', marginTop: wp(7), borderColor: '#0477a4', borderRadius: wp(2), borderWidth: wp(0.2), width: hp(40), height: wp(11.2), flexDirection: 'row', alignItems: 'center' }}>
-                <Image source={require('../../Assets/Image/lock.png')} style={{ width: wp(4.2), height: wp(4.2), marginLeft: wp(5) }} />
-                <TextInput placeholder='Password' placeholderTextColor='#004561' maxLength={20} keyboardType='name-phone-pad' secureTextEntry={true} value={this.state.password} onChangeText={this.handlePassword} style={{ paddingLeft: wp(3), fontSize: wp(3.9), fontWeight: '400', color: '#004561', width: hp(40) }} />
-              </View>
-
-
-              <TouchableOpacity style={{ justifyContent: 'center', backgroundColor: '#0477a4', height: wp(10.5), width: hp(40), alignSelf: 'center', borderRadius: wp(2), marginTop: wp(6.5) }} onPress={this.handleLogin}>
-                <Text style={{ color: 'white', textAlign: 'center', fontSize: wp(4.2), fontWeight: '500' }}>Login</Text>
-              </TouchableOpacity>
+          <View style={{ flex: 1, top: wp(-5) }}>
+            <View style={Styles.logo}>
+              <Image source={require('../../Assets/Image/tirupati-logo.png')}
+                style={{ width: wp(40), height: wp(40) }} resizeMode='contain' />
             </View>
-          </TouchableWithoutFeedback>
+
+            <View style={Styles.welcomeText}>
+              <Text style={{
+                fontWeight: '700',
+                color: '#000000',
+                letterSpacing: wp(0.4),
+                fontSize: wp(5.5),
+                textAlign: 'center'
+              }}>Hello Again!</Text>
+
+              <Text style={{
+                fontWeight: '500',
+                color: '#383838',
+                letterSpacing: wp(0.3),
+                fontSize: wp(3.5),
+                textAlign: 'center',
+                marginTop: wp(2)
+              }}>
+                It's great to have you back! please log in to access your account.
+              </Text>
+
+            </View>
+
+          </View>
+
+          <View style={{ flex: 2,alignSelf:'center' }}>
+            {/*  login and password textinput  */}
+            <View style={{ marginTop: wp(8) }}>
+
+              <Text style={{
+                fontWeight: '500',
+                color: '#000000',
+                letterSpacing: wp(0.4),
+                fontSize: wp(4),
+              }}>Mobile</Text>
+
+              <View style={{
+                overflow: 'hidden',
+                borderRadius: wp(3),
+                backgroundColor: '#E0E0E0',
+                width: hp(45),
+                height: wp(11.2),
+                alignSelf: 'center',
+                marginTop: wp(1.5)
+              }}>
+                <TextInput
+                  placeholder='Enter mobile number'
+                  placeholderTextColor='#757575'
+                  keyboardType='number-pad'
+                  maxLength={10}
+                  value={this.state.mobile}
+                  onChangeText={this.handleMobileLogin}
+
+                  style={{
+                    paddingLeft: wp(3.5),
+                    fontSize: wp(3.5),
+                    fontWeight: '400',
+                    color: '#757575',
+                  }} />
+              </View>
+            </View>
+
+
+            <View style={{ marginTop: wp(8) }}>
+
+              <Text style={{
+                fontWeight: '500',
+                color: '#000000',
+                letterSpacing: wp(0.4),
+                fontSize: wp(4),
+              }}>Password</Text>
+
+              <View style={{
+                overflow: 'hidden',
+                borderRadius: wp(3),
+                backgroundColor: '#E0E0E0',
+                width: hp(45),
+                height: wp(11.2),
+                alignSelf: 'center',
+                marginTop: wp(1.5),
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <TextInput
+                  placeholder='Password'
+                  placeholderTextColor='#757575'
+                  maxLength={20}
+                  keyboardType='name-phone-pad'
+                  secureTextEntry={!this.state.showPassword} // Use secureTextEntry conditionally
+                  value={this.state.password}
+                  onChangeText={this.handlePassword}
+                  style={{
+                    paddingLeft: wp(3.5),
+                    fontSize: wp(3.5),
+                    fontWeight: '400',
+                    color: '#757575',
+                    width: hp(30),
+
+                  }}
+                />
+
+                <TouchableOpacity onPress={this.toggleShowPassword}>
+                  <Image
+                    source={this.state.showPassword ? require('../../Assets/Image/view.png') : require('../../Assets/Image/hide.png')}
+                    style={{ width: wp(5.5), height: wp(5.5), marginRight: wp(5) }}
+                  />
+                </TouchableOpacity>
+              </View>
+
+            </View>
+
+            {/* forget password */}
+            <TouchableOpacity onPress={this.handleForget}>
+              <Text style={{
+                fontWeight: '400',
+                color: '#757575',
+                letterSpacing: wp(0.2),
+                fontSize: wp(3.5),
+                marginTop: wp(2),
+              }}> Forget Password ?</Text>
+            </TouchableOpacity>
+
+            {/* login button */}
+            <TouchableOpacity style={{
+              justifyContent: 'center',
+              backgroundColor: '#0293DF',
+              height: wp(10.5),
+              width: hp(45),
+              alignSelf: 'center',
+              borderRadius: wp(5),
+              marginTop: wp(10),
+            }}
+              onPress={this.handleLogin}>
+              <Text style={{
+                color: 'white',
+                textAlign: 'center',
+                fontSize: wp(4.2),
+                fontWeight: '500'
+              }}>Log In</Text>
+            </TouchableOpacity>
+          </View>
           {showProcessingLoader && <ProcessingLoader />}
-          </KeyboardAvoidingView>
+
         </SafeAreaView>
-      </ImageBackground>
+
+      </TouchableWithoutFeedback >
+
+
+
     );
   }
 }
 
-export default Login;
+const Styles = StyleSheet.create({
+  logo: {
+    alignSelf: 'center',
+  },
+  welcomeText: {
+    alignSelf: 'center',
+    top:wp(-2)
+  }
+})

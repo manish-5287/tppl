@@ -11,10 +11,10 @@ import {
   Linking,
   SafeAreaView,
 } from 'react-native';
-import React, {Component} from 'react';
-import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
-import {Table, Row} from 'react-native-table-component';
-import {BASE_URL, makeRequest} from '../../api/Api_info';
+import React, { Component } from 'react';
+import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
+import { Table, Row } from 'react-native-table-component';
+import { BASE_URL, makeRequest } from '../../api/Api_info';
 import CustomLoader from '../../Component/loader/Loader';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
 
@@ -30,6 +30,7 @@ export class PO_AAA extends Component {
       showProcessingLoader: false,
       isRefreshing: false,
       isLoading: false,
+      purchaseorderIId: '',
       purchaseorderId: '',
       poPrimary: '',
       isRevised: '',
@@ -42,13 +43,14 @@ export class PO_AAA extends Component {
 
   handlePO = async () => {
     try {
-      this.setState({showProcessingLoader: true, isRefreshing: true});
+      this.setState({ showProcessingLoader: true, isRefreshing: true });
       const response = await makeRequest(BASE_URL + '/mobile/purchaseorder');
-      const {success, message, poDetails} = response;
+      const { success, message, poDetails } = response;
       // console.log("po",response);
       if (success) {
         const modifiedPurchaseDetails = poDetails.map(
           ({
+            purchaseorder_id,
             po_primary,
             is_revised,
             poid,
@@ -58,6 +60,7 @@ export class PO_AAA extends Component {
             amount,
             delivery,
           }) => ({
+            purchaseorder_id,
             po_primary,
             is_revised,
             poid,
@@ -75,26 +78,26 @@ export class PO_AAA extends Component {
         }); // changes by manish
       } else {
         console.log(message);
-        this.setState({showProcessingLoader: false, isRefreshing: false});
+        this.setState({ showProcessingLoader: false, isRefreshing: false });
       }
     } catch (error) {
       console.log(error);
-      this.setState({showProcessingLoader: false, isRefreshing: false});
+      this.setState({ showProcessingLoader: false, isRefreshing: false });
     }
   };
 
   // pdf api by manish
 
-  handlePressProductID = (purchaseorderId, poPrimary, isRevised) => {
+  handlePressProductID = (purchaseorderIId, purchaseorderId, poPrimary, isRevised) => {
     this.setState(
-      {purchaseorderId, poPrimary, isRevised},
+      { purchaseorderIId, purchaseorderId, poPrimary, isRevised },
       this.handlePurchaseId,
     );
-    console.log('aqaqaqw12123123', purchaseorderId, poPrimary, isRevised);
+    console.log('aqaqaqw12123123', purchaseorderIId, purchaseorderId, poPrimary, isRevised);
   };
   handlePurchaseId = async () => {
     try {
-      const {purchaseorderId, poPrimary, isRevised} = this.state;
+      const { purchaseorderId, poPrimary, isRevised } = this.state;
       const params = {
         purchaseorder_id: purchaseorderId,
         po_primary: poPrimary,
@@ -105,10 +108,10 @@ export class PO_AAA extends Component {
         BASE_URL + '/mobile/purchaseorderpdf',
         params,
       );
-      const {success, message, pdfLink} = response;
+      const { success, message, pdfLink } = response;
       console.log('pdfpdfpdf', response);
       if (success) {
-        this.setState({cellData: pdfLink});
+        this.setState({ cellData: pdfLink });
         Linking.openURL(pdfLink);
       } else {
         console.log('====================================');
@@ -124,32 +127,32 @@ export class PO_AAA extends Component {
     try {
       if (searchPO.length < 1) {
         // Reset search results and fetch all data
-        this.setState({rowData: [], currentPage: 0});
+        this.setState({ rowData: [], currentPage: 0 });
         this.handlePO();
         return;
       }
       // Check if there are existing search results
-      const {searchResults} = this.state;
+      const { searchResults } = this.state;
       if (searchResults && searchResults.length > 0) {
         // Filter search results based on new search query
         const filteredResults = searchResults.filter(item =>
           item.po_id.includes(searchPO),
         );
         dataFound = filteredResults.length > 0; // Update dataFound based on filtered results
-        this.setState({rowData: filteredResults, currentPage: 0});
+        this.setState({ rowData: filteredResults, currentPage: 0 });
       } else {
         // Fetch new data based on search query
-        const params = {po_id: searchPO};
+        const params = { po_id: searchPO };
         const response = await makeRequest(
           BASE_URL + '/mobile/searchpurchaseorder',
           params,
         );
-        const {success, message, purchaseDetails} = response;
+        const { success, message, purchaseDetails } = response;
         if (success) {
-          this.setState({rowData: purchaseDetails, currentPage: 0});
+          this.setState({ rowData: purchaseDetails, currentPage: 0 });
         } else {
           console.log(message);
-          this.setState({rowData: []});
+          this.setState({ rowData: [] });
         }
       }
     } catch (error) {
@@ -158,30 +161,30 @@ export class PO_AAA extends Component {
   };
 
   nextPage = () => {
-    const {currentPage} = this.state;
-    this.setState({currentPage: currentPage + 1});
+    const { currentPage } = this.state;
+    this.setState({ currentPage: currentPage + 1 });
   };
 
   prevPage = () => {
-    const {currentPage} = this.state;
+    const { currentPage } = this.state;
     if (currentPage > 0) {
-      this.setState({currentPage: currentPage - 1});
+      this.setState({ currentPage: currentPage - 1 });
     }
   };
 
   _handleListRefreshing = async () => {
     try {
       // pull-to-refresh
-      this.setState({isRefreshing: true}, () => {
+      this.setState({ isRefreshing: true }, () => {
         // setTimeout with a delay of 1000 milliseconds (1 second)
         setTimeout(() => {
           // updating list after the delay
           this.handlePO();
           // resetting isRefreshing after the update
-          this.setState({isRefreshing: false, searchPO: '', currentPage: 0});
+          this.setState({ isRefreshing: false, searchPO: '', currentPage: 0 });
         }, 2000);
       });
-    } catch (error) {}
+    } catch (error) { }
   };
 
   handleGoBackHome = () => {
@@ -189,7 +192,7 @@ export class PO_AAA extends Component {
   };
 
   render() {
-    const {tableHead, rowData, currentPage, rowsPerPage, searchPO} = this.state;
+    const { tableHead, rowData, currentPage, rowsPerPage, searchPO } = this.state;
     const startIndex = currentPage * rowsPerPage;
     const endIndex = Math.min(startIndex + rowsPerPage, rowData.length); // Calculate end index while considering the last page
     const slicedData = rowData.slice(startIndex, endIndex);
@@ -198,7 +201,7 @@ export class PO_AAA extends Component {
       return <CustomLoader />;
     }
 
-    const {showProcessingLoader} = this.state;
+    const { showProcessingLoader } = this.state;
 
     // Calculate the maximum number of lines for each cell in a row
     let maxLines = 2;
@@ -213,7 +216,7 @@ export class PO_AAA extends Component {
     const rowHeight = maxLines * 25; // Assuming font size of 25
 
     return (
-      <SafeAreaView style={{flex: 1}}>
+      <SafeAreaView style={{ flex: 1 }}>
         <View
           style={{
             backgroundColor: '#E1F5FE',
@@ -257,17 +260,7 @@ export class PO_AAA extends Component {
           />
         </View>
 
-        <View
-          contentContainerStyle={{flexGrow: 1}}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              colors={['#039BE5']}
-              refreshing={this.state.isRefreshing}
-              onRefresh={this._handleListRefreshing}
-            />
-          }
-          style={styles.container}>
+        <View style={styles.container}>
           <View style={styles.search}>
             <TextInput
               placeholder="Search Purchase ID"
@@ -276,7 +269,7 @@ export class PO_AAA extends Component {
               keyboardType="number-pad"
               value={this.state.searchPO}
               onChangeText={searchPO => {
-                this.setState({searchPO});
+                this.setState({ searchPO });
               }}
               style={styles.search_text}
             />
@@ -285,15 +278,24 @@ export class PO_AAA extends Component {
               onPress={() => this.handlePOSearch(this.state.searchPO)}>
               <Image
                 source={require('../../Assets/Image/search.png')}
-                style={{width: wp(5), height: wp(5), marginRight: wp(3)}}
+                style={{ width: wp(5), height: wp(5), marginRight: wp(3) }}
               />
             </TouchableOpacity>
           </View>
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1 }}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                colors={['#039BE5']}
+                refreshing={this.state.isRefreshing}
+                onRefresh={this._handleListRefreshing}
+              />
+            }>
             {rowData.length ? (
               <Table
-                style={{marginTop: wp(2)}}
-                borderStyle={{borderWidth: wp(0.2), borderColor: 'white'}}>
+                style={{ marginTop: wp(2) }}
+                borderStyle={{ borderWidth: wp(0.2), borderColor: 'white' }}>
                 <Row
                   data={tableHead}
                   style={styles.head}
@@ -314,30 +316,30 @@ export class PO_AAA extends Component {
                             rowData.is_revised,
                           )
                         }>
-                        <Text style={[styles.Highlight, {lineHeight: 15}]}>
+                        <Text style={[styles.Highlight, { lineHeight: 15 }]}>
                           {rowData.poid}
                         </Text>
                       </TouchableOpacity>,
-                      <Text style={[styles.rowText, {lineHeight: 15}]}>
+                      <Text style={[styles.rowText, { lineHeight: 15 }]}>
                         {rowData.date}
                       </Text>,
-                      <Text style={[styles.rowText, {lineHeight: 15}]}>
+                      <Text style={[styles.rowText, { lineHeight: 15 }]}>
                         {rowData.supplier}
                       </Text>,
-                      <Text style={[styles.rowText, {lineHeight: 15}]}>
+                      <Text style={[styles.rowText, { lineHeight: 15 }]}>
                         {rowData.qty}
                       </Text>,
-                      <Text style={[styles.rowText, {lineHeight: 15}]}>
+                      <Text style={[styles.rowText, { lineHeight: 15 }]}>
                         {rowData.amount}
                       </Text>,
-                      <Text style={[styles.rowText, {lineHeight: 15}]}>
+                      <Text style={[styles.rowText, { lineHeight: 15 }]}>
                         {rowData.delivery}
                       </Text>,
                     ]}
                     textStyle={styles.rowText}
                     style={[
                       index % 2 === 0 ? styles.rowEven : styles.rowOdd,
-                      {height: rowHeight},
+                      { height: rowHeight },
                     ]}
                     flexArr={[1.5, 2.3, 3.5, 1.5, 2, 2.3]}
                   />

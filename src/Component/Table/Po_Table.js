@@ -18,6 +18,7 @@ export default class Po_Table extends Component {
     this.state = {
       tableHead: ['Id', 'Date', 'Vendor', 'Qty', 'Amount', 'Delivery'],
       rowData: [],
+      purchaseorderIId: '',
       purchaseorderId: '',
       poPrimary: '',
       isRevised: '',
@@ -35,6 +36,7 @@ export default class Po_Table extends Component {
       if (success) {
         const modifiedPurchaseDetails = poDetails.map(
           ({
+            purchaseorder_id,
             po_primary,
             is_revised,
             poid,
@@ -44,6 +46,7 @@ export default class Po_Table extends Component {
             amount,
             delivery,
           }) => ({
+            purchaseorder_id,
             po_primary,
             is_revised,
             poid,
@@ -63,12 +66,12 @@ export default class Po_Table extends Component {
     }
   };
 
-  handlePressProductID = (purchaseorderId, poPrimary, isRevised) => {
+  handlePressProductID = (purchaseorderIId, purchaseorderId, poPrimary, isRevised) => {
     this.setState(
-      { purchaseorderId, poPrimary, isRevised },
+      { purchaseorderIId, purchaseorderId, poPrimary, isRevised },
       this.handlePurchaseId,
     );
-    console.log('aqaqaqw12123123', purchaseorderId, poPrimary, isRevised);
+    console.log('aqaqaqw12123123', purchaseorderIId, purchaseorderId, poPrimary, isRevised);
   };
 
   handlePurchaseId = async () => {

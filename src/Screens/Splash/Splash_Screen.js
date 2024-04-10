@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
   logo: {
    width:wp(30),
    height:wp(30),
-  
+  resizeMode:'contain'
   },
 });
 

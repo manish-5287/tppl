@@ -30,6 +30,9 @@ import PO_AAA from "./src/Screens/PO/PO_AAA";
 import GRN_AA from "./src/Screens/GRN/GRN_AA";
 import handler from "./src/Firebase_Api/notificationHandler";
 import { Maintenance } from "./src/Screens/Maintenance/Maintenance";
+import Forget from "./src/Screens/Login_Screen/Forget";
+import VerifiyCode from "./src/Screens/Login_Screen/VerifiyCode";
+import { NewPassword } from "./src/Screens/Login_Screen/NewPassword";
 
 const handleBackgroundMessage = async remoteMessage => {
   console.log('Message handled in the background:', remoteMessage);
@@ -86,6 +89,9 @@ export default function App() {
         screenOptions={{ headerShown: false }}
       >
         <Stack.Screen name="login" component={Login} />
+        <Stack.Screen name="forget" component={Forget} />
+        <Stack.Screen name="VerifyCode" component={VerifiyCode} />
+        <Stack.Screen name="newPassword" component={NewPassword} />
         <Stack.Screen name="PO_AAA" component={PO_AAA} />
         <Stack.Screen name="Production" component={Production} />
         <Stack.Screen name="Search_Product" component={Search_Production} />
@@ -200,4 +206,6 @@ function MyTab() {
   )
 }
 
+
+ 
 

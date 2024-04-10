@@ -59,7 +59,8 @@ export class Header_comp extends Component {
                     style={{
                         width: wp(16),
                         height: wp(13),
-                        marginLeft: wp(2.5)
+                        marginLeft: wp(2.5),
+                        resizeMode:'contain'
 
                     }} />
 

@@ -99,10 +99,10 @@ android {
         applicationId "com.tppl"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 11
-        versionName "2.1"
-        multiDexEnabled true // <-- Add this
-    }
+        versionCode 12
+        versionName "2.2"
+        multiDexEnabled true // <-- Add this                       
+    }                  
 
     splits {
         abi {
