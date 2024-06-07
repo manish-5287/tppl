@@ -4,9 +4,10 @@ import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-nat
 import { BASE_URL, makeRequest } from '../../api/Api_info';
 import CustomLoader from '../../Component/loader/Loader';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
-import { KEYS, storeData } from '../../api/User_Preference';
+import { KEYS, storeData,getData } from '../../api/User_Preference';
 import { getUniqueId } from 'react-native-device-info';
-
+// Import your logo image
+import logo from '../../Assets/applogo.png';
 export default class Login extends Component {
   constructor(props) {
     super(props);
@@ -15,54 +16,94 @@ export default class Login extends Component {
       password: '',
       showProcessingLoader: false,
       showPassword: false,
-      isLoading: false
+      isLoading: false,
+      logoSource: null
     };
+  }
+  async componentDidMount() {
+    try {
+      const info = await getData(KEYS.USER_INFO);
+      if (info && info.logo) {
+          console.log('Using fetched logo:', info.logo);
+          this.setState({ logoSource: { uri: info.logo } });
+        } else {
+          console.log('Using default logo');
+          this.setState({ logoSource: logo });
+        }
+      } catch (error) {
+        console.error('Error fetching user info:', error);
+        console.log('Using default logo due to error');
+        this.setState({ logoSource: logo });
+      }
+
+
   }
 
   handleLogin = async () => {
     try {
       const { mobile, password } = this.state;
       Keyboard.dismiss();
-
+  
       // Validation
-      if (!mobile || !password) {
+      if (!mobile && !password) {
         Alert.alert('Please enter your mobile number and password.');
+        return;
+      }
+      if (!mobile) {
+        Alert.alert('Please enter your mobile number.');
         return;
       }
       if (!/^\d{10}$/.test(mobile)) {
         Alert.alert('Please enter a valid 10-digit mobile number.');
         return;
       }
-
+      if (!password) {
+        Alert.alert('Please enter your password.');
+        return;
+      }
+  
       this.setState({ showProcessingLoader: true });
-
+  
       let uniqueId = getUniqueId();
       const params = { mobile, password, device_id: uniqueId };
       console.log('mobile_params', params);
-
+  
       const response = await makeRequest(BASE_URL + '/mobile/login', params);
-      const { status, message, userId } = response;
-      console.log('login', response);
-
-      if (status) {
+      console.log('login response', response);
+  
+  const { success,output} = response;
+  
+      if (success) {
+        const {mobile, message, erpID, company_name, userId, deviceId: device_id, logo,authToken}=output
+        console.log('fewfewf',output)
         // Store data including device ID
-        const userInfo = { mobile, userId, deviceId: uniqueId };
-        await storeData(KEYS.USER_INFO, userInfo);
-        console.log('Stored userInfo:', userInfo);
-
+        const userInfo = { mobile, message, erpID, company_name, userId, deviceId: device_id, logo, authToken };
+        console.log('Storing userInfo:', userInfo);
+  
+        // Attempt to store userInfo and catch any errors
+        try {
+          await storeData(KEYS.USER_INFO, userInfo);
+          console.log('Successfully stored userInfo');
+        } catch (storeError) {
+          console.error('Error storing userInfo:', storeError);
+        }
+  
         // Navigate to the appropriate screen
-        this.props.navigation.navigate('mytab', { mobile, userId });
+        this.setState({ showProcessingLoader: false });
+       
+        this.props.navigation.navigate('mytab', { mobile, userId: userId });
         this.setState({ mobile: '', password: '', showProcessingLoader: false });
       } else {
         Alert.alert(message);
         this.setState({ showProcessingLoader: false });
       }
+  
     } catch (error) {
-      console.log(error);
-      Alert.alert('An error occurred. Please try again.');
+      console.error('Login error:', error);
       this.setState({ showProcessingLoader: false });
     }
   };
+  
 
   handleMobileLogin = (text) => {
     this.setState({ mobile: text });
@@ -78,16 +119,17 @@ export default class Login extends Component {
     }));
   };
 
-  handleForget = () => {
-    try {
-      this.props.navigation.navigate('forget')
-    } catch (error) {
-      console.log(error);
-    }
-  }
+  // handleForget = () => {
+  //   try {
+  //     this.props.navigation.navigate('forget')
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // }
 
 
   render() {
+    const {logoSource}= this.state;
     const { showProcessingLoader } = this.state;
     if (this.state.isLoading) {
       return <CustomLoader />;
@@ -100,7 +142,7 @@ export default class Login extends Component {
 
           <View style={{ flex: 1, top: wp(-5) }}>
             <View style={Styles.logo}>
-              <Image source={require('../../Assets/Image/tirupati-logo.png')}
+              <Image source={logoSource}
                 style={{ width: wp(40), height: wp(40) }} resizeMode='contain' />
             </View>
 
@@ -128,7 +170,7 @@ export default class Login extends Component {
 
           </View>
 
-          <View style={{ flex: 2,alignSelf:'center' }}>
+          <View style={{ flex: 2, alignSelf: 'center' }}>
             {/*  login and password textinput  */}
             <View style={{ marginTop: wp(8) }}>
 
@@ -215,16 +257,7 @@ export default class Login extends Component {
 
             </View>
 
-            {/* forget password */}
-            <TouchableOpacity onPress={this.handleForget}>
-              <Text style={{
-                fontWeight: '400',
-                color: '#757575',
-                letterSpacing: wp(0.2),
-                fontSize: wp(3.5),
-                marginTop: wp(2),
-              }}> Forget Password ?</Text>
-            </TouchableOpacity>
+          
 
             {/* login button */}
             <TouchableOpacity style={{
@@ -263,6 +296,6 @@ const Styles = StyleSheet.create({
   },
   welcomeText: {
     alignSelf: 'center',
-    top:wp(-2)
+    top: wp(-2)
   }
 })

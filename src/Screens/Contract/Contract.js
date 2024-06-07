@@ -21,7 +21,9 @@ import { Table, Row } from 'react-native-table-component';
 import { BASE_URL, makeRequest } from '../../api/Api_info';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
 import CustomLoader from '../../Component/loader/Loader';
-
+import { KEYS, getData } from '../../api/User_Preference';
+// Import your logo image
+import logo from '../../Assets/applogo.png';
 export default class Contract extends Component {
   constructor(props) {
     super(props);
@@ -39,11 +41,27 @@ export default class Contract extends Component {
       isLoading: false,
       errorMessage: '',
       contractid: '',
+      logoSource: null,
     };
   }
 
-  componentDidMount() {
+ async componentDidMount() {
     this.handleContract();
+    try {
+      const info = await getData(KEYS.USER_INFO);
+      if (info && info.logo) {
+          console.log('Using fetched logo:', info.logo);
+          this.setState({ logoSource: { uri: info.logo } });
+        } else {
+          console.log('Using default logo');
+          this.setState({ logoSource: logo });
+        }
+      } catch (error) {
+        console.error('Error fetching user info:', error);
+        console.log('Using default logo due to error');
+        this.setState({ logoSource: logo });
+      }
+
   }
 
   handlePressContract = contractId => {
@@ -55,13 +73,15 @@ export default class Contract extends Component {
 
   _handleContractPdf = async () => {
     try {
+      const erpiD = await getData(KEYS.USER_INFO);
+      console.log('efeeeee', erpiD.erpID);
       const { contractId } = this.state;
       if (!contractId) {
         console.log('No contract ID available to fetch PDF');
         return;
       }
 
-      const params = { contract_id: contractId };
+      const params = { contract_id: contractId,erpID: erpiD.erpID };
       const response = await makeRequest(
         BASE_URL + '/mobile/contractpdf',
         params,
@@ -82,8 +102,12 @@ export default class Contract extends Component {
 
   handleContract = async () => {
     try {
+
       this.setState({ showProcessingLoader: true, isRefreshing: true });
-      const response = await makeRequest(BASE_URL + '/mobile/contract');
+      const erpiD = await getData(KEYS.USER_INFO);
+      console.log('efeeeee', erpiD.erpID);
+      const params = { erpID: erpiD.erpID };
+      const response = await makeRequest(BASE_URL + '/mobile/contract',params);
       const { success, message, contractDetails } = response;
       console.log('ttttytytytytyt', response);
 
@@ -130,12 +154,16 @@ export default class Contract extends Component {
 
   handleSearch = async searchName => {
     try {
+      
+      const erpiD = await getData(KEYS.USER_INFO);
+      console.log('efeeeee', erpiD.erpID);
+      
       if (searchName.length < 1) {
         this.setState({ contractName: [], currentPage: 0 }); // Clear the search results
         return;
       }
 
-      const params = { workorderno: searchName };
+      const params = { workorderno: searchName,erpID: erpiD.erpID };
       // console.log('Search', params);
       const response = await makeRequest(
         BASE_URL + '/mobile/searchcontractname',
@@ -214,6 +242,7 @@ export default class Contract extends Component {
   };
 
   render() {
+    const {logoSource}= this.state;
     const { tableHead, rowData, currentPage, rowsPerPage } = this.state;
     console.log('wwwwwwwwwwww', rowData.contract_id);
     const startIndex = currentPage * rowsPerPage;
@@ -274,10 +303,10 @@ export default class Contract extends Component {
           </Text>
 
           <Image
-            source={require('../../Assets/applogo.png')}
+              source={logoSource}
             style={{
-              width: wp(16),
-              height: wp(13),
+              width: wp(20), // Adjust the width as needed
+              height: wp(16), // Adjust the height as needed
               resizeMode: 'contain',
               marginRight: wp(2),
             }}

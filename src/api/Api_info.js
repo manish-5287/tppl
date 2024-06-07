@@ -1,6 +1,7 @@
 /* eslint-disable prettier/prettier */
 // Base URL
 export const BASE_URL = 'https://tpplerp.in/'
+// export const BASE_URL = 'https://staging.tpplerp.in/'
 
 // API URL
 

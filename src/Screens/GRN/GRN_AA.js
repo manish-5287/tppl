@@ -22,7 +22,9 @@ import {BASE_URL, makeRequest} from '../../api/Api_info';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
 import CustomLoader from '../../Component/loader/Loader';
 import Pdf from 'react-native-pdf';
-
+import { KEYS, getData } from '../../api/User_Preference';
+// Import your logo image
+import logo from '../../Assets/applogo.png';
 export default class GRN_AA extends Component {
   constructor(props) {
     super(props);
@@ -37,11 +39,26 @@ export default class GRN_AA extends Component {
       isLoading: false,
       goodsID: '',
       cellData: '',
+      logoSource: null,
     };
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.handleGRN();
+    try {
+      const info = await getData(KEYS.USER_INFO);
+      if (info && info.logo) {
+          console.log('Using fetched logo:', info.logo);
+          this.setState({ logoSource: { uri: info.logo } });
+        } else {
+          console.log('Using default logo');
+          this.setState({ logoSource: logo });
+        }
+      } catch (error) {
+        console.error('Error fetching user info:', error);
+        console.log('Using default logo due to error');
+        this.setState({ logoSource: logo });
+      }
   }
 
   // changes by manish
@@ -53,8 +70,10 @@ export default class GRN_AA extends Component {
   };
   _handleGRNPdf = async () => {
     try {
+      const erpiD= await getData(KEYS.USER_INFO);
+      console.log('efeeeee',erpiD.erpID);
       const {goodsID} = this.state;
-      const params = {goods_id: goodsID};
+      const params = {goodsID: goodsID.grnno,erpID: erpiD.erpID};
       console.log('papapapapapap', params);
       const response = await makeRequest(BASE_URL + '/mobile/grnpopup', params);
       const {success, message, pdfLink} = response;
@@ -69,11 +88,14 @@ export default class GRN_AA extends Component {
       console.log(error);
     }
   };
-
   handleGRN = async () => {
     try {
       this.setState({showProcessingLoader: true, isRefreshing: true});
-      const response = await makeRequest(BASE_URL + '/mobile/grn');
+      const erpiD = await getData(KEYS.USER_INFO);
+      console.log('efeeeee', erpiD.erpID);
+  
+      const params = { erpID: erpiD.erpID };
+      const response = await makeRequest(BASE_URL + '/mobile/grn',params);
       const {success, message, grnDetails} = response;
       // console.log("grn",response);
       if (success) {
@@ -119,7 +141,9 @@ export default class GRN_AA extends Component {
         );
         this.setState({rowData: filteredResults, currentPage: 0});
       } else {
-        const params = {po_id: searchGRN};
+        const erpiD= await getData(KEYS.USER_INFO);
+        console.log('efeeeee',erpiD.erpID);
+        const params = {po_id: searchGRN,erpID: erpiD.erpID};
         const response = await makeRequest(
           BASE_URL + '/mobile/searchgrn',
           params,
@@ -172,6 +196,7 @@ export default class GRN_AA extends Component {
   };
 
   render() {
+    const {logoSource}= this.state;
     const {tableHead, rowData, currentPage, rowsPerPage} = this.state;
     const startIndex = currentPage * rowsPerPage;
     const endIndex = Math.min(startIndex + rowsPerPage, rowData.length); // Calculate end index while considering the last page
@@ -228,10 +253,10 @@ export default class GRN_AA extends Component {
           </Text>
 
           <Image
-            source={require('../../Assets/applogo.png')}
+             source={logoSource}
             style={{
-              width: wp(16),
-              height: wp(13),
+              width: wp(20), // Adjust the width as needed
+              height: wp(16), // Adjust the height as needed
               resizeMode: 'contain',
               marginRight: wp(2),
             }}

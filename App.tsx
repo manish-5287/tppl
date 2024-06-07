@@ -50,6 +50,7 @@ const Stack = createNativeStackNavigator()
 export default function App() {
   const [userInfo, setUserInfo] = useState(null);
   const [splashLoaded, setSplashLoaded] = useState(false);
+  
 
   useEffect(() => {
     const fetchData = async () => {
@@ -106,6 +107,7 @@ export default function App() {
         <Stack.Screen name="Search_Reverse" component={Search_Reverse} />
         <Stack.Screen name="report" component={VendorReport} />
         <Stack.Screen name="Maintenance" component={Maintenance} />
+     
         <Stack.Screen name="mytab" component={MyTab} />
       </Stack.Navigator>
     </NavigationContainer>

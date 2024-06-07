@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import { Table, Row, Rows } from 'react-native-table-component';
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import { BASE_URL, makeRequest } from '../../api/Api_info';
-
+import { KEYS, getData } from '../../api/User_Preference';
 export class Reverses_Table extends Component {
     constructor(props) {
         super(props);
@@ -22,7 +22,10 @@ export class Reverses_Table extends Component {
 
     handleReverse = async () => {
         try {
-            const response = await makeRequest(BASE_URL + '/mobile/dashboard')
+            const erpiD= await getData(KEYS.USER_INFO);
+            console.log('efeeeee',erpiD.erpID);
+            const params = {erpID: erpiD.erpID };
+            const response = await makeRequest(BASE_URL + '/mobile/dashboard',params)
             // console.log("reverse_table",response);
             const { success, message, reverseDetails } = response;
             if (success) {
@@ -48,12 +51,14 @@ export class Reverses_Table extends Component {
 
     _handlePressProductpdf = async () => {
         try {
+            const erpiD= await getData(KEYS.USER_INFO);
+            console.log('efeeeee',erpiD.erpID);
             const { reverseId } = this.state;
             if (!reverseId) {
                 console.log('No contract ID available to fetch PDF');
                 return;
             }
-            const params = { reverse_id: reverseId };
+            const params = { reverse_id: reverseId,erpID: erpiD.erpID  };
             console.log('papapapapapap', params);
             const response = await makeRequest(BASE_URL + '/mobile/reversepdf', params);
             const { success, message, pdfLink } = response;
@@ -80,13 +85,15 @@ export class Reverses_Table extends Component {
 
     _handleContractPdf = async () => {
         try {
+            const erpiD= await getData(KEYS.USER_INFO);
+            console.log('efeeeee',erpiD.erpID);
             const { contractId } = this.state;
             if (!contractId) {
                 console.log('No contract ID available to fetch PDF');
                 return;
             }
 
-            const params = { contract_id: contractId };
+            const params = { contract_id: contractId,erpID: erpiD.erpID  };
             const response = await makeRequest(BASE_URL + '/mobile/contractpdf', params);
             const { success, message, pdfLink } = response;
             console.log('PDF response:', response);

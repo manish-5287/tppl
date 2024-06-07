@@ -17,7 +17,9 @@ import { Table, Row } from 'react-native-table-component';
 import { BASE_URL, makeRequest } from '../../api/Api_info';
 import CustomLoader from '../../Component/loader/Loader';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
-
+import { KEYS, getData } from '../../api/User_Preference';
+// Import your logo image
+import logo from '../../Assets/applogo.png';
 export class PO_AAA extends Component {
   constructor(props) {
     super(props);
@@ -34,19 +36,41 @@ export class PO_AAA extends Component {
       purchaseorderId: '',
       poPrimary: '',
       isRevised: '',
+      logoSource: null,
     };
   }
 
-  componentDidMount() {
+ async componentDidMount() {
     this.handlePO();
+    try {
+      const info = await getData(KEYS.USER_INFO);
+      if (info && info.logo) {
+          console.log('Using fetched logo:', info.logo);
+          this.setState({ logoSource: { uri: info.logo } });
+        } else {
+          console.log('Using default logo');
+          this.setState({ logoSource: logo });
+        }
+      } catch (error) {
+        console.error('Error fetching user info:', error);
+        console.log('Using default logo due to error');
+        this.setState({ logoSource: logo });
+      }
   }
 
   handlePO = async () => {
     try {
-      this.setState({ showProcessingLoader: true, isRefreshing: true });
-      const response = await makeRequest(BASE_URL + '/mobile/purchaseorder');
+      this.setState({ isRefreshing: true });
+  
+      const erpiD = await getData(KEYS.USER_INFO);
+      console.log('efeeeee', erpiD.erpID);
+  
+      const params = { erpID: erpiD.erpID };
+      const response = await makeRequest(BASE_URL + '/mobile/purchaseorder', params);
+      
       const { success, message, poDetails } = response;
-      // console.log("po",response);
+      // console.log("po", response);
+  
       if (success) {
         const modifiedPurchaseDetails = poDetails.map(
           ({
@@ -71,18 +95,14 @@ export class PO_AAA extends Component {
             delivery,
           }),
         ); // change by manish
-        this.setState({
-          rowData: modifiedPurchaseDetails,
-          showProcessingLoader: false,
-          isRefreshing: false,
-        }); // changes by manish
+        this.setState({ rowData: modifiedPurchaseDetails, isRefreshing: false });
       } else {
         console.log(message);
-        this.setState({ showProcessingLoader: false, isRefreshing: false });
+        this.setState({ isRefreshing: false });
       }
     } catch (error) {
       console.log(error);
-      this.setState({ showProcessingLoader: false, isRefreshing: false });
+      this.setState({ isRefreshing: false });
     }
   };
 
@@ -97,11 +117,14 @@ export class PO_AAA extends Component {
   };
   handlePurchaseId = async () => {
     try {
+      const erpiD = await getData(KEYS.USER_INFO);
+      console.log('efeeeee', erpiD.erpID);
       const { purchaseorderId, poPrimary, isRevised } = this.state;
       const params = {
         purchaseorder_id: purchaseorderId,
         po_primary: poPrimary,
         is_revised: isRevised,
+        erpID: erpiD.erpID
       };
       console.log('papapapapapap', params);
       const response = await makeRequest(
@@ -142,7 +165,9 @@ export class PO_AAA extends Component {
         this.setState({ rowData: filteredResults, currentPage: 0 });
       } else {
         // Fetch new data based on search query
-        const params = { po_id: searchPO };
+        const erpiD= await getData(KEYS.USER_INFO);
+        console.log('efeeeee',erpiD.erpID);
+        const params = { po_id: searchPO,erpID: erpiD.erpID };
         const response = await makeRequest(
           BASE_URL + '/mobile/searchpurchaseorder',
           params,
@@ -192,6 +217,7 @@ export class PO_AAA extends Component {
   };
 
   render() {
+    const {logoSource}= this.state;
     const { tableHead, rowData, currentPage, rowsPerPage, searchPO } = this.state;
     const startIndex = currentPage * rowsPerPage;
     const endIndex = Math.min(startIndex + rowsPerPage, rowData.length); // Calculate end index while considering the last page
@@ -250,10 +276,10 @@ export class PO_AAA extends Component {
           </Text>
 
           <Image
-            source={require('../../Assets/applogo.png')}
+           source={logoSource}
             style={{
-              width: wp(16),
-              height: wp(13),
+              width: wp(20), // Adjust the width as needed
+              height: wp(16), // Adjust the height as needed
               resizeMode: 'contain',
               marginRight: wp(2),
             }}

@@ -1,8 +1,7 @@
 import React, {Component} from 'react';
 import {View, StyleSheet, Animated, Text, Image} from 'react-native';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
-
-
+import { KEYS, getData } from '../../api/User_Preference';
 // Import your logo image
 import logo from '../../Assets/applogo.png';
 class SplashScreen extends Component {
@@ -11,10 +10,12 @@ class SplashScreen extends Component {
     this.state = {
       logoOpacity: new Animated.Value(0), // Initial opacity of logo
       logoScale: new Animated.Value(0.85), // Initial scale of logo
+      logoSource: null, // State to hold the logo URL
     };
   }
 
   componentDidMount() {
+    this.splash();
     // Animation configuration
     const animationConfig = {
       toValue: 1, // Final value of opacity
@@ -35,40 +36,45 @@ class SplashScreen extends Component {
     }).start();
   }
 
+  splash = async () => {
+    try {
+      const info = await getData(KEYS.USER_INFO);
+      console.log('Fetched user info:', info);
+  
+      if (info && info.logo) {
+        console.log('Using fetched logo:', info.logo);
+        this.setState({ logoSource: { uri: info.logo } });
+      } else {
+        console.log('Using default logo');
+        this.setState({ logoSource: logo });
+      }
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+      console.log('Using default logo due to error');
+      this.setState({ logoSource: logo });
+    }
+  }
+  
+
+
   render() {
-    const {logoOpacity, logoScale} = this.state;
+    const { logoOpacity, logoScale, logoSource } = this.state;
 
     return (
       <View style={styles.container}>
-        <Animated.Image
-          source={logo}
-          style={[
-            styles.logo,
-            {
-              opacity: logoOpacity,
-              transform: [{scale: logoScale}],
-            },
-          ]}
-          resizeMode="cover"
-        />
-        <Text
-          style={{
-            color: '#0477a4',
-            fontSize: hp(3.5),
-            fontWeight: '500',
-            textAlign: 'center',
-          }}>
-          Tirupati Plastomatics Pvt.Ltd
-        </Text>
-        <Text
-          style={{
-            color: '#0477a4',
-            fontSize: hp(1.5),
-            fontWeight: '400',
-            textAlign: 'center',
-          }}>
-          (Integrated Management System (IMS) Certified Company)
-        </Text>
+        {logoSource && (
+          <Animated.Image
+            source={logoSource}
+            style={[
+              styles.logo,
+              {
+                opacity: logoOpacity,
+                transform: [{ scale: logoScale }],
+              },
+            ]}
+            resizeMode="cover"
+          />
+        )}
       </View>
     );
   }
@@ -82,9 +88,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-   width:wp(30),
-   height:wp(30),
-  resizeMode:'contain'
+    width: wp(60),
+    height: wp(60),
+    marginLeft: wp(2.5),
+    resizeMode: 'contain',
   },
 });
 

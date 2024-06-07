@@ -97,6 +97,9 @@ export default class Dashboard extends Component {
     try {
       let buildNumber = '';
       let IosbuildNumber = '';
+      const erpiD= await getData(KEYS.USER_INFO);
+      console.log('efeeeee',erpiD.erpID);
+      let erpID =erpiD.erpID ;
       if (Platform.OS === 'ios') {
         IosbuildNumber = Number(DeviceInfo.getBuildNumber());
       } else {
@@ -109,6 +112,7 @@ export default class Dashboard extends Component {
       let params = {
         ios_build_no: IosbuildNumber,
         android_build_no: buildNumber,
+        erpID: erpID
       };
 
       const response = await makeRequest(
@@ -134,16 +138,18 @@ export default class Dashboard extends Component {
     this.setState({ isUpdateVisible: false });
   };
 
-  handleSliderBox = async () => {
+  handleSliderBox = async () => { 
     try {
       const userData = await getData(KEYS.USER_INFO);
       let uniqueId = getUniqueId();
-
+  
       const params = {
         user_id: userData.userId,
+        erpID: userData.erpID,
+      
       };
       console.log('====================================');
-      console.log('kkkkkkk', params);
+      console.log('Params:', params);
       console.log('====================================');
       const response = await makeRequest(
         BASE_URL + '/mobile/dashboard',
@@ -158,18 +164,21 @@ export default class Dashboard extends Component {
         supplierHeader,
         maintenanceHeader,
         device_id: responseDeviceId,
+       
       } = response;
-      // console.log('Slider_box', response);
-      if (uniqueId !== responseDeviceId) {
-        console.log('Device ID mismatch. Logging out user.');
-        // Implement logout logic here
-        // For example, clear user data and navigate to login screen
-        await clearData(); // Clear stored user data
-        // Navigate to the login screen
-        // Replace 'LoginScreen' with the name of your login screen component
-        this.props.navigation.navigate('login');
-        return; // Exit the function to prevent further execution
-      }
+  
+      console.log('====================================');
+      console.log('Response:', response);
+      console.log('====================================');
+  
+      // if (uniqueId !== responseDeviceId) {
+      //   console.log('Device ID mismatch. Logging out user.');
+      //   // Implement logout logic here
+      //   await clearData(); // Clear stored user data
+      //   this.props.navigation.navigate('login');
+      //   return; // Exit the function to prevent further execution
+      // }
+  
       if (success) {
         if (
           contractHeader.length > 0 ||
@@ -184,6 +193,7 @@ export default class Dashboard extends Component {
             grnData: grnHeader[0],
             supplierData: supplierHeader[0],
             maintenanceData: maintenanceHeader[0],
+            
           });
         }
       } else {
@@ -193,6 +203,7 @@ export default class Dashboard extends Component {
       console.log(error);
     }
   };
+
 
   handlePO = () => {
     try {

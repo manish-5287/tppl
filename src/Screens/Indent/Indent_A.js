@@ -22,6 +22,9 @@ import {Table, Row} from 'react-native-table-component';
 import {BASE_URL, makeRequest} from '../../api/Api_info';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
 import CustomLoader from '../../Component/loader/Loader';
+import { KEYS, getData } from '../../api/User_Preference';
+// Import your logo image
+import logo from '../../Assets/applogo.png';
 
 export default class Indent_A extends Component {
   constructor(props) {
@@ -40,11 +43,26 @@ export default class Indent_A extends Component {
       errorMessage: '',
       indentId: '',
       contractId: '',
+      logoSource: null,
     };
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.handleIndent();
+    try {
+      const info = await getData(KEYS.USER_INFO);
+      if (info && info.logo) {
+          console.log('Using fetched logo:', info.logo);
+          this.setState({ logoSource: { uri: info.logo } });
+        } else {
+          console.log('Using default logo');
+          this.setState({ logoSource: logo });
+        }
+      } catch (error) {
+        console.error('Error fetching user info:', error);
+        console.log('Using default logo due to error');
+        this.setState({ logoSource: logo });
+      }
   }
 
   // pdf api by manish
@@ -54,12 +72,14 @@ export default class Indent_A extends Component {
 
   _handlePressProductpdf = async () => {
     try {
+      const erpiD= await getData(KEYS.USER_INFO);
+      console.log('efeeeee',erpiD.erpID);
       const {indentId} = this.state;
       if (!indentId) {
         console.log('No contract ID available to fetch PDF');
         return;
       }
-      const params = {indent_id: indentId};
+      const params = {indent_id: indentId,erpID: erpiD.erpID};
       console.log('papapapapapap', params);
       const response = await makeRequest(
         BASE_URL + '/mobile/indentpdf',
@@ -88,13 +108,15 @@ export default class Indent_A extends Component {
 
   _handleContractPdf = async () => {
     try {
+      const erpiD= await getData(KEYS.USER_INFO);
+      console.log('efeeeee',erpiD.erpID);
       const {contractId} = this.state;
       if (!contractId) {
         console.log('No contract ID available to fetch PDF');
         return;
       }
 
-      const params = {contract_id: contractId};
+      const params = {contract_id: contractId,erpID: erpiD.erpID};
       const response = await makeRequest(
         BASE_URL + '/mobile/contractpdf',
         params,
@@ -115,8 +137,11 @@ export default class Indent_A extends Component {
 
   handleIndent = async () => {
     try {
+      const erpiD= await getData(KEYS.USER_INFO);
+      console.log('efeeeee',erpiD.erpID);
+      const params = {erpID: erpiD.erpID };
       this.setState({showProcessingLoader: true, isRefreshing: true});
-      const response = await makeRequest(BASE_URL + '/mobile/indent');
+      const response = await makeRequest(BASE_URL + '/mobile/indent',params);
       const {success, message, indentDetails} = response;
 
       if (success) {
@@ -167,11 +192,14 @@ export default class Indent_A extends Component {
 
   handleSearch = async searchName => {
     try {
+      const erpiD = await getData(KEYS.USER_INFO);
+      console.log('efeeeee', erpiD.erpID);
+      
       if (searchName.length < 1) {
         this.setState({contractName: [], currentPage: 0}); // Clear the search results
         return;
       }
-      const params = {workorderno: searchName};
+      const params = {workorderno: searchName,erpID: erpiD.erpID };
       // console.log('Search', params);
       const response = await makeRequest(
         BASE_URL + '/mobile/searchcontractname',
@@ -249,6 +277,7 @@ export default class Indent_A extends Component {
   };
 
   render() {
+    const {logoSource}= this.state;
     const {tableHead, rowData, currentPage, rowsPerPage} = this.state;
     const startIndex = currentPage * rowsPerPage;
     const endIndex = Math.min(startIndex + rowsPerPage, rowData.length); // Calculate end index while considering the last page
@@ -304,10 +333,10 @@ export default class Indent_A extends Component {
           </Text>
 
           <Image
-            source={require('../../Assets/applogo.png')}
+               source={logoSource}
             style={{
-              width: wp(16),
-              height: wp(13),
+              width: wp(20), // Adjust the width as needed
+              height: wp(16), // Adjust the height as needed
               resizeMode: 'contain',
               marginRight: wp(2),
             }}

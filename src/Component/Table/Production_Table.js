@@ -14,6 +14,7 @@ import {
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
 import {BASE_URL, makeRequest} from '../../api/Api_info';
+import { KEYS, getData } from '../../api/User_Preference';
 
 export default class Production_Table extends Component {
   constructor(props) {
@@ -38,7 +39,10 @@ export default class Production_Table extends Component {
 
   handleProductionOrder = async () => {
     try {
-      const response = await makeRequest(BASE_URL + '/mobile/dashboard');
+      const erpiD = await getData(KEYS.USER_INFO);
+      console.log('efeeeee', erpiD.erpID);
+      const params = { erpID: erpiD.erpID };
+      const response = await makeRequest(BASE_URL + '/mobile/dashboard',params);
       // console.log("production_table",response);
       const {success, message, productionDetails} = response;
       if (success) {
@@ -76,12 +80,14 @@ export default class Production_Table extends Component {
 
   _handlePressProductpdf = async () => {
     try {
+      const erpiD = await getData(KEYS.USER_INFO);
+      console.log('efeeeee', erpiD.erpID);
       const {productionId} = this.state;
       if (!productionId) {
         console.log('No contract ID available to fetch PDF');
         return;
       }
-      const params = {production_id: productionId};
+      const params = {production_id: productionId,erpID: erpiD.erpID};
       console.log('papapapapapap', params);
       const response = await makeRequest(
         BASE_URL + '/mobile/productionorderpdf',
@@ -110,13 +116,15 @@ export default class Production_Table extends Component {
 
   _handleContractPdf = async () => {
     try {
+      const erpiD = await getData(KEYS.USER_INFO);
+      console.log('efeeeee', erpiD.erpID);
       const {contractId} = this.state;
       if (!contractId) {
         console.log('No contract ID available to fetch PDF');
         return;
       }
 
-      const params = {contract_id: contractId};
+      const params = {contract_id: contractId,erpID: erpiD.erpID};
       const response = await makeRequest(
         BASE_URL + '/mobile/contractpdf',
         params,

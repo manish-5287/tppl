@@ -11,7 +11,7 @@ import {
 import { Table, Row } from 'react-native-table-component';
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import { BASE_URL, makeRequest } from '../../api/Api_info';
-
+import { KEYS, getData } from '../../api/User_Preference';
 export default class Po_Table extends Component {
   constructor(props) {
     super(props);
@@ -30,7 +30,10 @@ export default class Po_Table extends Component {
 
   handlePurchaseOrder = async () => {
     try {
-      const response = await makeRequest(BASE_URL + '/mobile/dashboard');
+      const erpiD = await getData(KEYS.USER_INFO);
+      console.log('efeeeee', erpiD.erpID);
+      const params = { erpID: erpiD.erpID };
+      const response = await makeRequest(BASE_URL + '/mobile/dashboard',params);
       // console.log('po_table',response);
       const { success, message, poDetails } = response;
       if (success) {
@@ -76,11 +79,14 @@ export default class Po_Table extends Component {
 
   handlePurchaseId = async () => {
     try {
+      const erpiD = await getData(KEYS.USER_INFO);
+      console.log('efeeeee', erpiD.erpID);
       const { purchaseorderId, poPrimary, isRevised } = this.state;
       const params = {
         purchaseorder_id: purchaseorderId,
         po_primary: poPrimary,
         is_revised: isRevised,
+        erpID: erpiD.erpID
       };
       console.log('papapapapapap', params);
       const response = await makeRequest(

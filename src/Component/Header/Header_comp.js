@@ -1,17 +1,36 @@
 import { Alert, Image, Text, TouchableOpacity, View } from 'react-native'
 import React, { Component } from 'react'
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
-import { clearData } from '../../api/User_Preference';
+import { KEYS, clearData, getData } from '../../api/User_Preference';
+// Import your logo image
+import logo from '../../Assets/applogo.png';
 
 
 export class Header_comp extends Component {
     constructor(props) {
         super(props)
         this.state = {
-            showProcessingLoader:false
+            showProcessingLoader:false,
+            logoSource: null,
         };
     }
-
+    
+    async componentDidMount() {
+        try {
+            const info = await getData(KEYS.USER_INFO);
+            if (info && info.logo) {
+                console.log('Using fetched logo:', info.logo);
+                this.setState({ logoSource: { uri: info.logo } });
+              } else {
+                console.log('Using default logo');
+                this.setState({ logoSource: logo });
+              }
+            } catch (error) {
+              console.error('Error fetching user info:', error);
+              console.log('Using default logo due to error');
+              this.setState({ logoSource: logo });
+            }
+    }
 
     handleLogout = async () => {
         // Show alert to confirm logout
@@ -42,6 +61,8 @@ export class Header_comp extends Component {
 
 
     render() {
+ 
+        const {logoSource}= this.state;
         return (
 
             <View
@@ -55,12 +76,12 @@ export class Header_comp extends Component {
 
                 }}>
 
-                <Image source={require('../../Assets/applogo.png')}
+                <Image source={logoSource}
                     style={{
-                        width: wp(16),
-                        height: wp(13),
+                        width: wp(20), // Adjust the width as needed
+                        height: wp(16), // Adjust the height as needed // Set the width and height to the same value for square size
                         marginLeft: wp(2.5),
-                        resizeMode:'contain'
+                        resizeMode: 'contain',
 
                     }} />
 

@@ -11,7 +11,7 @@ import {
 import {Table, Row} from 'react-native-table-component';
 import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
 import {BASE_URL, makeRequest} from '../../api/Api_info';
-
+import { KEYS, getData } from '../../api/User_Preference';
 export class GRN_Table extends Component {
   constructor(props) {
     super(props);
@@ -29,7 +29,10 @@ export class GRN_Table extends Component {
 
   handleGrnOrder = async () => {
     try {
-      const response = await makeRequest(BASE_URL + '/mobile/dashboard');
+      const erpiD = await getData(KEYS.USER_INFO);
+      console.log('efeeeee', erpiD.erpID);
+      const params = { erpID: erpiD.erpID };
+      const response = await makeRequest(BASE_URL + '/mobile/dashboard',params);
       const {success, grnDetails} = response;
       if (success) {
         const modifiedGrnData = grnDetails.map(
@@ -58,8 +61,10 @@ export class GRN_Table extends Component {
   };
   _handleGRNPdf = async () => {
     try {
+      const erpiD= await getData(KEYS.USER_INFO);
+      console.log('efeeeee',erpiD.erpID);
       const {goodsID} = this.state;
-      const params = {goods_id: goodsID};
+      const params = {goodsID: goodsID.grnno,erpID: erpiD.erpID};
       console.log('papapapapapap', params);
       const response = await makeRequest(BASE_URL + '/mobile/grnpopup', params);
       const {success, message, pdfLink} = response;

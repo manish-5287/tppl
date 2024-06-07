@@ -13,7 +13,9 @@ import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
 import {BASE_URL, makeRequest} from '../../api/Api_info';
 import CustomLoader from '../../Component/loader/Loader';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
-
+import { KEYS, getData } from '../../api/User_Preference';
+// Import your logo image
+import logo from '../../Assets/applogo.png';
 export default class Search_RevAA extends Component {
   constructor(props) {
     super(props);
@@ -22,6 +24,7 @@ export default class Search_RevAA extends Component {
       rowData: [],
       isPopoverVisible: false,
       popoverContent: '',
+      logoSource: null,
     };
   }
 
@@ -92,9 +95,23 @@ export default class Search_RevAA extends Component {
     );
   };
 
-  componentDidMount() {
+  async componentDidMount() {
     this.handleReverseSearch();
     this._handleListRefresh();
+    try {
+      const info = await getData(KEYS.USER_INFO);
+      if (info && info.logo) {
+          console.log('Using fetched logo:', info.logo);
+          this.setState({ logoSource: { uri: info.logo } });
+        } else {
+          console.log('Using default logo');
+          this.setState({ logoSource: logo });
+        }
+      } catch (error) {
+        console.error('Error fetching user info:', error);
+        console.log('Using default logo due to error');
+        this.setState({ logoSource: logo });
+      }
   }
 
   _handleListRefresh = () => {
@@ -116,8 +133,10 @@ export default class Search_RevAA extends Component {
 
   handleReverseSearch = async () => {
     try {
+      const erpiD= await getData(KEYS.USER_INFO);
+      console.log('efeeeee',erpiD.erpID);
       const {contract_id} = this.props.route.params;
-      const params = {contract_id};
+      const params = {contract_id,erpID: erpiD.erpID};
       // console.log("handleContractSearch", contract_id);
       this.setState({showProcessingLoader: true, isRefreshing: true});
       const response = await makeRequest(
@@ -155,6 +174,7 @@ export default class Search_RevAA extends Component {
     this.props.navigation.navigate('Reverse_AA');
   };
   render() {
+    const {logoSource}= this.state;
     const {tableHead, rowData} = this.state;
     if (this.state.isLoading) {
       return <CustomLoader />;
@@ -195,10 +215,10 @@ export default class Search_RevAA extends Component {
           </Text>
 
           <Image
-            source={require('../../Assets/applogo.png')}
+               source={logoSource}
             style={{
-              width: wp(16),
-              height: wp(13),
+              width: wp(20), // Adjust the width as needed
+              height: wp(16), // Adjust the height as needed
               resizeMode: 'contain',
               marginRight: wp(2),
             }}

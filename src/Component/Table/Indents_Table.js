@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import { Table, Row, Rows } from 'react-native-table-component';
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import { BASE_URL, makeRequest } from '../../api/Api_info';
-
+import { KEYS, getData } from '../../api/User_Preference';
 export class Indents_Table extends Component {
     constructor(props) {
         super(props);
@@ -31,12 +31,14 @@ export class Indents_Table extends Component {
 
     _handlePressProductpdf = async () => {
         try {
+            const erpiD= await getData(KEYS.USER_INFO);
+            console.log('efeeeee',erpiD.erpID);
             const { indentId } = this.state;
             if (!indentId) {
                 console.log('No contract ID available to fetch PDF');
                 return;
             }
-            const params = { indent_id: indentId };
+            const params = { indent_id: indentId,erpID: erpiD.erpID };
             console.log('papapapapapap', params);
             const response = await makeRequest(BASE_URL + '/mobile/indentpdf', params);
             const { success, message, pdfLink } = response;
@@ -63,13 +65,15 @@ export class Indents_Table extends Component {
 
     _handleContractPdf = async () => {
         try {
+            const erpiD= await getData(KEYS.USER_INFO);
+            console.log('efeeeee',erpiD.erpID);
             const { contractId } = this.state;
             if (!contractId) {
                 console.log('No contract ID available to fetch PDF');
                 return;
             }
 
-            const params = { contract_id: contractId };
+            const params = { contract_id: contractId,erpID: erpiD.erpID };
             const response = await makeRequest(BASE_URL + '/mobile/contractpdf', params);
             const { success, message, pdfLink } = response;
             console.log('PDF response:', response);
@@ -87,7 +91,10 @@ export class Indents_Table extends Component {
 
     handleIndentOrder = async () => { // changes by manish 
         try {
-            const response = await makeRequest(BASE_URL + '/mobile/dashboard')
+            const erpiD= await getData(KEYS.USER_INFO);
+      console.log('efeeeee',erpiD.erpID);
+      const params = {erpID: erpiD.erpID};
+            const response = await makeRequest(BASE_URL + '/mobile/dashboard',params)
             // console.log('Indent_Table',response);
             const { success, message, indentDetails } = response;
             if (success) {

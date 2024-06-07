@@ -14,7 +14,7 @@ export default class VerifiyCode extends Component {
     }
 
     handleCodeFilled = (code) => {
-    
+
         console.log(`Code is ${code}, your code is here!`);
         this.props.navigation.push('newPassword');
     };
@@ -152,7 +152,7 @@ const Styles = StyleSheet.create({
     welcomeText: {
         alignSelf: 'center',
         flex: 2,
-    },
+    }, 
     otpinputview: {
         width: wp(60),
         height: hp(20),

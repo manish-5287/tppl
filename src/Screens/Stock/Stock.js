@@ -20,7 +20,9 @@ import CustomLoader from '../../Component/loader/Loader';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
 import {BASE_URL, makeRequest} from '../../api/Api_info';
 import DateTimePicker from 'react-native-modal-datetime-picker';
-
+import { KEYS, getData } from '../../api/User_Preference';
+// Import your logo image
+import logo from '../../Assets/applogo.png';
 export class Stock extends Component {
   constructor(props) {
     super(props);
@@ -51,12 +53,29 @@ export class Stock extends Component {
       isLoading: false,
       errorMessage: '',
       searchDataAvailable: true,
+      logoSource: null,
     };
   }
 
-  componentDidMount() {
+ async componentDidMount() {
     this.handleStock();
     this.props.navigation.addListener('focus', this._handleListRefresh); // Add listener for screen focus
+    try {
+      const info = await getData(KEYS.USER_INFO);
+      if (info && info.logo) {
+          console.log('Using fetched logo:', info.logo);
+          this.setState({ logoSource: { uri: info.logo } });
+        } else {
+          console.log('Using default logo');
+          this.setState({ logoSource: logo });
+        }
+      } catch (error) {
+        console.error('Error fetching user info:', error);
+        console.log('Using default logo due to error');
+        this.setState({ logoSource: logo });
+      }
+
+
   }
 
   componentWillUnmount() {
@@ -66,7 +85,11 @@ export class Stock extends Component {
   handleStock = async () => {
     try {
       this.setState({isRefreshing: true});
-      const response = await makeRequest(BASE_URL + '/mobile/stock');
+      const erpiD = await getData(KEYS.USER_INFO);
+      console.log('efeeeee', erpiD.erpID);
+  
+      const params = { erpID: erpiD.erpID };
+      const response = await makeRequest(BASE_URL + '/mobile/stock',params);
       const {success, message, stockDetails, item_name} = response;
       console.log('stock stock stock ', response);
       if (success) {
@@ -167,11 +190,14 @@ export class Stock extends Component {
 
   handleShowSearch = async () => {
     try {
+      const erpiD= await getData(KEYS.USER_INFO);
+      console.log('efeeeee',erpiD.erpID);
       const {selectedDateFrom, selectedDateTo, itemid} = this.state;
       const params = {
         item_id: itemid,
         datefrom: selectedDateFrom,
         dateto: selectedDateTo,
+        erpID: erpiD.erpID
       };
       console.log('111112121212', params);
       const response = await makeRequest(
@@ -215,6 +241,8 @@ export class Stock extends Component {
 
   handleSearch = async () => {
     try {
+      const erpiD= await getData(KEYS.USER_INFO);
+      console.log('efeeeee',erpiD.erpID);
       const {searchName} = this.state;
       if (searchName.length < 1) {
         this.setState({contractName: []}); // Clear the search results
@@ -222,6 +250,7 @@ export class Stock extends Component {
       }
       const params = {
         item_name: searchName,
+        erpID: erpiD.erpID
       };
       const response = await makeRequest(
         BASE_URL + '/mobile/searchitemname',
@@ -283,6 +312,7 @@ export class Stock extends Component {
   };
 
   render() {
+    const {logoSource}= this.state;
     const {
       tableHead,
       rowData,
@@ -345,10 +375,10 @@ export class Stock extends Component {
           </Text>
 
           <Image
-            source={require('../../Assets/applogo.png')}
+            source={logoSource}
             style={{
-              width: wp(16),
-              height: wp(13),
+              width: wp(20), // Adjust the width as needed
+              height: wp(16), // Adjust the height as needed
               resizeMode: 'contain',
               marginRight: wp(2),
             }}

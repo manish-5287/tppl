@@ -17,6 +17,7 @@ import {Table, Row} from 'react-native-table-component';
 import {BASE_URL, makeRequest} from '../../api/Api_info';
 import CustomLoader from '../../Component/loader/Loader';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
+import { KEYS, getData } from '../../api/User_Preference';
 
 export default class Search_Contract extends Component {
   constructor(props) {
@@ -27,12 +28,21 @@ export default class Search_Contract extends Component {
       showProcessingLoader: false,
       isRefreshing: false,
       isLoading: true, // Initially set isLoading to true
+      logoSource: null,
     };
   }
 
-  componentDidMount() {
+   async componentDidMount() {
     this.handleContractSearch();
     this._handleListRefresh();
+    try {
+      const userInfo = await getData(KEYS.USER_INFO);
+      if (userInfo && userInfo.logo) {
+        this.setState({logoSource: {uri: userInfo.logo}});
+      }
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+    }
   }
 
   _handleListRefresh = () => {
@@ -54,8 +64,10 @@ export default class Search_Contract extends Component {
 
   handleContractSearch = async () => {
     try {
+      const erpiD = await getData(KEYS.USER_INFO);
+      console.log('efeeeee', erpiD.erpID);
       const {contract_id} = this.props.route.params;
-      const params = {contract_id};
+      const params = {contract_id,erpID: erpiD.erpID};
 
       this.setState({showProcessingLoader: true, isRefreshing: true});
 
@@ -155,6 +167,7 @@ export default class Search_Contract extends Component {
     this.props.navigation.navigate('Contract');
   };
   render() {
+    const {logoSource}= this.state;
     const {tableHead, rowData} = this.state;
     if (this.state.isLoading) {
       return <CustomLoader />;
@@ -195,10 +208,10 @@ export default class Search_Contract extends Component {
           </Text>
 
           <Image
-            source={require('../../Assets/applogo.png')}
+            source={logoSource}
             style={{
-              width: wp(16),
-              height: wp(13),
+              width: wp(20), // Adjust the width as needed
+              height: wp(16), // Adjust the height as needed
               resizeMode: 'contain',
               marginRight: wp(2),
             }}

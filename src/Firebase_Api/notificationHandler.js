@@ -2,13 +2,15 @@ import React from 'react';
 import {Platform} from 'react-native';
 import PushNotification from 'react-native-push-notification';
 import {getUniqueId} from 'react-native-device-info';
-import {KEYS, storeData} from '../api/User_Preference';
+import {KEYS, storeData,getData} from '../api/User_Preference';
 import {BASE_URL, makeRequest} from '../api/Api_info';
 import messaging from '@react-native-firebase/messaging';
 
 class NotificationHandler {
   async onRegister() {
     try {
+      const erpiD = await getData(KEYS.USER_INFO);
+      console.log('============ggrgrg===================', erpiD.erpID);
       let fcmToken = '';
       if (Platform.OS === 'android') {
         fcmToken = await messaging().getToken();
@@ -24,6 +26,9 @@ class NotificationHandler {
       const params = {
         token: fcmToken,
         uniqueDeviceId: uniqueId,
+        erpID: erpiD.erpID
+
+      
       };
 
       const response = await makeRequest(
@@ -34,7 +39,7 @@ class NotificationHandler {
       console.log('Response:', response);
 
       if (response.success) {
-        // await storeData(KEYS.USER_INFO);
+          // await storeData(KEYS.USER_INFO);
       }
     } catch (error) {
       console.error('Error uploading token:', error);

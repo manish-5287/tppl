@@ -20,7 +20,9 @@ import {Table, Row} from 'react-native-table-component';
 import {BASE_URL, makeRequest} from '../../api/Api_info';
 import ProcessingLoader from '../../Component/loader/ProcessingLoader';
 import CustomLoader from '../../Component/loader/Loader';
-
+import { KEYS, getData } from '../../api/User_Preference';
+// Import your logo image
+import logo from '../../Assets/applogo.png';
 export default class Reverse_AA extends Component {
   constructor(props) {
     super(props);
@@ -38,17 +40,37 @@ export default class Reverse_AA extends Component {
       errorMessages: '',
       reverseId: '',
       contractId: '',
+      logoSource: null,
     };
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.handleReverse();
+   
+    try {
+      const info = await getData(KEYS.USER_INFO);
+      if (info && info.logo) {
+          console.log('Using fetched logo:', info.logo);
+          this.setState({ logoSource: { uri: info.logo } });
+        } else {
+          console.log('Using default logo');
+          this.setState({ logoSource: logo });
+        }
+      } catch (error) {
+        console.error('Error fetching user info:', error);
+        console.log('Using default logo due to error');
+        this.setState({ logoSource: logo });
+      }
   }
 
   handleReverse = async () => {
     try {
-      this.setState({showProcessingLoader: true, isRefreshing: true});
-      const response = await makeRequest(BASE_URL + '/mobile/reverse');
+
+      this.setState({isRefreshing: true});
+      const erpiD= await getData(KEYS.USER_INFO);
+      console.log('efeeeee',erpiD.erpID);
+      const params = {erpID: erpiD.erpID};
+      const response = await makeRequest(BASE_URL + '/mobile/reverse',params);
       const {success, message, reverseDetails} = response;
       // console.log("reverse",response);
       if (success) {
@@ -69,18 +91,14 @@ export default class Reverse_AA extends Component {
             contract_id,
           }),
         ); // changes by manish
-        this.setState({
-          rowData: modifiedReverseDetails,
-          showProcessingLoader: false,
-          isRefreshing: false,
-        }); // changes by manish
+        this.setState({rowData: modifiedReverseDetails, isRefreshing: false}); // changes by manish
       } else {
         console.log(message);
-        this.setState({showProcessingLoader: false, isRefreshing: false});
+        this.setState({isRefreshing: false});
       }
     } catch (error) {
       console.log(error);
-      this.setState({showProcessingLoader: false, isRefreshing: false});
+      this.setState({isRefreshing: false});
     }
   };
 
@@ -89,14 +107,17 @@ export default class Reverse_AA extends Component {
     this.setState({reverseId}, this._handlePressProductpdf); // Pass a reference to _handlePressProductpdf
   };
 
+ 
   _handlePressProductpdf = async () => {
     try {
+      const erpiD= await getData(KEYS.USER_INFO);
+      console.log('efeeeee',erpiD.erpID);
       const {reverseId} = this.state;
       if (!reverseId) {
         console.log('No contract ID available to fetch PDF');
         return;
       }
-      const params = {reverse_id: reverseId};
+      const params = {reverse_id: reverseId,erpID: erpiD.erpID};
       console.log('papapapapapap', params);
       const response = await makeRequest(
         BASE_URL + '/mobile/reversepdf',
@@ -125,13 +146,15 @@ export default class Reverse_AA extends Component {
 
   _handleContractPdf = async () => {
     try {
+      const erpiD= await getData(KEYS.USER_INFO);
+      console.log('efeeeee',erpiD.erpID);
       const {contractId} = this.state;
       if (!contractId) {
         console.log('No contract ID available to fetch PDF');
         return;
       }
 
-      const params = {contract_id: contractId};
+      const params = {contract_id: contractId,erpID: erpiD.erpID};
       const response = await makeRequest(
         BASE_URL + '/mobile/contractpdf',
         params,
@@ -149,6 +172,7 @@ export default class Reverse_AA extends Component {
       console.log('Error fetching PDF:', error);
     }
   };
+
 
   nextPage = () => {
     const {currentPage} = this.state;
@@ -168,7 +192,9 @@ export default class Reverse_AA extends Component {
         this.setState({contractName: [], currentPage: 0}); // Clear the search results
         return;
       }
-      const params = {workorderno: searchName};
+      const erpiD= await getData(KEYS.USER_INFO);
+      console.log('efeeeee',erpiD.erpID);
+      const params = {workorderno: searchName,erpID: erpiD.erpID};
       // console.log('searc', params);
       const response = await makeRequest(
         BASE_URL + '/mobile/searchcontractname',
@@ -186,6 +212,7 @@ export default class Reverse_AA extends Component {
       this.setState({contractName: []});
     }
   };
+
 
   handleProductPress = item => {
     const {contract_id} = item;
@@ -247,6 +274,7 @@ export default class Reverse_AA extends Component {
     this.props.navigation.navigate('home');
   };
   render() {
+    const {logoSource}= this.state;
     const {tableHead, rowData, currentPage, rowsPerPage} = this.state;
     const startIndex = currentPage * rowsPerPage;
     const endIndex = Math.min(startIndex + rowsPerPage, rowData.length); // Calculate end index while considering the last page
@@ -302,10 +330,10 @@ export default class Reverse_AA extends Component {
           </Text>
 
           <Image
-            source={require('../../Assets/applogo.png')}
+          source={logoSource}
             style={{
-              width: wp(16),
-              height: wp(13),
+              width: wp(20), // Adjust the width as needed
+              height: wp(16), // Adjust the height as needed
               resizeMode: 'contain',
               marginRight: wp(2),
             }}
